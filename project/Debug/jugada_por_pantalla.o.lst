@@ -1,0 +1,630 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"jugada_por_pantalla.c"
+  21              	.Ltext0:
+  22              		.file 1 "../jugada_por_pantalla.c"
+ 2255              		.align	2
+ 2256              		.global	jugada_x_pantalla
+ 2258              	jugada_x_pantalla:
+ 2259              	.LFB0:
+   1:../jugada_por_pantalla.c **** /*********************************************************************************************
+   2:../jugada_por_pantalla.c **** * Fichero:	jugada_por_pantalla.c
+   3:../jugada_por_pantalla.c **** * Autor1:	Sergio García Esteban	755844
+   4:../jugada_por_pantalla.c **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../jugada_por_pantalla.c **** * Descrip:	Autómata del juego
+   6:../jugada_por_pantalla.c **** * Version:
+   7:../jugada_por_pantalla.c **** *********************************************************************************************/
+   8:../jugada_por_pantalla.c **** 
+   9:../jugada_por_pantalla.c **** /*--- ficheros de cabecera ---*/
+  10:../jugada_por_pantalla.c **** #include "jugada_por_pantalla.h"
+  11:../jugada_por_pantalla.c **** #include "reversi8_2019.h"
+  12:../jugada_por_pantalla.c **** #include "8led.h"
+  13:../jugada_por_pantalla.c **** #include "44blib.h"
+  14:../jugada_por_pantalla.c **** #include "tp.h"
+  15:../jugada_por_pantalla.c **** #include "pantalla.h"
+  16:../jugada_por_pantalla.c **** #include "button.h"
+  17:../jugada_por_pantalla.c **** #include "tp.h"
+  18:../jugada_por_pantalla.c **** 
+  19:../jugada_por_pantalla.c **** 
+  20:../jugada_por_pantalla.c **** /*--- valores y constantes ---*/
+  21:../jugada_por_pantalla.c **** enum estado{ INICIAL, JUEGO, FINAL, CALIBRADO };
+  22:../jugada_por_pantalla.c **** 
+  23:../jugada_por_pantalla.c **** 
+  24:../jugada_por_pantalla.c **** /*--- codigo de funciones ---*/
+  25:../jugada_por_pantalla.c **** 
+  26:../jugada_por_pantalla.c **** /*********************************************************************************************
+  27:../jugada_por_pantalla.c **** * Autómata de juego. Gestiona la interaccion del usuario (utilizando la pantalla y los botones)
+  28:../jugada_por_pantalla.c **** * con la interfaz del juego y la partida.
+  29:../jugada_por_pantalla.c **** *********************************************************************************************/
+  30:../jugada_por_pantalla.c **** void jugada_x_pantalla(ID_evento evento, uint32_t info ){
+ 2260              		.loc 1 30 0
+ 2261              		.cfi_startproc
+ 2262              		@ Function supports interworking.
+ 2263              		@ args = 0, pretend = 0, frame = 0
+ 2264              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2265              	.LVL0:
+ 2266 0000 0DC0A0E1 		mov	ip, sp
+ 2267              	.LCFI0:
+ 2268              		.cfi_def_cfa_register 12
+  31:../jugada_por_pantalla.c **** 	static int estado=CALIBRADO;
+  32:../jugada_por_pantalla.c **** 	static char fila=0,columna=0;
+  33:../jugada_por_pantalla.c **** 	static int mov_valido=0;
+  34:../jugada_por_pantalla.c **** 	static int x=0,y=0;
+  35:../jugada_por_pantalla.c **** 	static int fin=0;
+  36:../jugada_por_pantalla.c **** 	static int blancas=0,negras=0;
+  37:../jugada_por_pantalla.c **** 	static int esquina=0;
+  38:../jugada_por_pantalla.c **** 	if(evento==ev_tactil){
+ 2269              		.loc 1 38 0
+ 2270 0004 040050E3 		cmp	r0, #4
+  30:../jugada_por_pantalla.c **** void jugada_x_pantalla(ID_evento evento, uint32_t info ){
+ 2271              		.loc 1 30 0
+ 2272 0008 F0DD2DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, sl, fp, ip, lr, pc}
+ 2273 000c 04B04CE2 		sub	fp, ip, #4
+ 2274              		.cfi_offset 14, -8
+ 2275              		.cfi_offset 13, -12
+ 2276              		.cfi_offset 11, -16
+ 2277              		.cfi_offset 10, -20
+ 2278              		.cfi_offset 8, -24
+ 2279              		.cfi_offset 7, -28
+ 2280              		.cfi_offset 6, -32
+ 2281              		.cfi_offset 5, -36
+ 2282              		.cfi_offset 4, -40
+ 2283              	.LCFI1:
+ 2284              		.cfi_def_cfa 11, 4
+ 2285              		.loc 1 38 0
+ 2286 0010 5200000A 		beq	.L2
+ 2287 0014 B4429FE5 		ldr	r4, .L27
+ 2288 0018 040194E8 		ldmia	r4, {r2, r8}	@ phole ldm
+ 2289              	.L3:
+  39:../jugada_por_pantalla.c **** 		x=info&0x00000fff;		// leemos coordenadas de la pulsacion en el tp
+  40:../jugada_por_pantalla.c **** 		y=((info&0x00fff000)>>12);
+  41:../jugada_por_pantalla.c **** 	}
+  42:../jugada_por_pantalla.c **** 	static char __attribute__ ((aligned (8))) candidatas[DIM][DIM] = {
+  43:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  44:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  45:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  46:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  47:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  48:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  49:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0},
+  50:../jugada_por_pantalla.c **** 			{0,0,0,0,0,0,0,0}
+  51:../jugada_por_pantalla.c **** 	};
+  52:../jugada_por_pantalla.c **** 	static char __attribute__ ((aligned (8))) tablero[DIM][DIM] = {
+  53:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  54:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  55:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  56:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  57:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  58:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  59:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  60:../jugada_por_pantalla.c **** 			{CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VAC
+  61:../jugada_por_pantalla.c **** 	};
+  62:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+  63:../jugada_por_pantalla.c **** 	if( (estado==INICIAL) & (evento==ev_tactil) & (220<x) & (x<=319) & (170<=y) & (y<=239) ){
+ 2290              		.loc 1 63 0
+ 2291 001c B0529FE5 		ldr	r5, .L27+4
+ 2292 0020 043040E2 		sub	r3, r0, #4
+ 2293 0024 00A073E2 		rsbs	sl, r3, #0
+ 2294 0028 00C095E5 		ldr	ip, [r5, #0]
+ 2295 002c 03A0AAE0 		adc	sl, sl, r3
+ 2296 0030 00005CE3 		cmp	ip, #0
+ 2297 0034 0030A013 		movne	r3, #0
+ 2298 0038 01300A02 		andeq	r3, sl, #1
+ 2299 003c DC0052E3 		cmp	r2, #220
+ 2300 0040 0060A0D3 		movle	r6, #0
+ 2301 0044 0160A0C3 		movgt	r6, #1
+ 2302 0048 050D52E3 		cmp	r2, #320
+ 2303 004c 0060A0A3 		movge	r6, #0
+ 2304 0050 036006E0 		and	r6, r6, r3
+ 2305 0054 A90058E3 		cmp	r8, #169
+ 2306 0058 0060A0D3 		movle	r6, #0
+ 2307 005c 016006C2 		andgt	r6, r6, #1
+ 2308 0060 EF0058E3 		cmp	r8, #239
+ 2309 0064 0060A0C3 		movgt	r6, #0
+ 2310 0068 016006D2 		andle	r6, r6, #1
+ 2311 006c 000056E3 		cmp	r6, #0
+ 2312 0070 4200001A 		bne	.L23
+  64:../jugada_por_pantalla.c **** 		estado=CALIBRADO;					// INICIAL -> CALIBRADO
+  65:../jugada_por_pantalla.c **** 		touchpad_setCalibrar(4);			// tp_ISR calcula nuevos maximos en proximas 4 pulsaciones
+  66:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_CALIBRADO);	// pantalla a imprimir
+  67:../jugada_por_pantalla.c **** 		esquina=0;
+  68:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+  69:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD (indica a dma que hay que iniciar transmision)
+  70:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+  71:../jugada_por_pantalla.c **** 	}else if( (estado==INICIAL) & (evento==ev_tactil)  ){
+ 2313              		.loc 1 71 0
+ 2314 0074 000053E3 		cmp	r3, #0
+ 2315 0078 4C00001A 		bne	.L19
+  72:../jugada_por_pantalla.c **** 		estado=JUEGO;						// INICIAL -> JUEGO
+  73:../jugada_por_pantalla.c **** 		init_table(tablero,candidatas);		// inicializar partida
+  74:../jugada_por_pantalla.c **** 		fila=0;
+  75:../jugada_por_pantalla.c **** 		columna=0;
+  76:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_JUEGO);		// pantalla a imprimir
+  77:../jugada_por_pantalla.c **** 		LCD_tablero(tablero);				// tablero a imprimir
+  78:../jugada_por_pantalla.c **** 		LCD_movimiento(fila,columna);		// ficha gris a imprimir
+  79:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+  80:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+  81:../jugada_por_pantalla.c **** 	}else if( (estado==JUEGO) & ((evento==ev_pulsacion) | (evento==ev_mantener)) ){
+ 2316              		.loc 1 81 0
+ 2317 007c 01304CE2 		sub	r3, ip, #1
+ 2318 0080 007073E2 		rsbs	r7, r3, #0
+ 2319 0084 020040E2 		sub	r0, r0, #2
+ 2320              	.LVL1:
+ 2321 0088 0370A7E0 		adc	r7, r7, r3
+ 2322 008c 010050E3 		cmp	r0, #1
+ 2323 0090 01005C93 		cmpls	ip, #1
+ 2324 0094 0F00001A 		bne	.L7
+  82:../jugada_por_pantalla.c **** 		if(info==button_dr){				// JUEGO
+ 2325              		.loc 1 82 0
+ 2326 0098 020051E3 		cmp	r1, #2
+  83:../jugada_por_pantalla.c **** 			columna=(columna+1)%DIM;
+ 2327              		.loc 1 83 0
+ 2328 009c 9110D405 		ldreqb	r1, [r4, #145]	@ zero_extendqisi2
+ 2329              	.LVL2:
+  84:../jugada_por_pantalla.c **** 		}else{
+  85:../jugada_por_pantalla.c **** 			fila=(fila+1)%DIM;
+ 2330              		.loc 1 85 0
+ 2331 00a0 9000D415 		ldrneb	r0, [r4, #144]	@ zero_extendqisi2
+  83:../jugada_por_pantalla.c **** 			columna=(columna+1)%DIM;
+ 2332              		.loc 1 83 0
+ 2333 00a4 01108102 		addeq	r1, r1, #1
+ 2334              		.loc 1 85 0
+ 2335 00a8 01008012 		addne	r0, r0, #1
+  83:../jugada_por_pantalla.c **** 			columna=(columna+1)%DIM;
+ 2336              		.loc 1 83 0
+ 2337 00ac 07100102 		andeq	r1, r1, #7
+ 2338              		.loc 1 85 0
+ 2339 00b0 07000012 		andne	r0, r0, #7
+  83:../jugada_por_pantalla.c **** 			columna=(columna+1)%DIM;
+ 2340              		.loc 1 83 0
+ 2341 00b4 9110C405 		streqb	r1, [r4, #145]
+ 2342 00b8 9000D405 		ldreqb	r0, [r4, #144]	@ zero_extendqisi2
+ 2343              		.loc 1 85 0
+ 2344 00bc 9000C415 		strneb	r0, [r4, #144]
+ 2345 00c0 9110D415 		ldrneb	r1, [r4, #145]	@ zero_extendqisi2
+ 2346              	.L20:
+  86:../jugada_por_pantalla.c **** 		}
+  87:../jugada_por_pantalla.c **** 		LCD_movimiento(fila,columna);		// ficha gris a imprimir
+  88:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+  89:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+  90:../jugada_por_pantalla.c **** 	}else if( (estado==JUEGO) & (evento==ev_tactil) & (110<=x) ){
+  91:../jugada_por_pantalla.c **** 											// JUEGO
+  92:../jugada_por_pantalla.c **** 		mov_valido=movimiento_valido(tablero, fila, columna);
+  93:../jugada_por_pantalla.c **** 		fin=0;								// Comprobamos si el movimiento es válido
+  94:../jugada_por_pantalla.c **** 		if(mov_valido==1){					// Si es válido, ejecutamos movimiento y movimiento máquina.
+  95:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,fila,columna);
+  96:../jugada_por_pantalla.c **** 		}else{								// Si no es valido, solo ejecuta movimiento la máquina.
+  97:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,9,9);
+  98:../jugada_por_pantalla.c **** 		}
+  99:../jugada_por_pantalla.c **** 		if(fin==0){
+ 100:../jugada_por_pantalla.c **** 			fila=0;
+ 101:../jugada_por_pantalla.c **** 			columna=0;
+ 102:../jugada_por_pantalla.c **** 			LCD_tablero(tablero);			// tablero a imprimir
+ 103:../jugada_por_pantalla.c **** 			LCD_movimiento(fila,columna);	// ficha gris a imprimir
+ 104:../jugada_por_pantalla.c **** 		}else{
+ 105:../jugada_por_pantalla.c **** 			estado=FINAL;					// JUEGO -> FINAL
+ 106:../jugada_por_pantalla.c **** 			contar(tablero,&blancas,&negras);
+ 107:../jugada_por_pantalla.c **** 			LCD_fichas(blancas,negras);		// resultado a imprimir
+ 108:../jugada_por_pantalla.c **** 			LCD_pantalla(PANTALLA_FINAL);	// pantalla a imprimir
+ 109:../jugada_por_pantalla.c **** 		}
+ 110:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 111:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+ 112:../jugada_por_pantalla.c **** 	}else if( (estado==JUEGO) & (evento==ev_tactil) & (x<=109) ){
+ 113:../jugada_por_pantalla.c **** 		estado=INICIAL;						// JUEGO -> INICIAL
+ 114:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 115:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 116:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+ 117:../jugada_por_pantalla.c **** 	}else if( (estado==CALIBRADO) & (evento==ev_tactil) ){
+ 118:../jugada_por_pantalla.c **** 		esquina++;							// CALIBRADO
+ 119:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+ 120:../jugada_por_pantalla.c **** 		if(esquina==4){
+ 121:../jugada_por_pantalla.c **** 			estado=INICIAL;					// CALIBRADO -> INICIAL
+ 122:../jugada_por_pantalla.c **** 			LCD_pantalla(PANTALLA_INICIO);	// pantalla a imprimir
+ 123:../jugada_por_pantalla.c **** 		}
+ 124:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 125:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+ 126:../jugada_por_pantalla.c **** 	}else if( (estado==FINAL) & (evento==ev_tactil) & (120<=y) ){
+ 127:../jugada_por_pantalla.c **** 		estado=JUEGO;						// FINAL -> JUEGO
+ 128:../jugada_por_pantalla.c **** 		init_table(tablero,candidatas);		// inicializar partida
+ 129:../jugada_por_pantalla.c **** 		fila=0;
+ 130:../jugada_por_pantalla.c **** 		columna=0;
+ 131:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_JUEGO);		// pantalla a imprimir
+ 132:../jugada_por_pantalla.c **** 		LCD_tablero(tablero);				// tablero a imprimir
+ 133:../jugada_por_pantalla.c **** 		LCD_movimiento(fila,columna);		// ficha gris a imprimir
+ 2347              		.loc 1 133 0
+ 2348 00c4 FEFFFFEB 		bl	LCD_movimiento
+ 134:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2349              		.loc 1 134 0
+ 2350 00c8 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2351              	.L1:
+ 135:../jugada_por_pantalla.c **** //-------------------------------------------------------------------------------------------------
+ 136:../jugada_por_pantalla.c **** 	}else if( (estado==FINAL) & (evento==ev_tactil) & (y<=119) ){
+ 137:../jugada_por_pantalla.c **** 		estado=INICIAL;						// FINAL -> INICIAL
+ 138:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 139:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 140:../jugada_por_pantalla.c **** 	}
+ 141:../jugada_por_pantalla.c **** }
+ 2352              		.loc 1 141 0
+ 2353 00cc 24D04BE2 		sub	sp, fp, #36
+ 2354 00d0 F06D9DE8 		ldmfd	sp, {r4, r5, r6, r7, r8, sl, fp, sp, lr}
+ 2355 00d4 1EFF2FE1 		bx	lr
+ 2356              	.LVL3:
+ 2357              	.L7:
+  90:../jugada_por_pantalla.c **** 	}else if( (estado==JUEGO) & (evento==ev_tactil) & (110<=x) ){
+ 2358              		.loc 1 90 0
+ 2359 00d8 07700AE0 		and	r7, sl, r7
+ 2360 00dc 6D0052E3 		cmp	r2, #109
+ 2361 00e0 0030A0D3 		movle	r3, #0
+ 2362 00e4 013007C2 		andgt	r3, r7, #1
+ 2363 00e8 000053E3 		cmp	r3, #0
+ 2364 00ec 3D00001A 		bne	.L24
+ 112:../jugada_por_pantalla.c **** 	}else if( (estado==JUEGO) & (evento==ev_tactil) & (x<=109) ){
+ 2365              		.loc 1 112 0
+ 2366 00f0 6D0052E3 		cmp	r2, #109
+ 2367 00f4 0070A0C3 		movgt	r7, #0
+ 2368 00f8 017007D2 		andle	r7, r7, #1
+ 2369 00fc 000057E3 		cmp	r7, #0
+ 2370 0100 6000001A 		bne	.L25
+ 117:../jugada_por_pantalla.c **** 	}else if( (estado==CALIBRADO) & (evento==ev_tactil) ){
+ 2371              		.loc 1 117 0
+ 2372 0104 03005CE3 		cmp	ip, #3
+ 2373 0108 0060A013 		movne	r6, #0
+ 2374 010c 01600A02 		andeq	r6, sl, #1
+ 2375 0110 000056E3 		cmp	r6, #0
+ 2376 0114 4E00001A 		bne	.L26
+ 126:../jugada_por_pantalla.c **** 	}else if( (estado==FINAL) & (evento==ev_tactil) & (120<=y) ){
+ 2377              		.loc 1 126 0
+ 2378 0118 02005CE3 		cmp	ip, #2
+ 2379 011c 00C0A013 		movne	ip, #0
+ 2380 0120 01C00A02 		andeq	ip, sl, #1
+ 2381 0124 770058E3 		cmp	r8, #119
+ 2382 0128 0030A0D3 		movle	r3, #0
+ 2383 012c 01300CC2 		andgt	r3, ip, #1
+ 2384 0130 000053E3 		cmp	r3, #0
+ 2385 0134 1D00001A 		bne	.L19
+ 136:../jugada_por_pantalla.c **** 	}else if( (estado==FINAL) & (evento==ev_tactil) & (y<=119) ){
+ 2386              		.loc 1 136 0
+ 2387 0138 770058E3 		cmp	r8, #119
+ 2388 013c 00C0A0C3 		movgt	ip, #0
+ 2389 0140 01C00CD2 		andle	ip, ip, #1
+ 2390 0144 00005CE3 		cmp	ip, #0
+ 2391 0148 DFFFFF0A 		beq	.L1
+ 138:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 2392              		.loc 1 138 0
+ 2393 014c 0300A0E1 		mov	r0, r3
+ 137:../jugada_por_pantalla.c **** 		estado=INICIAL;						// FINAL -> INICIAL
+ 2394              		.loc 1 137 0
+ 2395 0150 003085E5 		str	r3, [r5, #0]
+ 138:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 2396              		.loc 1 138 0
+ 2397 0154 FEFFFFEB 		bl	LCD_pantalla
+ 2398              	.LVL4:
+ 2399              	.L21:
+ 139:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2400              		.loc 1 139 0
+ 2401 0158 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2402 015c DAFFFFEA 		b	.L1
+ 2403              	.LVL5:
+ 2404              	.L2:
+  40:../jugada_por_pantalla.c **** 		y=((info&0x00fff000)>>12);
+ 2405              		.loc 1 40 0
+ 2406 0160 70319FE5 		ldr	r3, .L27+8
+  39:../jugada_por_pantalla.c **** 		x=info&0x00000fff;		// leemos coordenadas de la pulsacion en el tp
+ 2407              		.loc 1 39 0
+ 2408 0164 64419FE5 		ldr	r4, .L27
+ 2409 0168 012AA0E1 		mov	r2, r1, asl #20
+  40:../jugada_por_pantalla.c **** 		y=((info&0x00fff000)>>12);
+ 2410              		.loc 1 40 0
+ 2411 016c 038001E0 		and	r8, r1, r3
+  39:../jugada_por_pantalla.c **** 		x=info&0x00000fff;		// leemos coordenadas de la pulsacion en el tp
+ 2412              		.loc 1 39 0
+ 2413 0170 222AA0E1 		mov	r2, r2, lsr #20
+  40:../jugada_por_pantalla.c **** 		y=((info&0x00fff000)>>12);
+ 2414              		.loc 1 40 0
+ 2415 0174 2886A0E1 		mov	r8, r8, lsr #12
+  39:../jugada_por_pantalla.c **** 		x=info&0x00000fff;		// leemos coordenadas de la pulsacion en el tp
+ 2416              		.loc 1 39 0
+ 2417 0178 040184E8 		stmia	r4, {r2, r8}	@ phole stm
+ 2418 017c A6FFFFEA 		b	.L3
+ 2419              	.L23:
+  64:../jugada_por_pantalla.c **** 		estado=CALIBRADO;					// INICIAL -> CALIBRADO
+ 2420              		.loc 1 64 0
+ 2421 0180 0360A0E3 		mov	r6, #3
+  65:../jugada_por_pantalla.c **** 		touchpad_setCalibrar(4);			// tp_ISR calcula nuevos maximos en proximas 4 pulsaciones
+ 2422              		.loc 1 65 0
+ 2423 0184 0400A0E3 		mov	r0, #4
+ 2424              	.LVL6:
+  64:../jugada_por_pantalla.c **** 		estado=CALIBRADO;					// INICIAL -> CALIBRADO
+ 2425              		.loc 1 64 0
+ 2426 0188 006085E5 		str	r6, [r5, #0]
+  65:../jugada_por_pantalla.c **** 		touchpad_setCalibrar(4);			// tp_ISR calcula nuevos maximos en proximas 4 pulsaciones
+ 2427              		.loc 1 65 0
+ 2428 018c FEFFFFEB 		bl	touchpad_setCalibrar
+ 2429              	.LVL7:
+  66:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_CALIBRADO);	// pantalla a imprimir
+ 2430              		.loc 1 66 0
+ 2431 0190 0600A0E1 		mov	r0, r6
+ 2432 0194 FEFFFFEB 		bl	LCD_pantalla
+  67:../jugada_por_pantalla.c **** 		esquina=0;
+ 2433              		.loc 1 67 0
+ 2434 0198 0010A0E3 		mov	r1, #0
+  68:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+ 2435              		.loc 1 68 0
+ 2436 019c 0100A0E1 		mov	r0, r1
+  67:../jugada_por_pantalla.c **** 		esquina=0;
+ 2437              		.loc 1 67 0
+ 2438 01a0 081084E5 		str	r1, [r4, #8]
+  68:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+ 2439              		.loc 1 68 0
+ 2440 01a4 FEFFFFEB 		bl	LCD_esquina
+  69:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD (indica a dma que hay que iniciar transmision)
+ 2441              		.loc 1 69 0
+ 2442 01a8 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2443 01ac C6FFFFEA 		b	.L1
+ 2444              	.LVL8:
+ 2445              	.L19:
+ 128:../jugada_por_pantalla.c **** 		init_table(tablero,candidatas);		// inicializar partida
+ 2446              		.loc 1 128 0
+ 2447 01b0 24019FE5 		ldr	r0, .L27+12
+ 127:../jugada_por_pantalla.c **** 		estado=JUEGO;						// FINAL -> JUEGO
+ 2448              		.loc 1 127 0
+ 2449 01b4 0170A0E3 		mov	r7, #1
+ 128:../jugada_por_pantalla.c **** 		init_table(tablero,candidatas);		// inicializar partida
+ 2450              		.loc 1 128 0
+ 2451 01b8 401080E2 		add	r1, r0, #64
+ 2452              	.LVL9:
+ 127:../jugada_por_pantalla.c **** 		estado=JUEGO;						// FINAL -> JUEGO
+ 2453              		.loc 1 127 0
+ 2454 01bc 007085E5 		str	r7, [r5, #0]
+ 128:../jugada_por_pantalla.c **** 		init_table(tablero,candidatas);		// inicializar partida
+ 2455              		.loc 1 128 0
+ 2456 01c0 FEFFFFEB 		bl	init_table
+ 131:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_JUEGO);		// pantalla a imprimir
+ 2457              		.loc 1 131 0
+ 2458 01c4 0700A0E1 		mov	r0, r7
+ 129:../jugada_por_pantalla.c **** 		fila=0;
+ 2459              		.loc 1 129 0
+ 2460 01c8 9060C4E5 		strb	r6, [r4, #144]
+ 130:../jugada_por_pantalla.c **** 		columna=0;
+ 2461              		.loc 1 130 0
+ 2462 01cc 9160C4E5 		strb	r6, [r4, #145]
+ 131:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_JUEGO);		// pantalla a imprimir
+ 2463              		.loc 1 131 0
+ 2464 01d0 FEFFFFEB 		bl	LCD_pantalla
+ 132:../jugada_por_pantalla.c **** 		LCD_tablero(tablero);				// tablero a imprimir
+ 2465              		.loc 1 132 0
+ 2466 01d4 00019FE5 		ldr	r0, .L27+12
+ 2467 01d8 FEFFFFEB 		bl	LCD_tablero
+ 133:../jugada_por_pantalla.c **** 		LCD_movimiento(fila,columna);		// ficha gris a imprimir
+ 2468              		.loc 1 133 0
+ 2469 01dc 9000D4E5 		ldrb	r0, [r4, #144]	@ zero_extendqisi2
+ 2470 01e0 9110D4E5 		ldrb	r1, [r4, #145]	@ zero_extendqisi2
+ 2471 01e4 B6FFFFEA 		b	.L20
+ 2472              	.LVL10:
+ 2473              	.L24:
+  92:../jugada_por_pantalla.c **** 		mov_valido=movimiento_valido(tablero, fila, columna);
+ 2474              		.loc 1 92 0
+ 2475 01e8 E0609FE5 		ldr	r6, .L27
+ 2476 01ec 9120D4E5 		ldrb	r2, [r4, #145]	@ zero_extendqisi2
+ 2477 01f0 9010D4E5 		ldrb	r1, [r4, #144]	@ zero_extendqisi2
+ 2478              	.LVL11:
+ 2479 01f4 100086E2 		add	r0, r6, #16
+ 2480 01f8 FEFFFFEB 		bl	movimiento_valido
+  94:../jugada_por_pantalla.c **** 		if(mov_valido==1){					// Si es válido, ejecutamos movimiento y movimiento máquina.
+ 2481              		.loc 1 94 0
+ 2482 01fc 010050E3 		cmp	r0, #1
+  97:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,9,9);
+ 2483              		.loc 1 97 0
+ 2484 0200 0920A013 		movne	r2, #9
+  95:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,fila,columna);
+ 2485              		.loc 1 95 0
+ 2486 0204 9130D605 		ldreqb	r3, [r6, #145]	@ zero_extendqisi2
+  97:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,9,9);
+ 2487              		.loc 1 97 0
+ 2488 0208 0230A011 		movne	r3, r2
+  95:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,fila,columna);
+ 2489              		.loc 1 95 0
+ 2490 020c 10008602 		addeq	r0, r6, #16
+ 2491 0210 50108602 		addeq	r1, r6, #80
+ 2492 0214 9020D605 		ldreqb	r2, [r6, #144]	@ zero_extendqisi2
+  97:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,9,9);
+ 2493              		.loc 1 97 0
+ 2494 0218 10008612 		addne	r0, r6, #16
+ 2495 021c 50108612 		addne	r1, r6, #80
+ 2496 0220 FEFFFFEB 		bl	reversi_procesar
+  99:../jugada_por_pantalla.c **** 		if(fin==0){
+ 2497              		.loc 1 99 0
+ 2498 0224 000050E3 		cmp	r0, #0
+  97:../jugada_por_pantalla.c **** 			fin=reversi_procesar(tablero,candidatas,9,9);
+ 2499              		.loc 1 97 0
+ 2500 0228 0030A0E1 		mov	r3, r0
+  99:../jugada_por_pantalla.c **** 		if(fin==0){
+ 2501              		.loc 1 99 0
+ 2502 022c 1A00001A 		bne	.L13
+ 102:../jugada_por_pantalla.c **** 			LCD_tablero(tablero);			// tablero a imprimir
+ 2503              		.loc 1 102 0
+ 2504 0230 A4009FE5 		ldr	r0, .L27+12
+ 100:../jugada_por_pantalla.c **** 			fila=0;
+ 2505              		.loc 1 100 0
+ 2506 0234 9030C4E5 		strb	r3, [r4, #144]
+ 101:../jugada_por_pantalla.c **** 			columna=0;
+ 2507              		.loc 1 101 0
+ 2508 0238 9130C4E5 		strb	r3, [r4, #145]
+ 102:../jugada_por_pantalla.c **** 			LCD_tablero(tablero);			// tablero a imprimir
+ 2509              		.loc 1 102 0
+ 2510 023c FEFFFFEB 		bl	LCD_tablero
+ 103:../jugada_por_pantalla.c **** 			LCD_movimiento(fila,columna);	// ficha gris a imprimir
+ 2511              		.loc 1 103 0
+ 2512 0240 9000D4E5 		ldrb	r0, [r4, #144]	@ zero_extendqisi2
+ 2513 0244 9110D4E5 		ldrb	r1, [r4, #145]	@ zero_extendqisi2
+ 2514 0248 FEFFFFEB 		bl	LCD_movimiento
+ 139:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2515              		.loc 1 139 0
+ 2516 024c FEFFFFEB 		bl	LCD_Hay_cambios
+ 2517 0250 9DFFFFEA 		b	.L1
+ 2518              	.LVL12:
+ 2519              	.L26:
+ 118:../jugada_por_pantalla.c **** 		esquina++;							// CALIBRADO
+ 2520              		.loc 1 118 0
+ 2521 0254 08E094E5 		ldr	lr, [r4, #8]
+ 2522 0258 01C08EE2 		add	ip, lr, #1
+ 119:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+ 2523              		.loc 1 119 0
+ 2524 025c 0C00A0E1 		mov	r0, ip
+ 118:../jugada_por_pantalla.c **** 		esquina++;							// CALIBRADO
+ 2525              		.loc 1 118 0
+ 2526 0260 08C084E5 		str	ip, [r4, #8]
+ 119:../jugada_por_pantalla.c **** 		LCD_esquina(esquina);				// esquina a imprimir
+ 2527              		.loc 1 119 0
+ 2528 0264 FEFFFFEB 		bl	LCD_esquina
+ 2529              	.LVL13:
+ 120:../jugada_por_pantalla.c **** 		if(esquina==4){
+ 2530              		.loc 1 120 0
+ 2531 0268 080094E5 		ldr	r0, [r4, #8]
+ 2532 026c 040050E3 		cmp	r0, #4
+ 2533 0270 B8FFFF1A 		bne	.L21
+ 122:../jugada_por_pantalla.c **** 			LCD_pantalla(PANTALLA_INICIO);	// pantalla a imprimir
+ 2534              		.loc 1 122 0
+ 2535 0274 0700A0E1 		mov	r0, r7
+ 121:../jugada_por_pantalla.c **** 			estado=INICIAL;					// CALIBRADO -> INICIAL
+ 2536              		.loc 1 121 0
+ 2537 0278 007085E5 		str	r7, [r5, #0]
+ 122:../jugada_por_pantalla.c **** 			LCD_pantalla(PANTALLA_INICIO);	// pantalla a imprimir
+ 2538              		.loc 1 122 0
+ 2539 027c FEFFFFEB 		bl	LCD_pantalla
+ 139:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2540              		.loc 1 139 0
+ 2541 0280 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2542 0284 90FFFFEA 		b	.L1
+ 2543              	.LVL14:
+ 2544              	.L25:
+ 114:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 2545              		.loc 1 114 0
+ 2546 0288 0300A0E1 		mov	r0, r3
+ 113:../jugada_por_pantalla.c **** 		estado=INICIAL;						// JUEGO -> INICIAL
+ 2547              		.loc 1 113 0
+ 2548 028c 003085E5 		str	r3, [r5, #0]
+ 114:../jugada_por_pantalla.c **** 		LCD_pantalla(PANTALLA_INICIO);		// pantalla a imprimir
+ 2549              		.loc 1 114 0
+ 2550 0290 FEFFFFEB 		bl	LCD_pantalla
+ 2551              	.LVL15:
+ 115:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2552              		.loc 1 115 0
+ 2553 0294 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2554 0298 8BFFFFEA 		b	.L1
+ 2555              	.L13:
+ 106:../jugada_por_pantalla.c **** 			contar(tablero,&blancas,&negras);
+ 2556              		.loc 1 106 0
+ 2557 029c 38009FE5 		ldr	r0, .L27+12
+ 105:../jugada_por_pantalla.c **** 			estado=FINAL;					// JUEGO -> FINAL
+ 2558              		.loc 1 105 0
+ 2559 02a0 0260A0E3 		mov	r6, #2
+ 106:../jugada_por_pantalla.c **** 			contar(tablero,&blancas,&negras);
+ 2560              		.loc 1 106 0
+ 2561 02a4 882080E2 		add	r2, r0, #136
+ 2562 02a8 841080E2 		add	r1, r0, #132
+ 105:../jugada_por_pantalla.c **** 			estado=FINAL;					// JUEGO -> FINAL
+ 2563              		.loc 1 105 0
+ 2564 02ac 006085E5 		str	r6, [r5, #0]
+ 106:../jugada_por_pantalla.c **** 			contar(tablero,&blancas,&negras);
+ 2565              		.loc 1 106 0
+ 2566 02b0 FEFFFFEB 		bl	contar
+ 107:../jugada_por_pantalla.c **** 			LCD_fichas(blancas,negras);		// resultado a imprimir
+ 2567              		.loc 1 107 0
+ 2568 02b4 940084E2 		add	r0, r4, #148
+ 2569 02b8 030090E8 		ldmia	r0, {r0, r1}	@ phole ldm
+ 2570 02bc FEFFFFEB 		bl	LCD_fichas
+ 108:../jugada_por_pantalla.c **** 			LCD_pantalla(PANTALLA_FINAL);	// pantalla a imprimir
+ 2571              		.loc 1 108 0
+ 2572 02c0 0600A0E1 		mov	r0, r6
+ 2573 02c4 FEFFFFEB 		bl	LCD_pantalla
+ 139:../jugada_por_pantalla.c **** 		LCD_Hay_cambios();					// CAMBIOS_LCD
+ 2574              		.loc 1 139 0
+ 2575 02c8 FEFFFFEB 		bl	LCD_Hay_cambios
+ 2576 02cc 7EFFFFEA 		b	.L1
+ 2577              	.L28:
+ 2578              		.align	2
+ 2579              	.L27:
+ 2580 02d0 00000000 		.word	.LANCHOR0
+ 2581 02d4 00000000 		.word	.LANCHOR1
+ 2582 02d8 00F0FF00 		.word	16773120
+ 2583 02dc 10000000 		.word	.LANCHOR0+16
+ 2584              		.cfi_endproc
+ 2585              	.LFE0:
+ 2587              		.data
+ 2588              		.align	2
+ 2589              		.set	.LANCHOR1,. + 0
+ 2592              	estado.4098:
+ 2593 0000 03000000 		.word	3
+ 2594              		.bss
+ 2595              		.align	3
+ 2596              		.set	.LANCHOR0,. + 0
+ 2599              	x.4102:
+ 2600 0000 00000000 		.space	4
+ 2603              	y.4103:
+ 2604 0004 00000000 		.space	4
+ 2607              	esquina.4107:
+ 2608 0008 00000000 		.space	4
+ 2609 000c 00000000 		.space	4
+ 2612              	tablero.4109:
+ 2613 0010 00000000 		.space	64
+ 2613      00000000 
+ 2613      00000000 
+ 2613      00000000 
+ 2613      00000000 
+ 2616              	candidatas.4108:
+ 2617 0050 00000000 		.space	64
+ 2617      00000000 
+ 2617      00000000 
+ 2617      00000000 
+ 2617      00000000 
+ 2620              	fila.4099:
+ 2621 0090 00       		.space	1
+ 2624              	columna.4100:
+ 2625 0091 00       		.space	1
+ 2626 0092 0000     		.space	2
+ 2629              	blancas.4105:
+ 2630 0094 00000000 		.space	4
+ 2633              	negras.4106:
+ 2634 0098 00000000 		.space	4
+ 2635 009c 00000000 		.text
+ 2636              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 jugada_por_pantalla.c
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2255   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2258   .text:00000000 jugada_x_pantalla
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2580   .text:000002d0 $d
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2588   .data:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2592   .data:00000000 estado.4098
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2595   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2599   .bss:00000000 x.4102
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2603   .bss:00000004 y.4103
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2607   .bss:00000008 esquina.4107
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2612   .bss:00000010 tablero.4109
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2616   .bss:00000050 candidatas.4108
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2620   .bss:00000090 fila.4099
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2624   .bss:00000091 columna.4100
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2629   .bss:00000094 blancas.4105
+C:\Users\sergi\AppData\Local\Temp\ccoWaISa.s:2633   .bss:00000098 negras.4106
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+LCD_movimiento
+LCD_Hay_cambios
+LCD_pantalla
+touchpad_setCalibrar
+LCD_esquina
+init_table
+LCD_tablero
+movimiento_valido
+reversi_procesar
+contar
+LCD_fichas

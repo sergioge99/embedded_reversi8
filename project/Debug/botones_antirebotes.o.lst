@@ -1,0 +1,248 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"botones_antirebotes.c"
+  21              	.Ltext0:
+  22              		.file 1 "../botones_antirebotes.c"
+ 1233              		.align	2
+ 1234              		.global	antirrebotes_ev_boton
+ 1236              	antirrebotes_ev_boton:
+ 1237              	.LFB0:
+   1:../botones_antirebotes.c **** /*********************************************************************************************
+   2:../botones_antirebotes.c **** * Fichero:	botones_antirebotes.c
+   3:../botones_antirebotes.c **** * Autor1:	Sergio García Esteban	755844
+   4:../botones_antirebotes.c **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../botones_antirebotes.c **** * Descrip:	Autómata filtro de interrupciones de los botones
+   6:../botones_antirebotes.c **** * Version:
+   7:../botones_antirebotes.c **** *********************************************************************************************/
+   8:../botones_antirebotes.c **** 
+   9:../botones_antirebotes.c **** /*--- ficheros de cabecera ---*/
+  10:../botones_antirebotes.c **** #include "botones_antirebotes.h"
+  11:../botones_antirebotes.c **** #include "button.h"
+  12:../botones_antirebotes.c **** #include "cola_depuracion.h"
+  13:../botones_antirebotes.c **** 
+  14:../botones_antirebotes.c **** /*--- valores y constantes ---*/
+  15:../botones_antirebotes.c **** enum estado{ BOTON_PREPARADO, RETARDO_PULSAR, ESPERANDO_SOLTAR, RETARDO_SOLTAR };
+  16:../botones_antirebotes.c **** enum{ MS_30 = 2, MS_333 = 21, MS_180 = 12 };	//VALORES PARA TRANSFORMAR DE TIMER0_TICK A MS
+  17:../botones_antirebotes.c **** enum{ TRP = 12, TRD = 2 };	//VALORES DE LOS RETARDOS EN TIMER0_TICKS
+  18:../botones_antirebotes.c **** 
+  19:../botones_antirebotes.c **** /*--- variables globales del módulo ---*/
+  20:../botones_antirebotes.c **** static int estado;
+  21:../botones_antirebotes.c **** static int counter;
+  22:../botones_antirebotes.c **** 
+  23:../botones_antirebotes.c **** /*--- codigo de funciones ---*/
+  24:../botones_antirebotes.c **** 
+  25:../botones_antirebotes.c **** /*********************************************************************************************
+  26:../botones_antirebotes.c **** * Funcion 1 del autómata. Transicion causada por ev_boton.
+  27:../botones_antirebotes.c **** *********************************************************************************************/
+  28:../botones_antirebotes.c **** void antirrebotes_ev_boton()
+  29:../botones_antirebotes.c **** {
+ 1238              		.loc 1 29 0
+ 1239              		.cfi_startproc
+ 1240              		@ Function supports interworking.
+ 1241              		@ args = 0, pretend = 0, frame = 0
+ 1242              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1243              		@ link register save eliminated.
+  30:../botones_antirebotes.c **** 	estado=RETARDO_PULSAR; //Han pulsado boton, pasamos a estado de espera de retardo inicial
+ 1244              		.loc 1 30 0
+ 1245 0000 0C309FE5 		ldr	r3, .L2
+ 1246 0004 0100A0E3 		mov	r0, #1
+  31:../botones_antirebotes.c **** 	counter=0;
+ 1247              		.loc 1 31 0
+ 1248 0008 0020A0E3 		mov	r2, #0
+  30:../botones_antirebotes.c **** 	estado=RETARDO_PULSAR; //Han pulsado boton, pasamos a estado de espera de retardo inicial
+ 1249              		.loc 1 30 0
+ 1250 000c 050083E8 		stmia	r3, {r0, r2}	@ phole stm
+  32:../botones_antirebotes.c **** }
+ 1251              		.loc 1 32 0
+ 1252 0010 1EFF2FE1 		bx	lr
+ 1253              	.L3:
+ 1254              		.align	2
+ 1255              	.L2:
+ 1256 0014 00000000 		.word	.LANCHOR0
+ 1257              		.cfi_endproc
+ 1258              	.LFE0:
+ 1260              		.align	2
+ 1261              		.global	antirrebotes_ev_tick
+ 1263              	antirrebotes_ev_tick:
+ 1264              	.LFB1:
+  33:../botones_antirebotes.c **** 
+  34:../botones_antirebotes.c **** /*********************************************************************************************
+  35:../botones_antirebotes.c **** * Funcion 2 del autómata. Transicion causada por ev_tick. Gestiona la reactivación
+  36:../botones_antirebotes.c **** * de las interrupciones de los botones.
+  37:../botones_antirebotes.c **** *********************************************************************************************/
+  38:../botones_antirebotes.c **** void antirrebotes_ev_tick()
+  39:../botones_antirebotes.c **** {
+ 1265              		.loc 1 39 0
+ 1266              		.cfi_startproc
+ 1267              		@ Function supports interworking.
+ 1268              		@ args = 0, pretend = 0, frame = 0
+ 1269              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1270 0018 0DC0A0E1 		mov	ip, sp
+ 1271              	.LCFI0:
+ 1272              		.cfi_def_cfa_register 12
+ 1273 001c 18D82DE9 		stmfd	sp!, {r3, r4, fp, ip, lr, pc}
+  40:../botones_antirebotes.c **** 	if(estado!=BOTON_PREPARADO){
+ 1274              		.loc 1 40 0
+ 1275 0020 BC409FE5 		ldr	r4, .L13
+ 1276              		.cfi_offset 14, -8
+ 1277              		.cfi_offset 13, -12
+ 1278              		.cfi_offset 11, -16
+ 1279              		.cfi_offset 4, -20
+ 1280              		.cfi_offset 3, -24
+ 1281 0024 003094E5 		ldr	r3, [r4, #0]
+ 1282 0028 000053E3 		cmp	r3, #0
+  39:../botones_antirebotes.c **** {
+ 1283              		.loc 1 39 0
+ 1284 002c 04B04CE2 		sub	fp, ip, #4
+ 1285              	.LCFI1:
+ 1286              		.cfi_def_cfa 11, 4
+ 1287              		.loc 1 40 0
+ 1288 0030 0A00000A 		beq	.L4
+  41:../botones_antirebotes.c **** 		counter++;
+ 1289              		.loc 1 41 0
+ 1290 0034 042094E5 		ldr	r2, [r4, #4]
+  42:../botones_antirebotes.c **** 		if(estado==RETARDO_PULSAR && counter==TRP){//espera retardo inical
+ 1291              		.loc 1 42 0
+ 1292 0038 010053E3 		cmp	r3, #1
+  41:../botones_antirebotes.c **** 		counter++;
+ 1293              		.loc 1 41 0
+ 1294 003c 012082E2 		add	r2, r2, #1
+ 1295 0040 042084E5 		str	r2, [r4, #4]
+ 1296              		.loc 1 42 0
+ 1297 0044 0800000A 		beq	.L10
+  43:../botones_antirebotes.c **** 			estado=ESPERANDO_SOLTAR;
+  44:../botones_antirebotes.c **** 		}else if(estado==ESPERANDO_SOLTAR && counter%MS_30){
+ 1298              		.loc 1 44 0
+ 1299 0048 020053E3 		cmp	r3, #2
+ 1300 004c 0A00000A 		beq	.L11
+  45:../botones_antirebotes.c **** 			enum estado_button b_actual = button_estado();//comprueba estado actual de los botones
+  46:../botones_antirebotes.c **** 			if(b_actual==button_none){//si no esta pulsado ejecutamos transicion de estado
+  47:../botones_antirebotes.c **** 				estado=RETARDO_SOLTAR;
+  48:../botones_antirebotes.c **** 				counter=0;
+  49:../botones_antirebotes.c **** 			}
+  50:../botones_antirebotes.c **** 			else{	//OPCIONAL 1:   si mantiene pulsado se lo comunicamos al gestor de eventos
+  51:../botones_antirebotes.c **** 			  	if( (counter>=(MS_333) )&&( (counter-MS_333)%MS_180==0 )){
+  52:../botones_antirebotes.c **** 			  		push_debug(ev_mantener,b_actual);
+  53:../botones_antirebotes.c **** 			 	}
+  54:../botones_antirebotes.c **** 			}
+  55:../botones_antirebotes.c **** 		}else if(estado==RETARDO_SOLTAR && counter==TRD){//espera retardo final
+ 1301              		.loc 1 55 0
+ 1302 0050 030053E3 		cmp	r3, #3
+ 1303 0054 0100001A 		bne	.L4
+ 1304              		.loc 1 55 0 is_stmt 0 discriminator 1
+ 1305 0058 020052E3 		cmp	r2, #2
+ 1306 005c 1C00000A 		beq	.L12
+ 1307              	.L4:
+  56:../botones_antirebotes.c **** 			estado=BOTON_PREPARADO;
+  57:../botones_antirebotes.c **** 			button_resetear();//activamos interrupciones
+  58:../botones_antirebotes.c **** 		}
+  59:../botones_antirebotes.c **** 	}
+  60:../botones_antirebotes.c **** }
+ 1308              		.loc 1 60 0 is_stmt 1
+ 1309 0060 14D04BE2 		sub	sp, fp, #20
+ 1310 0064 18689DE8 		ldmfd	sp, {r3, r4, fp, sp, lr}
+ 1311 0068 1EFF2FE1 		bx	lr
+ 1312              	.L10:
+  42:../botones_antirebotes.c **** 		if(estado==RETARDO_PULSAR && counter==TRP){//espera retardo inical
+ 1313              		.loc 1 42 0 discriminator 1
+ 1314 006c 0C0052E3 		cmp	r2, #12
+  43:../botones_antirebotes.c **** 			estado=ESPERANDO_SOLTAR;
+ 1315              		.loc 1 43 0 discriminator 1
+ 1316 0070 0230A003 		moveq	r3, #2
+ 1317 0074 00308405 		streq	r3, [r4, #0]
+ 1318 0078 F8FFFFEA 		b	.L4
+ 1319              	.L11:
+  44:../botones_antirebotes.c **** 		}else if(estado==ESPERANDO_SOLTAR && counter%MS_30){
+ 1320              		.loc 1 44 0 discriminator 1
+ 1321 007c 010012E3 		tst	r2, #1
+ 1322 0080 F6FFFF0A 		beq	.L4
+ 1323              	.LBB2:
+  45:../botones_antirebotes.c **** 			enum estado_button b_actual = button_estado();//comprueba estado actual de los botones
+ 1324              		.loc 1 45 0
+ 1325 0084 FEFFFFEB 		bl	button_estado
+ 1326              	.LVL0:
+  46:../botones_antirebotes.c **** 			if(b_actual==button_none){//si no esta pulsado ejecutamos transicion de estado
+ 1327              		.loc 1 46 0
+ 1328 0088 001050E2 		subs	r1, r0, #0
+  47:../botones_antirebotes.c **** 				estado=RETARDO_SOLTAR;
+ 1329              		.loc 1 47 0
+ 1330 008c 0330A003 		moveq	r3, #3
+ 1331 0090 00308405 		streq	r3, [r4, #0]
+  48:../botones_antirebotes.c **** 				counter=0;
+ 1332              		.loc 1 48 0
+ 1333 0094 04108405 		streq	r1, [r4, #4]
+  46:../botones_antirebotes.c **** 			if(b_actual==button_none){//si no esta pulsado ejecutamos transicion de estado
+ 1334              		.loc 1 46 0
+ 1335 0098 F0FFFF0A 		beq	.L4
+  51:../botones_antirebotes.c **** 			  	if( (counter>=(MS_333) )&&( (counter-MS_333)%MS_180==0 )){
+ 1336              		.loc 1 51 0
+ 1337 009c 043094E5 		ldr	r3, [r4, #4]
+ 1338 00a0 140053E3 		cmp	r3, #20
+ 1339 00a4 EDFFFFDA 		ble	.L4
+  51:../botones_antirebotes.c **** 			  	if( (counter>=(MS_333) )&&( (counter-MS_333)%MS_180==0 )){
+ 1340              		.loc 1 51 0 is_stmt 0 discriminator 1
+ 1341 00a8 15C043E2 		sub	ip, r3, #21
+ 1342 00ac 34309FE5 		ldr	r3, .L13+4
+ 1343 00b0 9C23C3E0 		smull	r2, r3, ip, r3
+ 1344 00b4 CC2FA0E1 		mov	r2, ip, asr #31
+ 1345 00b8 C3E062E0 		rsb	lr, r2, r3, asr #1
+ 1346 00bc 8E008EE0 		add	r0, lr, lr, asl #1
+ 1347              	.LVL1:
+ 1348 00c0 00015CE1 		cmp	ip, r0, asl #2
+ 1349 00c4 E5FFFF1A 		bne	.L4
+  52:../botones_antirebotes.c **** 			  		push_debug(ev_mantener,b_actual);
+ 1350              		.loc 1 52 0 is_stmt 1
+ 1351 00c8 0300A0E3 		mov	r0, #3
+ 1352 00cc FEFFFFEB 		bl	push_debug
+ 1353 00d0 E2FFFFEA 		b	.L4
+ 1354              	.L12:
+ 1355              	.LBE2:
+  56:../botones_antirebotes.c **** 			estado=BOTON_PREPARADO;
+ 1356              		.loc 1 56 0
+ 1357 00d4 0010A0E3 		mov	r1, #0
+ 1358 00d8 001084E5 		str	r1, [r4, #0]
+  57:../botones_antirebotes.c **** 			button_resetear();//activamos interrupciones
+ 1359              		.loc 1 57 0
+ 1360 00dc FEFFFFEB 		bl	button_resetear
+ 1361 00e0 DEFFFFEA 		b	.L4
+ 1362              	.L14:
+ 1363              		.align	2
+ 1364              	.L13:
+ 1365 00e4 00000000 		.word	.LANCHOR0
+ 1366 00e8 ABAAAA2A 		.word	715827883
+ 1367              		.cfi_endproc
+ 1368              	.LFE1:
+ 1370              		.bss
+ 1371              		.align	2
+ 1372              		.set	.LANCHOR0,. + 0
+ 1375              	estado:
+ 1376 0000 00000000 		.space	4
+ 1379              	counter:
+ 1380 0004 00000000 		.space	4
+ 1381              		.text
+ 1382              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 botones_antirebotes.c
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1233   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1236   .text:00000000 antirrebotes_ev_boton
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1256   .text:00000014 $d
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1260   .text:00000018 $a
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1263   .text:00000018 antirrebotes_ev_tick
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1365   .text:000000e4 $d
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1371   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1375   .bss:00000000 estado
+C:\Users\sergi\AppData\Local\Temp\ccsBTYio.s:1379   .bss:00000004 counter
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+button_estado
+push_debug
+button_resetear

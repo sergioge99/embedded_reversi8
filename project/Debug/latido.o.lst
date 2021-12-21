@@ -1,0 +1,117 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"latido.c"
+  21              	.Ltext0:
+  22              		.file 1 "../latido.c"
+ 981              		.align	2
+ 982              		.global	Latido_ev_new_tick
+ 984              	Latido_ev_new_tick:
+ 985              	.LFB0:
+   1:../latido.c   **** /*********************************************************************************************
+   2:../latido.c   **** * Fichero:	latido.c
+   3:../latido.c   **** * Autor1:	Sergio García Esteban	755844
+   4:../latido.c   **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../latido.c   **** * Descrip:	Latido de funcionamiento del juego
+   6:../latido.c   **** * Version:
+   7:../latido.c   **** *********************************************************************************************/
+   8:../latido.c   **** 
+   9:../latido.c   **** /*--- ficheros de cabecera ---*/
+  10:../latido.c   **** #include "latido.h"
+  11:../latido.c   **** #include "led.h"
+  12:../latido.c   **** 
+  13:../latido.c   **** /*--- codigo de funciones ---*/
+  14:../latido.c   **** 
+  15:../latido.c   **** /*
+  16:../latido.c   ****  * Cuenta el tiempo y decide si enciende/apaga el led
+  17:../latido.c   ****  */
+  18:../latido.c   **** void Latido_ev_new_tick(){
+ 986              		.loc 1 18 0
+ 987              		.cfi_startproc
+ 988              		@ Function supports interworking.
+ 989              		@ args = 0, pretend = 0, frame = 0
+ 990              		@ frame_needed = 1, uses_anonymous_args = 0
+ 991 0000 0DC0A0E1 		mov	ip, sp
+ 992              	.LCFI0:
+ 993              		.cfi_def_cfa_register 12
+ 994 0004 18D82DE9 		stmfd	sp!, {r3, r4, fp, ip, lr, pc}
+  19:../latido.c   **** 	static int ev_new_tick=0;
+  20:../latido.c   **** 	ev_new_tick++;
+ 995              		.loc 1 20 0
+ 996 0008 3C409FE5 		ldr	r4, .L6
+ 997              		.cfi_offset 14, -8
+ 998              		.cfi_offset 13, -12
+ 999              		.cfi_offset 11, -16
+ 1000              		.cfi_offset 4, -20
+ 1001              		.cfi_offset 3, -24
+ 1002 000c 003094E5 		ldr	r3, [r4, #0]
+ 1003 0010 013083E2 		add	r3, r3, #1
+  21:../latido.c   **** 	if(ev_new_tick==8){			// primeros 8 ticks encendido
+ 1004              		.loc 1 21 0
+ 1005 0014 080053E3 		cmp	r3, #8
+  18:../latido.c   **** void Latido_ev_new_tick(){
+ 1006              		.loc 1 18 0
+ 1007 0018 04B04CE2 		sub	fp, ip, #4
+ 1008              	.LCFI1:
+ 1009              		.cfi_def_cfa 11, 4
+  20:../latido.c   **** 	ev_new_tick++;
+ 1010              		.loc 1 20 0
+ 1011 001c 003084E5 		str	r3, [r4, #0]
+ 1012              		.loc 1 21 0
+ 1013 0020 0700000A 		beq	.L5
+  22:../latido.c   **** 		led1_off();
+  23:../latido.c   **** 	}else if(ev_new_tick>=15){	// ultimos 7 ticks apagado
+ 1014              		.loc 1 23 0
+ 1015 0024 0E0053E3 		cmp	r3, #14
+ 1016 0028 020000DA 		ble	.L1
+  24:../latido.c   **** 		led1_on();
+ 1017              		.loc 1 24 0
+ 1018 002c FEFFFFEB 		bl	led1_on
+  25:../latido.c   **** 		ev_new_tick=0;
+ 1019              		.loc 1 25 0
+ 1020 0030 0000A0E3 		mov	r0, #0
+ 1021 0034 000084E5 		str	r0, [r4, #0]
+ 1022              	.L1:
+  26:../latido.c   **** 	}
+  27:../latido.c   **** }
+ 1023              		.loc 1 27 0
+ 1024 0038 14D04BE2 		sub	sp, fp, #20
+ 1025 003c 18689DE8 		ldmfd	sp, {r3, r4, fp, sp, lr}
+ 1026 0040 1EFF2FE1 		bx	lr
+ 1027              	.L5:
+  22:../latido.c   **** 		led1_off();
+ 1028              		.loc 1 22 0
+ 1029 0044 FEFFFFEB 		bl	led1_off
+ 1030 0048 FAFFFFEA 		b	.L1
+ 1031              	.L7:
+ 1032              		.align	2
+ 1033              	.L6:
+ 1034 004c 00000000 		.word	.LANCHOR0
+ 1035              		.cfi_endproc
+ 1036              	.LFE0:
+ 1038              		.bss
+ 1039              		.align	2
+ 1040              		.set	.LANCHOR0,. + 0
+ 1043              	ev_new_tick.3935:
+ 1044 0000 00000000 		.space	4
+ 1045              		.text
+ 1046              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 latido.c
+C:\Users\sergi\AppData\Local\Temp\cc20xCRB.s:981    .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\cc20xCRB.s:984    .text:00000000 Latido_ev_new_tick
+C:\Users\sergi\AppData\Local\Temp\cc20xCRB.s:1034   .text:0000004c $d
+C:\Users\sergi\AppData\Local\Temp\cc20xCRB.s:1039   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\cc20xCRB.s:1043   .bss:00000000 ev_new_tick.3935
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+led1_on
+led1_off

@@ -1,0 +1,222 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"main.c"
+  21              	.Ltext0:
+  22              		.file 1 "../main.c"
+ 2426              		.align	2
+ 2427              		.global	modo_usuario
+ 2429              	modo_usuario:
+ 2430              	.LFB0:
+   1:../main.c     **** /*********************************************************************************************
+   2:../main.c     **** * Fichero:		main.c
+   3:../main.c     **** * Autor1:	Sergio García Esteban	755844
+   4:../main.c     **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../main.c     **** * Descrip:		MAIN Proyecto reversi
+   6:../main.c     **** * Version:
+   7:../main.c     **** *********************************************************************************************/
+   8:../main.c     **** 
+   9:../main.c     **** /*--- ficheros de cabecera ---*/
+  10:../main.c     **** #include "8led.h"
+  11:../main.c     **** #include "led.h"
+  12:../main.c     **** #include "button.h"
+  13:../main.c     **** #include "cola_depuracion.h"
+  14:../main.c     **** #include "timer2.h"
+  15:../main.c     **** #include "timer.h"
+  16:../main.c     **** #include "exception_lib.h"
+  17:../main.c     **** #include "44blib.h"
+  18:../main.c     **** #include "44b.h"
+  19:../main.c     **** #include "lcd.h"
+  20:../main.c     **** #include "tp.h"
+  21:../main.c     **** 
+  22:../main.c     **** #include "reversi_main.h"
+  23:../main.c     **** #include "pruebas_patron_volteo.h"
+  24:../main.c     **** #include "prueba_timer2.h"
+  25:../main.c     **** 
+  26:../main.c     **** 
+  27:../main.c     **** /*--- codigo de funciones ---*/
+  28:../main.c     **** 
+  29:../main.c     **** /*
+  30:../main.c     ****  * Cambia a modo usuario
+  31:../main.c     ****  */
+  32:../main.c     **** void modo_usuario(){
+ 2431              		.loc 1 32 0
+ 2432              		.cfi_startproc
+ 2433              		@ Function supports interworking.
+ 2434              		@ args = 0, pretend = 0, frame = 0
+ 2435              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2436              		@ link register save eliminated.
+  33:../main.c     **** 	__asm__ volatile("mrs r0, cpsr");		// Copiamos el cpsr al spsr
+ 2437              		.loc 1 33 0
+ 2438              	@ 33 "../main.c" 1
+ 2439 0000 00000FE1 		mrs r0, cpsr
+ 2440              	@ 0 "" 2
+  34:../main.c     **** 	__asm__ volatile("msr spsr, r0");		// Reasignamos módulo C del cpsr, asignamos
+ 2441              		.loc 1 34 0
+ 2442              	@ 34 "../main.c" 1
+ 2443 0004 00F069E1 		msr spsr, r0
+ 2444              	@ 0 "" 2
+  35:../main.c     **** 	__asm__ volatile("msr cpsr_c, 0x10");	// a bits de modo el modo usuario.
+ 2445              		.loc 1 35 0
+ 2446              	@ 35 "../main.c" 1
+ 2447 0008 10F021E3 		msr cpsr_c, 0x10
+ 2448              	@ 0 "" 2
+  36:../main.c     **** }
+ 2449              		.loc 1 36 0
+ 2450 000c 1EFF2FE1 		bx	lr
+ 2451              		.cfi_endproc
+ 2452              	.LFE0:
+ 2454              		.align	2
+ 2455              		.global	Main
+ 2457              	Main:
+ 2458              	.LFB1:
+  37:../main.c     **** 
+  38:../main.c     **** /*
+  39:../main.c     ****  * Inicializa sistema y perifericos, y lanza el juego.
+  40:../main.c     ****  */
+  41:../main.c     **** void Main(void)
+  42:../main.c     **** {
+ 2459              		.loc 1 42 0
+ 2460              		.cfi_startproc
+ 2461              		@ Function supports interworking.
+ 2462              		@ args = 0, pretend = 0, frame = 0
+ 2463              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2464 0010 0DC0A0E1 		mov	ip, sp
+ 2465              	.LCFI0:
+ 2466              		.cfi_def_cfa_register 12
+ 2467 0014 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 2468 0018 04B04CE2 		sub	fp, ip, #4
+ 2469              		.cfi_offset 14, -8
+ 2470              		.cfi_offset 13, -12
+ 2471              		.cfi_offset 11, -16
+ 2472              	.LCFI1:
+ 2473              		.cfi_def_cfa 11, 4
+  43:../main.c     **** 	/* --- Inicialización del sistema --- */
+  44:../main.c     **** 	sys_init();	// (placa, interrupciones y puertos)
+ 2474              		.loc 1 44 0
+ 2475 001c FEFFFFEB 		bl	sys_init
+  45:../main.c     **** 
+  46:../main.c     **** 	/* --- Inicialización de la cola de eventos --- */
+  47:../main.c     **** 	cola_ini();
+ 2476              		.loc 1 47 0
+ 2477 0020 FEFFFFEB 		bl	cola_ini
+  48:../main.c     **** 
+  49:../main.c     **** 	/* --- Configuracion de ISR de Excepciones --- */
+  50:../main.c     **** 	exception_init();
+ 2478              		.loc 1 50 0
+ 2479 0024 FEFFFFEB 		bl	exception_init
+  51:../main.c     **** 
+  52:../main.c     **** 	/* --- Inicialización de los dispositivos --- */
+  53:../main.c     **** 	button_iniciar();
+ 2480              		.loc 1 53 0
+ 2481 0028 FEFFFFEB 		bl	button_iniciar
+  54:../main.c     **** 	D8Led_init();
+ 2482              		.loc 1 54 0
+ 2483 002c FEFFFFEB 		bl	D8Led_init
+  55:../main.c     **** 	timer2_inicializar();
+ 2484              		.loc 1 55 0
+ 2485 0030 FEFFFFEB 		bl	timer2_inicializar
+  56:../main.c     **** 	Lcd_Init();
+ 2486              		.loc 1 56 0
+ 2487 0034 FEFFFFEB 		bl	Lcd_Init
+  57:../main.c     **** 	touchpad_init();
+ 2488              		.loc 1 57 0
+ 2489 0038 FEFFFFEB 		bl	touchpad_init
+  58:../main.c     **** 
+  59:../main.c     **** 	/* --- Iniciamos los timers --- */
+  60:../main.c     **** 	timer_init();
+ 2490              		.loc 1 60 0
+ 2491 003c FEFFFFEB 		bl	timer_init
+  61:../main.c     **** 	timer2_empezar();
+ 2492              		.loc 1 61 0
+ 2493 0040 FEFFFFEB 		bl	timer2_empezar
+ 2494              	.LBB4:
+ 2495              	.LBB5:
+  33:../main.c     **** 	__asm__ volatile("mrs r0, cpsr");		// Copiamos el cpsr al spsr
+ 2496              		.loc 1 33 0
+ 2497              	@ 33 "../main.c" 1
+ 2498 0044 00000FE1 		mrs r0, cpsr
+ 2499              	@ 0 "" 2
+  34:../main.c     **** 	__asm__ volatile("msr spsr, r0");		// Reasignamos módulo C del cpsr, asignamos
+ 2500              		.loc 1 34 0
+ 2501              	@ 34 "../main.c" 1
+ 2502 0048 00F069E1 		msr spsr, r0
+ 2503              	@ 0 "" 2
+  35:../main.c     **** 	__asm__ volatile("msr cpsr_c, 0x10");	// a bits de modo el modo usuario.
+ 2504              		.loc 1 35 0
+ 2505              	@ 35 "../main.c" 1
+ 2506 004c 10F021E3 		msr cpsr_c, 0x10
+ 2507              	@ 0 "" 2
+ 2508              	.LBE5:
+ 2509              	.LBE4:
+  62:../main.c     **** 
+  63:../main.c     **** 
+  64:../main.c     **** 	//////////////////////////////////////////////////////////////////
+  65:../main.c     **** 	//	Los siguientes comentarios contienen codigo descomentable.	//
+  66:../main.c     **** 	//////////////////////////////////////////////////////////////////
+  67:../main.c     **** 	/* --- Debug timer2 --- */
+  68:../main.c     **** 	//probar_timer2();					//si falla, bucle infinito
+  69:../main.c     **** 
+  70:../main.c     **** 	/* --- Debug volteo --- */
+  71:../main.c     **** 	//pruebas_patron_volteo();			//si falla, bucle infinito
+  72:../main.c     **** 	//pruebas_tiempo_patron_volteo();	//poner brkpoint para ver tiempos
+  73:../main.c     **** 
+  74:../main.c     **** 
+  75:../main.c     **** 	/* --- Generador excepciones --- */
+  76:../main.c     **** 	//asm volatile("SWI #0");				//SWI 1
+  77:../main.c     **** 
+  78:../main.c     **** 	//unsigned int x=1;
+  79:../main.c     **** 	//unsigned int y=0;						//Data Abort 2
+  80:../main.c     **** 	//asm volatile("ldr r0, [%1,%2]" :"=r"(x)  :"r"(x) ,"r"(y));
+  81:../main.c     **** 
+  82:../main.c     **** 	//asm volatile(".word 0xe7f000f0\n"); 	//UND 3
+  83:../main.c     **** 
+  84:../main.c     **** 	//////////////////////////////////////////////////////////////////////////
+  85:../main.c     **** 
+  86:../main.c     **** 
+  87:../main.c     **** 
+  88:../main.c     **** 
+  89:../main.c     **** 	/* --- Modo usuario --- */
+  90:../main.c     **** 	modo_usuario();
+  91:../main.c     **** 	/* --- Juego --- */
+  92:../main.c     **** 	reversi_main();
+ 2510              		.loc 1 92 0
+ 2511 0050 FEFFFFEB 		bl	reversi_main
+  93:../main.c     **** 
+  94:../main.c     **** 
+  95:../main.c     **** 
+  96:../main.c     **** 
+  97:../main.c     **** }
+ 2512              		.loc 1 97 0
+ 2513 0054 0CD04BE2 		sub	sp, fp, #12
+ 2514 0058 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2515 005c 1EFF2FE1 		bx	lr
+ 2516              		.cfi_endproc
+ 2517              	.LFE1:
+ 2519              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+C:\Users\sergi\AppData\Local\Temp\cc5DGNPh.s:2426   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\cc5DGNPh.s:2429   .text:00000000 modo_usuario
+C:\Users\sergi\AppData\Local\Temp\cc5DGNPh.s:2457   .text:00000010 Main
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+sys_init
+cola_ini
+exception_init
+button_iniciar
+D8Led_init
+timer2_inicializar
+Lcd_Init
+touchpad_init
+timer_init
+timer2_empezar
+reversi_main

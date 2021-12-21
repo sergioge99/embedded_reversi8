@@ -1,0 +1,212 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"tp_antirebotes.c"
+  21              	.Ltext0:
+  22              		.file 1 "../tp_antirebotes.c"
+ 2219              		.align	2
+ 2220              		.global	tp_antirrebotes_ev_tactil
+ 2222              	tp_antirrebotes_ev_tactil:
+ 2223              	.LFB0:
+   1:../tp_antirebotes.c **** /*********************************************************************************************
+   2:../tp_antirebotes.c **** * Fichero:	tp_antirebotes.c
+   3:../tp_antirebotes.c **** * Autor1:	Sergio García Esteban	755844
+   4:../tp_antirebotes.c **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../tp_antirebotes.c **** * Descrip:	Autómata filtro de interrupciones del tp
+   6:../tp_antirebotes.c **** * Version:
+   7:../tp_antirebotes.c **** *********************************************************************************************/
+   8:../tp_antirebotes.c **** 
+   9:../tp_antirebotes.c **** /*--- ficheros de cabecera ---*/
+  10:../tp_antirebotes.c **** #include "tp_antirebotes.h"
+  11:../tp_antirebotes.c **** #include "tp.h"
+  12:../tp_antirebotes.c **** #include "cola_depuracion.h"
+  13:../tp_antirebotes.c **** 
+  14:../tp_antirebotes.c **** /*--- valores y constantes ---*/
+  15:../tp_antirebotes.c **** enum estado{ TP_PREPARADO, RETARDO_PULSAR, ESPERANDO_SOLTAR, RETARDO_SOLTAR };
+  16:../tp_antirebotes.c **** enum{ MS_30 = 2 };			//VALORES PARA TRANSFORMAR DE TIMER0_TICK A MS
+  17:../tp_antirebotes.c **** enum{ TRP = 8, TRD = 4 };	//VALORES DE LOS RETARDOS EN TIMER0_TICK
+  18:../tp_antirebotes.c **** 
+  19:../tp_antirebotes.c **** /*--- variables globales del módulo ---*/
+  20:../tp_antirebotes.c **** static int estado=TP_PREPARADO;
+  21:../tp_antirebotes.c **** static int counter=0;
+  22:../tp_antirebotes.c **** 
+  23:../tp_antirebotes.c **** /*--- codigo de funciones ---*/
+  24:../tp_antirebotes.c **** 
+  25:../tp_antirebotes.c **** /*********************************************************************************************
+  26:../tp_antirebotes.c **** * Funcion 1 del autómata. Transicion causada por ev_tactil.
+  27:../tp_antirebotes.c **** *********************************************************************************************/
+  28:../tp_antirebotes.c **** void tp_antirrebotes_ev_tactil()
+  29:../tp_antirebotes.c **** {
+ 2224              		.loc 1 29 0
+ 2225              		.cfi_startproc
+ 2226              		@ Function supports interworking.
+ 2227              		@ args = 0, pretend = 0, frame = 0
+ 2228              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2229              		@ link register save eliminated.
+  30:../tp_antirebotes.c **** 	estado=RETARDO_PULSAR; //Han pulsado boton, pasamos a estado de espera de retardo inicial
+ 2230              		.loc 1 30 0
+ 2231 0000 0C309FE5 		ldr	r3, .L2
+ 2232 0004 0100A0E3 		mov	r0, #1
+  31:../tp_antirebotes.c **** 	counter=0;
+ 2233              		.loc 1 31 0
+ 2234 0008 0020A0E3 		mov	r2, #0
+  30:../tp_antirebotes.c **** 	estado=RETARDO_PULSAR; //Han pulsado boton, pasamos a estado de espera de retardo inicial
+ 2235              		.loc 1 30 0
+ 2236 000c 050083E8 		stmia	r3, {r0, r2}	@ phole stm
+  32:../tp_antirebotes.c **** }
+ 2237              		.loc 1 32 0
+ 2238 0010 1EFF2FE1 		bx	lr
+ 2239              	.L3:
+ 2240              		.align	2
+ 2241              	.L2:
+ 2242 0014 00000000 		.word	.LANCHOR0
+ 2243              		.cfi_endproc
+ 2244              	.LFE0:
+ 2246              		.align	2
+ 2247              		.global	tp_antirrebotes_ev_tick
+ 2249              	tp_antirrebotes_ev_tick:
+ 2250              	.LFB1:
+  33:../tp_antirebotes.c **** 
+  34:../tp_antirebotes.c **** /*********************************************************************************************
+  35:../tp_antirebotes.c **** * Funcion 2 del autómata. Transicion causada por ev_tick. Gestiona la reactivación
+  36:../tp_antirebotes.c **** * de las interrupciones del touchpad.
+  37:../tp_antirebotes.c **** *********************************************************************************************/
+  38:../tp_antirebotes.c **** void tp_antirrebotes_ev_tick()
+  39:../tp_antirebotes.c **** {
+ 2251              		.loc 1 39 0
+ 2252              		.cfi_startproc
+ 2253              		@ Function supports interworking.
+ 2254              		@ args = 0, pretend = 0, frame = 0
+ 2255              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2256 0018 0DC0A0E1 		mov	ip, sp
+ 2257              	.LCFI0:
+ 2258              		.cfi_def_cfa_register 12
+ 2259 001c 18D82DE9 		stmfd	sp!, {r3, r4, fp, ip, lr, pc}
+  40:../tp_antirebotes.c **** 	if(estado!=TP_PREPARADO){
+ 2260              		.loc 1 40 0
+ 2261 0020 84409FE5 		ldr	r4, .L12
+ 2262              		.cfi_offset 14, -8
+ 2263              		.cfi_offset 13, -12
+ 2264              		.cfi_offset 11, -16
+ 2265              		.cfi_offset 4, -20
+ 2266              		.cfi_offset 3, -24
+ 2267 0024 003094E5 		ldr	r3, [r4, #0]
+ 2268 0028 000053E3 		cmp	r3, #0
+  39:../tp_antirebotes.c **** {
+ 2269              		.loc 1 39 0
+ 2270 002c 04B04CE2 		sub	fp, ip, #4
+ 2271              	.LCFI1:
+ 2272              		.cfi_def_cfa 11, 4
+ 2273              		.loc 1 40 0
+ 2274 0030 0A00000A 		beq	.L4
+  41:../tp_antirebotes.c **** 		counter++;
+ 2275              		.loc 1 41 0
+ 2276 0034 042094E5 		ldr	r2, [r4, #4]
+  42:../tp_antirebotes.c **** 		if(estado==RETARDO_PULSAR && counter==TRP){		// espera retardo inical
+ 2277              		.loc 1 42 0
+ 2278 0038 010053E3 		cmp	r3, #1
+  41:../tp_antirebotes.c **** 		counter++;
+ 2279              		.loc 1 41 0
+ 2280 003c 012082E2 		add	r2, r2, #1
+ 2281 0040 042084E5 		str	r2, [r4, #4]
+ 2282              		.loc 1 42 0
+ 2283 0044 0800000A 		beq	.L9
+  43:../tp_antirebotes.c **** 			estado=ESPERANDO_SOLTAR;
+  44:../tp_antirebotes.c **** 		}else if(estado==ESPERANDO_SOLTAR && counter%MS_30){
+ 2284              		.loc 1 44 0
+ 2285 0048 020053E3 		cmp	r3, #2
+ 2286 004c 0A00000A 		beq	.L10
+  45:../tp_antirebotes.c **** 			if(touchpad_estado()==0){					// si no esta pulsado, cambio de estado
+  46:../tp_antirebotes.c **** 				estado=RETARDO_SOLTAR;
+  47:../tp_antirebotes.c **** 				counter=0;
+  48:../tp_antirebotes.c **** 			}
+  49:../tp_antirebotes.c **** 		}else if(estado==RETARDO_SOLTAR && counter==TRD){//espera retardo final
+ 2287              		.loc 1 49 0
+ 2288 0050 030053E3 		cmp	r3, #3
+ 2289 0054 0100001A 		bne	.L4
+ 2290              		.loc 1 49 0 is_stmt 0 discriminator 1
+ 2291 0058 040052E3 		cmp	r2, #4
+ 2292 005c 0E00000A 		beq	.L11
+ 2293              	.L4:
+  50:../tp_antirebotes.c **** 			estado=TP_PREPARADO;
+  51:../tp_antirebotes.c **** 			touchpad_reactivar();						// activamos interrupciones
+  52:../tp_antirebotes.c **** 		}
+  53:../tp_antirebotes.c **** 	}
+  54:../tp_antirebotes.c **** }
+ 2294              		.loc 1 54 0 is_stmt 1
+ 2295 0060 14D04BE2 		sub	sp, fp, #20
+ 2296 0064 18689DE8 		ldmfd	sp, {r3, r4, fp, sp, lr}
+ 2297 0068 1EFF2FE1 		bx	lr
+ 2298              	.L9:
+  42:../tp_antirebotes.c **** 		if(estado==RETARDO_PULSAR && counter==TRP){		// espera retardo inical
+ 2299              		.loc 1 42 0 discriminator 1
+ 2300 006c 080052E3 		cmp	r2, #8
+  43:../tp_antirebotes.c **** 			estado=ESPERANDO_SOLTAR;
+ 2301              		.loc 1 43 0 discriminator 1
+ 2302 0070 0230A003 		moveq	r3, #2
+ 2303 0074 00308405 		streq	r3, [r4, #0]
+ 2304 0078 F8FFFFEA 		b	.L4
+ 2305              	.L10:
+  44:../tp_antirebotes.c **** 		}else if(estado==ESPERANDO_SOLTAR && counter%MS_30){
+ 2306              		.loc 1 44 0 discriminator 1
+ 2307 007c 010012E3 		tst	r2, #1
+ 2308 0080 F6FFFF0A 		beq	.L4
+  45:../tp_antirebotes.c **** 			if(touchpad_estado()==0){					// si no esta pulsado, cambio de estado
+ 2309              		.loc 1 45 0
+ 2310 0084 FEFFFFEB 		bl	touchpad_estado
+ 2311 0088 000050E3 		cmp	r0, #0
+  46:../tp_antirebotes.c **** 				estado=RETARDO_SOLTAR;
+ 2312              		.loc 1 46 0
+ 2313 008c 0330A003 		moveq	r3, #3
+ 2314 0090 00308405 		streq	r3, [r4, #0]
+  47:../tp_antirebotes.c **** 				counter=0;
+ 2315              		.loc 1 47 0
+ 2316 0094 04008405 		streq	r0, [r4, #4]
+ 2317 0098 F0FFFFEA 		b	.L4
+ 2318              	.L11:
+  50:../tp_antirebotes.c **** 			estado=TP_PREPARADO;
+ 2319              		.loc 1 50 0
+ 2320 009c 0000A0E3 		mov	r0, #0
+ 2321 00a0 000084E5 		str	r0, [r4, #0]
+  51:../tp_antirebotes.c **** 			touchpad_reactivar();						// activamos interrupciones
+ 2322              		.loc 1 51 0
+ 2323 00a4 FEFFFFEB 		bl	touchpad_reactivar
+ 2324 00a8 ECFFFFEA 		b	.L4
+ 2325              	.L13:
+ 2326              		.align	2
+ 2327              	.L12:
+ 2328 00ac 00000000 		.word	.LANCHOR0
+ 2329              		.cfi_endproc
+ 2330              	.LFE1:
+ 2332              		.bss
+ 2333              		.align	2
+ 2334              		.set	.LANCHOR0,. + 0
+ 2337              	estado:
+ 2338 0000 00000000 		.space	4
+ 2341              	counter:
+ 2342 0004 00000000 		.space	4
+ 2343              		.text
+ 2344              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 tp_antirebotes.c
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2219   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2222   .text:00000000 tp_antirrebotes_ev_tactil
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2242   .text:00000014 $d
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2246   .text:00000018 $a
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2249   .text:00000018 tp_antirrebotes_ev_tick
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2328   .text:000000ac $d
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2333   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2337   .bss:00000000 estado
+C:\Users\sergi\AppData\Local\Temp\cc88w5ju.s:2341   .bss:00000004 counter
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+touchpad_estado
+touchpad_reactivar

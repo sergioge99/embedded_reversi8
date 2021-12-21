@@ -1,0 +1,4551 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"pantalla.c"
+  21              	.Ltext0:
+  22              		.file 1 "../pantalla.c"
+ 1243              		.align	2
+ 1244              		.global	Pantalla_final
+ 1246              	Pantalla_final:
+ 1247              	.LFB0:
+   1:../pantalla.c **** /*********************************************************************************************
+   2:../pantalla.c **** * Fichero:		pantalla.c
+   3:../pantalla.c **** * Autor1:		Sergio García Esteban	755844
+   4:../pantalla.c **** * Autor2:		Irene Fumanal Lacoma	758325
+   5:../pantalla.c **** * Descrip:		Funciones de pantalla.
+   6:../pantalla.c **** * Version:
+   7:../pantalla.c **** *********************************************************************************************/
+   8:../pantalla.c **** 
+   9:../pantalla.c **** /*--- ficheros de cabecera ---*/
+  10:../pantalla.c **** #include "pantalla.h"
+  11:../pantalla.c **** #include "lcd.h"
+  12:../pantalla.c **** #include "itoa.h"
+  13:../pantalla.c **** #include "timer2.h"
+  14:../pantalla.c **** #include "Bmp.h"
+  15:../pantalla.c **** 
+  16:../pantalla.c **** // Bitmaps de las fichas negras, blancas y grises
+  17:../pantalla.c **** extern STRU_BITMAP Stru_Bitmap_fichaNegra;
+  18:../pantalla.c **** extern STRU_BITMAP Stru_Bitmap_fichaBlanca;
+  19:../pantalla.c **** extern STRU_BITMAP Stru_Bitmap_fichaGris;
+  20:../pantalla.c **** 
+  21:../pantalla.c **** /*--- valores y constantes ---*/
+  22:../pantalla.c **** enum { CONTADOR_COMPARADOR=134 }; //134 segundos es el máximo tiempo que mide timer2
+  23:../pantalla.c **** 
+  24:../pantalla.c **** /*--- variables globales ---*/
+  25:../pantalla.c **** static int pantalla=PANTALLA_CALIBRADO;
+  26:../pantalla.c **** static int DMA_ready=1, Hay_cambios=1;
+  27:../pantalla.c **** static int primeraImpresion=1;
+  28:../pantalla.c **** static int fMov=0, cMov=0;
+  29:../pantalla.c **** static int oldfMov=0, oldcMov=0;
+  30:../pantalla.c **** static char underGris=0;
+  31:../pantalla.c **** static char toblerone[DIM][DIM]= {
+  32:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  33:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  34:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  35:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  36:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  37:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  38:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  39:../pantalla.c **** 		{0,0,0,0,0,0,0,0}
+  40:../pantalla.c **** };
+  41:../pantalla.c **** static char cambios[DIM][DIM]= {
+  42:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  43:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  44:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  45:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  46:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  47:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  48:../pantalla.c **** 		{0,0,0,0,0,0,0,0},
+  49:../pantalla.c **** 		{0,0,0,0,0,0,0,0}
+  50:../pantalla.c **** };
+  51:../pantalla.c **** static int ncambios=0;
+  52:../pantalla.c **** static int tcalculos=0, tvolteos=0, nvolteos=0;
+  53:../pantalla.c **** static int ttotal=0, tinicio_juego=0, contador_multiplicador=0, tanterior=0;
+  54:../pantalla.c **** static int esquina=0;
+  55:../pantalla.c **** static int negras=0, blancas=0;
+  56:../pantalla.c **** 
+  57:../pantalla.c **** /*--- codigo de las funciones ---*/
+  58:../pantalla.c **** /*
+  59:../pantalla.c ****  * Pantalla fin de partida
+  60:../pantalla.c ****  */
+  61:../pantalla.c **** void Pantalla_final(){
+ 1248              		.loc 1 61 0
+ 1249              		.cfi_startproc
+ 1250              		@ Function supports interworking.
+ 1251              		@ args = 0, pretend = 0, frame = 0
+ 1252              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1253 0000 0DC0A0E1 		mov	ip, sp
+ 1254              	.LCFI0:
+ 1255              		.cfi_def_cfa_register 12
+ 1256 0004 30D82DE9 		stmfd	sp!, {r4, r5, fp, ip, lr, pc}
+ 1257 0008 04B04CE2 		sub	fp, ip, #4
+ 1258              		.cfi_offset 14, -8
+ 1259              		.cfi_offset 13, -12
+ 1260              		.cfi_offset 11, -16
+ 1261              		.cfi_offset 5, -20
+ 1262              		.cfi_offset 4, -24
+ 1263              	.LCFI1:
+ 1264              		.cfi_def_cfa 11, 4
+ 1265 000c 08D04DE2 		sub	sp, sp, #8
+  62:../pantalla.c **** 	if(primeraImpresion==1){
+ 1266              		.loc 1 62 0
+ 1267 0010 00419FE5 		ldr	r4, .L5
+ 1268              		.loc 1 62 0
+ 1269 0014 003094E5 		ldr	r3, [r4, #0]
+ 1270 0018 010053E3 		cmp	r3, #1
+ 1271 001c 0200000A 		beq	.L4
+ 1272              	.L1:
+  63:../pantalla.c **** 		primeraImpresion=0;
+  64:../pantalla.c **** 		Lcd_Clr();
+  65:../pantalla.c **** 
+  66:../pantalla.c **** 		// Leyenda fin del juego
+  67:../pantalla.c **** 		static char a[]="Fin del juego";
+  68:../pantalla.c **** 		Lcd_DspAscII8x16(118,70,BLACK,a);
+  69:../pantalla.c **** 
+  70:../pantalla.c **** 		// Resultado negras y blancas
+  71:../pantalla.c **** 		static char snum[10];
+  72:../pantalla.c **** 		static char b[]="Negras";
+  73:../pantalla.c **** 		Lcd_DspAscII6x8(84,92,BLACK,b);
+  74:../pantalla.c **** 		itoa(negras,snum);
+  75:../pantalla.c **** 		Lcd_DspAscII8x16(96,102,BLACK,snum);
+  76:../pantalla.c **** 		static char c[]="Blancas";
+  77:../pantalla.c **** 		Lcd_DspAscII6x8(194,92,BLACK,c);
+  78:../pantalla.c **** 		itoa(blancas,snum);
+  79:../pantalla.c **** 		Lcd_DspAscII8x16(212,102,BLACK,snum);
+  80:../pantalla.c **** 
+  81:../pantalla.c **** 		// Boton jugar de nuevo
+  82:../pantalla.c **** 		Lcd_Draw_Box(100, 130, 220, 162, 15);
+  83:../pantalla.c **** 		static char d[]="Volver a jugar";
+  84:../pantalla.c **** 		Lcd_DspAscII6x8(118,138,BLACK,d);
+  85:../pantalla.c **** 
+  86:../pantalla.c **** 		// Boton pantalla inicial
+  87:../pantalla.c **** 		Lcd_Draw_Box(100, 170, 220, 202, 15);
+  88:../pantalla.c **** 		static char e[]="Salir";
+  89:../pantalla.c **** 		Lcd_DspAscII6x8(145,178,BLACK,e);
+  90:../pantalla.c **** 	}
+  91:../pantalla.c **** }
+ 1273              		.loc 1 91 0
+ 1274 0020 14D04BE2 		sub	sp, fp, #20
+ 1275 0024 30689DE8 		ldmfd	sp, {r4, r5, fp, sp, lr}
+ 1276 0028 1EFF2FE1 		bx	lr
+ 1277              	.L4:
+ 1278              	.LBB2:
+  63:../pantalla.c **** 		primeraImpresion=0;
+ 1279              		.loc 1 63 0
+ 1280 002c 0000A0E3 		mov	r0, #0
+  74:../pantalla.c **** 		itoa(negras,snum);
+ 1281              		.loc 1 74 0
+ 1282 0030 E4509FE5 		ldr	r5, .L5+4
+  63:../pantalla.c **** 		primeraImpresion=0;
+ 1283              		.loc 1 63 0
+ 1284 0034 000084E5 		str	r0, [r4, #0]
+  64:../pantalla.c **** 		Lcd_Clr();
+ 1285              		.loc 1 64 0
+ 1286 0038 FEFFFFEB 		bl	Lcd_Clr
+  68:../pantalla.c **** 		Lcd_DspAscII8x16(118,70,BLACK,a);
+ 1287              		.loc 1 68 0
+ 1288 003c 043084E2 		add	r3, r4, #4
+ 1289 0040 7600A0E3 		mov	r0, #118
+ 1290 0044 4610A0E3 		mov	r1, #70
+ 1291 0048 0F20A0E3 		mov	r2, #15
+ 1292 004c FEFFFFEB 		bl	Lcd_DspAscII8x16
+  73:../pantalla.c **** 		Lcd_DspAscII6x8(84,92,BLACK,b);
+ 1293              		.loc 1 73 0
+ 1294 0050 143084E2 		add	r3, r4, #20
+ 1295 0054 0F20A0E3 		mov	r2, #15
+ 1296 0058 5400A0E3 		mov	r0, #84
+ 1297 005c 5C10A0E3 		mov	r1, #92
+ 1298 0060 FEFFFFEB 		bl	Lcd_DspAscII6x8
+  74:../pantalla.c **** 		itoa(negras,snum);
+ 1299              		.loc 1 74 0
+ 1300 0064 0510A0E1 		mov	r1, r5
+ 1301 0068 040091E4 		ldr	r0, [r1], #4
+ 1302 006c FEFFFFEB 		bl	itoa
+  75:../pantalla.c **** 		Lcd_DspAscII8x16(96,102,BLACK,snum);
+ 1303              		.loc 1 75 0
+ 1304 0070 043085E2 		add	r3, r5, #4
+ 1305 0074 6000A0E3 		mov	r0, #96
+ 1306 0078 6610A0E3 		mov	r1, #102
+ 1307 007c 0F20A0E3 		mov	r2, #15
+ 1308 0080 FEFFFFEB 		bl	Lcd_DspAscII8x16
+  77:../pantalla.c **** 		Lcd_DspAscII6x8(194,92,BLACK,c);
+ 1309              		.loc 1 77 0
+ 1310 0084 1C3084E2 		add	r3, r4, #28
+ 1311 0088 0F20A0E3 		mov	r2, #15
+ 1312 008c C200A0E3 		mov	r0, #194
+ 1313 0090 5C10A0E3 		mov	r1, #92
+ 1314 0094 FEFFFFEB 		bl	Lcd_DspAscII6x8
+  78:../pantalla.c **** 		itoa(blancas,snum);
+ 1315              		.loc 1 78 0
+ 1316 0098 100095E5 		ldr	r0, [r5, #16]
+ 1317 009c 041085E2 		add	r1, r5, #4
+ 1318 00a0 FEFFFFEB 		bl	itoa
+  79:../pantalla.c **** 		Lcd_DspAscII8x16(212,102,BLACK,snum);
+ 1319              		.loc 1 79 0
+ 1320 00a4 043085E2 		add	r3, r5, #4
+ 1321 00a8 D400A0E3 		mov	r0, #212
+ 1322 00ac 6610A0E3 		mov	r1, #102
+ 1323 00b0 0F20A0E3 		mov	r2, #15
+ 1324 00b4 FEFFFFEB 		bl	Lcd_DspAscII8x16
+  82:../pantalla.c **** 		Lcd_Draw_Box(100, 130, 220, 162, 15);
+ 1325              		.loc 1 82 0
+ 1326 00b8 0F50A0E3 		mov	r5, #15
+ 1327 00bc 6400A0E3 		mov	r0, #100
+ 1328 00c0 8210A0E3 		mov	r1, #130
+ 1329 00c4 DC20A0E3 		mov	r2, #220
+ 1330 00c8 A230A0E3 		mov	r3, #162
+ 1331 00cc 00508DE5 		str	r5, [sp, #0]
+ 1332 00d0 FEFFFFEB 		bl	Lcd_Draw_Box
+  84:../pantalla.c **** 		Lcd_DspAscII6x8(118,138,BLACK,d);
+ 1333              		.loc 1 84 0
+ 1334 00d4 0520A0E1 		mov	r2, r5
+ 1335 00d8 243084E2 		add	r3, r4, #36
+ 1336 00dc 7600A0E3 		mov	r0, #118
+ 1337 00e0 8A10A0E3 		mov	r1, #138
+ 1338 00e4 FEFFFFEB 		bl	Lcd_DspAscII6x8
+  87:../pantalla.c **** 		Lcd_Draw_Box(100, 170, 220, 202, 15);
+ 1339              		.loc 1 87 0
+ 1340 00e8 6400A0E3 		mov	r0, #100
+ 1341 00ec AA10A0E3 		mov	r1, #170
+ 1342 00f0 DC20A0E3 		mov	r2, #220
+ 1343 00f4 CA30A0E3 		mov	r3, #202
+ 1344 00f8 00508DE5 		str	r5, [sp, #0]
+ 1345 00fc FEFFFFEB 		bl	Lcd_Draw_Box
+  89:../pantalla.c **** 		Lcd_DspAscII6x8(145,178,BLACK,e);
+ 1346              		.loc 1 89 0
+ 1347 0100 9100A0E3 		mov	r0, #145
+ 1348 0104 B210A0E3 		mov	r1, #178
+ 1349 0108 0520A0E1 		mov	r2, r5
+ 1350 010c 343084E2 		add	r3, r4, #52
+ 1351 0110 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 1352 0114 C1FFFFEA 		b	.L1
+ 1353              	.L6:
+ 1354              		.align	2
+ 1355              	.L5:
+ 1356 0118 00000000 		.word	.LANCHOR0
+ 1357 011c 00000000 		.word	.LANCHOR1
+ 1358              	.LBE2:
+ 1359              		.cfi_endproc
+ 1360              	.LFE0:
+ 1362              		.align	2
+ 1363              		.global	Pantalla_calibrar
+ 1365              	Pantalla_calibrar:
+ 1366              	.LFB1:
+  92:../pantalla.c **** /*
+  93:../pantalla.c ****  * Pantalla de calibrado
+  94:../pantalla.c ****  * Dibuja un cuadrado en la esquina que corresponda
+  95:../pantalla.c ****  */
+  96:../pantalla.c **** void Pantalla_calibrar(){
+ 1367              		.loc 1 96 0
+ 1368              		.cfi_startproc
+ 1369              		@ Function supports interworking.
+ 1370              		@ args = 0, pretend = 0, frame = 0
+ 1371              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1372 0120 0DC0A0E1 		mov	ip, sp
+ 1373              	.LCFI2:
+ 1374              		.cfi_def_cfa_register 12
+ 1375 0124 30D82DE9 		stmfd	sp!, {r4, r5, fp, ip, lr, pc}
+ 1376 0128 04B04CE2 		sub	fp, ip, #4
+ 1377              		.cfi_offset 14, -8
+ 1378              		.cfi_offset 13, -12
+ 1379              		.cfi_offset 11, -16
+ 1380              		.cfi_offset 5, -20
+ 1381              		.cfi_offset 4, -24
+ 1382              	.LCFI3:
+ 1383              		.cfi_def_cfa 11, 4
+ 1384 012c 08D04DE2 		sub	sp, sp, #8
+  97:../pantalla.c **** 	if(primeraImpresion==1){
+ 1385              		.loc 1 97 0
+ 1386 0130 28519FE5 		ldr	r5, .L16
+ 1387              		.loc 1 97 0
+ 1388 0134 003095E5 		ldr	r3, [r5, #0]
+ 1389 0138 010053E3 		cmp	r3, #1
+ 1390 013c 1900000A 		beq	.L12
+  98:../pantalla.c **** 		primeraImpresion=0;
+  99:../pantalla.c **** 		Lcd_Clr();
+ 100:../pantalla.c **** 
+ 101:../pantalla.c **** 		// Leyenda Haz click
+ 102:../pantalla.c **** 		static char a[]="Haz click en el cuadrado";
+ 103:../pantalla.c **** 		Lcd_DspAscII6x8(88,116,BLACK,a);
+ 104:../pantalla.c **** 
+ 105:../pantalla.c **** 		// Cuadrado arriba izq
+ 106:../pantalla.c **** 		Lcd_Draw_Box(0, 0, 20, 20, 15);
+ 107:../pantalla.c **** 	}else{
+ 108:../pantalla.c **** 		if(esquina==1){
+ 1391              		.loc 1 108 0
+ 1392 0140 1C019FE5 		ldr	r0, .L16+4
+ 1393 0144 143090E5 		ldr	r3, [r0, #20]
+ 1394 0148 010053E3 		cmp	r3, #1
+ 1395 014c 2500000A 		beq	.L13
+ 109:../pantalla.c **** 			// Cuadrado arriba der (eliminamos anterior)
+ 110:../pantalla.c **** 			LcdClrRect(0, 0, 20, 20, 0);
+ 111:../pantalla.c **** 			Lcd_Draw_Box(299, 0, 319, 20, 15);
+ 112:../pantalla.c **** 		}else if(esquina==2){
+ 1396              		.loc 1 112 0
+ 1397 0150 020053E3 		cmp	r3, #2
+ 1398 0154 3200000A 		beq	.L14
+ 113:../pantalla.c **** 			// Cuadrado abajo izq (eliminamos anterior)
+ 114:../pantalla.c **** 			LcdClrRect(299, 0, 319, 20, 0);
+ 115:../pantalla.c **** 			Lcd_Draw_Box(0, 219, 20, 239, 15);
+ 116:../pantalla.c **** 		}else if(esquina==3){
+ 1399              		.loc 1 116 0
+ 1400 0158 030053E3 		cmp	r3, #3
+ 1401 015c 0200000A 		beq	.L15
+ 1402              	.L7:
+ 117:../pantalla.c **** 			// Cuadrado abajo der (eliminamos anterior)
+ 118:../pantalla.c **** 			LcdClrRect(0, 219, 20, 239, 0);
+ 119:../pantalla.c **** 			Lcd_Draw_Box(299, 219, 319, 239, 15);
+ 120:../pantalla.c **** 		}
+ 121:../pantalla.c **** 	}
+ 122:../pantalla.c **** }
+ 1403              		.loc 1 122 0
+ 1404 0160 14D04BE2 		sub	sp, fp, #20
+ 1405 0164 30689DE8 		ldmfd	sp, {r4, r5, fp, sp, lr}
+ 1406 0168 1EFF2FE1 		bx	lr
+ 1407              	.L15:
+ 118:../pantalla.c **** 			LcdClrRect(0, 219, 20, 239, 0);
+ 1408              		.loc 1 118 0
+ 1409 016c 00E0A0E3 		mov	lr, #0
+ 1410 0170 0E00A0E1 		mov	r0, lr
+ 1411 0174 DB10A0E3 		mov	r1, #219
+ 1412 0178 1420A0E3 		mov	r2, #20
+ 1413 017c EF30A0E3 		mov	r3, #239
+ 1414 0180 00E08DE5 		str	lr, [sp, #0]
+ 1415 0184 FEFFFFEB 		bl	LcdClrRect
+ 119:../pantalla.c **** 			Lcd_Draw_Box(299, 219, 319, 239, 15);
+ 1416              		.loc 1 119 0
+ 1417 0188 0FC0A0E3 		mov	ip, #15
+ 1418 018c D4009FE5 		ldr	r0, .L16+8
+ 1419 0190 DB10A0E3 		mov	r1, #219
+ 1420 0194 D0209FE5 		ldr	r2, .L16+12
+ 1421 0198 EF30A0E3 		mov	r3, #239
+ 1422 019c 00C08DE5 		str	ip, [sp, #0]
+ 1423 01a0 FEFFFFEB 		bl	Lcd_Draw_Box
+ 1424 01a4 EDFFFFEA 		b	.L7
+ 1425              	.L12:
+ 1426              	.LBB3:
+  98:../pantalla.c **** 		primeraImpresion=0;
+ 1427              		.loc 1 98 0
+ 1428 01a8 0040A0E3 		mov	r4, #0
+ 1429 01ac 004085E5 		str	r4, [r5, #0]
+  99:../pantalla.c **** 		Lcd_Clr();
+ 1430              		.loc 1 99 0
+ 1431 01b0 FEFFFFEB 		bl	Lcd_Clr
+ 103:../pantalla.c **** 		Lcd_DspAscII6x8(88,116,BLACK,a);
+ 1432              		.loc 1 103 0
+ 1433 01b4 3C3085E2 		add	r3, r5, #60
+ 1434 01b8 5800A0E3 		mov	r0, #88
+ 1435 01bc 7410A0E3 		mov	r1, #116
+ 1436 01c0 0F20A0E3 		mov	r2, #15
+ 1437 01c4 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 106:../pantalla.c **** 		Lcd_Draw_Box(0, 0, 20, 20, 15);
+ 1438              		.loc 1 106 0
+ 1439 01c8 1420A0E3 		mov	r2, #20
+ 1440 01cc 0FC0A0E3 		mov	ip, #15
+ 1441 01d0 0400A0E1 		mov	r0, r4
+ 1442 01d4 0410A0E1 		mov	r1, r4
+ 1443 01d8 0230A0E1 		mov	r3, r2
+ 1444 01dc 00C08DE5 		str	ip, [sp, #0]
+ 1445 01e0 FEFFFFEB 		bl	Lcd_Draw_Box
+ 1446 01e4 DDFFFFEA 		b	.L7
+ 1447              	.L13:
+ 1448              	.LBE3:
+ 110:../pantalla.c **** 			LcdClrRect(0, 0, 20, 20, 0);
+ 1449              		.loc 1 110 0
+ 1450 01e8 0040A0E3 		mov	r4, #0
+ 1451 01ec 1420A0E3 		mov	r2, #20
+ 1452 01f0 0400A0E1 		mov	r0, r4
+ 1453 01f4 0410A0E1 		mov	r1, r4
+ 1454 01f8 0230A0E1 		mov	r3, r2
+ 1455 01fc 00408DE5 		str	r4, [sp, #0]
+ 1456 0200 FEFFFFEB 		bl	LcdClrRect
+ 111:../pantalla.c **** 			Lcd_Draw_Box(299, 0, 319, 20, 15);
+ 1457              		.loc 1 111 0
+ 1458 0204 0FC0A0E3 		mov	ip, #15
+ 1459 0208 58009FE5 		ldr	r0, .L16+8
+ 1460 020c 0410A0E1 		mov	r1, r4
+ 1461 0210 54209FE5 		ldr	r2, .L16+12
+ 1462 0214 1430A0E3 		mov	r3, #20
+ 1463 0218 00C08DE5 		str	ip, [sp, #0]
+ 1464 021c FEFFFFEB 		bl	Lcd_Draw_Box
+ 1465 0220 CEFFFFEA 		b	.L7
+ 1466              	.L14:
+ 114:../pantalla.c **** 			LcdClrRect(299, 0, 319, 20, 0);
+ 1467              		.loc 1 114 0
+ 1468 0224 0040A0E3 		mov	r4, #0
+ 1469 0228 0410A0E1 		mov	r1, r4
+ 1470 022c 34009FE5 		ldr	r0, .L16+8
+ 1471 0230 34209FE5 		ldr	r2, .L16+12
+ 1472 0234 1430A0E3 		mov	r3, #20
+ 1473 0238 00408DE5 		str	r4, [sp, #0]
+ 1474 023c FEFFFFEB 		bl	LcdClrRect
+ 115:../pantalla.c **** 			Lcd_Draw_Box(0, 219, 20, 239, 15);
+ 1475              		.loc 1 115 0
+ 1476 0240 0FC0A0E3 		mov	ip, #15
+ 1477 0244 0400A0E1 		mov	r0, r4
+ 1478 0248 DB10A0E3 		mov	r1, #219
+ 1479 024c 1420A0E3 		mov	r2, #20
+ 1480 0250 EF30A0E3 		mov	r3, #239
+ 1481 0254 00C08DE5 		str	ip, [sp, #0]
+ 1482 0258 FEFFFFEB 		bl	Lcd_Draw_Box
+ 1483 025c BFFFFFEA 		b	.L7
+ 1484              	.L17:
+ 1485              		.align	2
+ 1486              	.L16:
+ 1487 0260 00000000 		.word	.LANCHOR0
+ 1488 0264 00000000 		.word	.LANCHOR1
+ 1489 0268 2B010000 		.word	299
+ 1490 026c 3F010000 		.word	319
+ 1491              		.cfi_endproc
+ 1492              	.LFE1:
+ 1494              		.align	2
+ 1495              		.global	Pantalla_inicial
+ 1497              	Pantalla_inicial:
+ 1498              	.LFB2:
+ 123:../pantalla.c **** /*
+ 124:../pantalla.c ****  * Pantalla inicial
+ 125:../pantalla.c ****  */
+ 126:../pantalla.c **** void Pantalla_inicial(){
+ 1499              		.loc 1 126 0
+ 1500              		.cfi_startproc
+ 1501              		@ Function supports interworking.
+ 1502              		@ args = 0, pretend = 0, frame = 0
+ 1503              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1504 0270 0DC0A0E1 		mov	ip, sp
+ 1505              	.LCFI4:
+ 1506              		.cfi_def_cfa_register 12
+ 1507 0274 70D82DE9 		stmfd	sp!, {r4, r5, r6, fp, ip, lr, pc}
+ 1508 0278 04B04CE2 		sub	fp, ip, #4
+ 1509              		.cfi_offset 14, -8
+ 1510              		.cfi_offset 13, -12
+ 1511              		.cfi_offset 11, -16
+ 1512              		.cfi_offset 6, -20
+ 1513              		.cfi_offset 5, -24
+ 1514              		.cfi_offset 4, -28
+ 1515              	.LCFI5:
+ 1516              		.cfi_def_cfa 11, 4
+ 1517 027c 0CD04DE2 		sub	sp, sp, #12
+ 127:../pantalla.c **** 	if(primeraImpresion==1){
+ 1518              		.loc 1 127 0
+ 1519 0280 E0409FE5 		ldr	r4, .L21
+ 1520              		.loc 1 127 0
+ 1521 0284 003094E5 		ldr	r3, [r4, #0]
+ 1522 0288 010053E3 		cmp	r3, #1
+ 1523 028c 0200000A 		beq	.L20
+ 1524              	.L18:
+ 128:../pantalla.c **** 		primeraImpresion=0;
+ 129:../pantalla.c **** 		Lcd_Clr();
+ 130:../pantalla.c **** 
+ 131:../pantalla.c **** 		// Titulo y leyenda Toque para jugar
+ 132:../pantalla.c **** 		static char a[]="Reversi 8";
+ 133:../pantalla.c **** 		Lcd_DspAscII8x16(124,90,BLACK,a);
+ 134:../pantalla.c **** 		static char b[]="Toque para jugar";
+ 135:../pantalla.c **** 		Lcd_DspAscII8x16(96,122,BLACK,b);
+ 136:../pantalla.c **** 
+ 137:../pantalla.c **** 		// Boton calibrar
+ 138:../pantalla.c **** 		Lcd_Draw_Box(236, 2, 317, 50, 15);
+ 139:../pantalla.c **** 		static char c[]="Calibrar";
+ 140:../pantalla.c **** 		Lcd_DspAscII6x8(246,12,BLACK,c);
+ 141:../pantalla.c **** 		static char d[]="pantalla";
+ 142:../pantalla.c **** 		Lcd_DspAscII6x8(246,30,BLACK,d);
+ 143:../pantalla.c **** 
+ 144:../pantalla.c **** 		// Instrucciones
+ 145:../pantalla.c **** 		static char e[]="Instrucciones:";
+ 146:../pantalla.c **** 		Lcd_DspAscII6x8(0,200,BLACK,e);
+ 147:../pantalla.c **** 		static char f[]="Pulse los botones para seleccionar fila y columna";
+ 148:../pantalla.c **** 		Lcd_DspAscII6x8(0,210,BLACK,f);
+ 149:../pantalla.c **** 		static char g[]="Pulse la pantalla para efectuar el movimiento";
+ 150:../pantalla.c **** 		Lcd_DspAscII6x8(0,220,BLACK,g);
+ 151:../pantalla.c **** 		static char h[]=" seleccionado";
+ 152:../pantalla.c **** 		Lcd_DspAscII6x8(0,230,BLACK,h);
+ 153:../pantalla.c **** 	}
+ 154:../pantalla.c **** }
+ 1525              		.loc 1 154 0
+ 1526 0290 18D04BE2 		sub	sp, fp, #24
+ 1527 0294 70689DE8 		ldmfd	sp, {r4, r5, r6, fp, sp, lr}
+ 1528 0298 1EFF2FE1 		bx	lr
+ 1529              	.L20:
+ 1530              	.LBB4:
+ 128:../pantalla.c **** 		primeraImpresion=0;
+ 1531              		.loc 1 128 0
+ 1532 029c 0060A0E3 		mov	r6, #0
+ 1533 02a0 006084E5 		str	r6, [r4, #0]
+ 129:../pantalla.c **** 		Lcd_Clr();
+ 1534              		.loc 1 129 0
+ 1535 02a4 FEFFFFEB 		bl	Lcd_Clr
+ 133:../pantalla.c **** 		Lcd_DspAscII8x16(124,90,BLACK,a);
+ 1536              		.loc 1 133 0
+ 1537 02a8 583084E2 		add	r3, r4, #88
+ 1538 02ac 7C00A0E3 		mov	r0, #124
+ 1539 02b0 5A10A0E3 		mov	r1, #90
+ 1540 02b4 0F20A0E3 		mov	r2, #15
+ 1541 02b8 FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 135:../pantalla.c **** 		Lcd_DspAscII8x16(96,122,BLACK,b);
+ 1542              		.loc 1 135 0
+ 1543 02bc 0F20A0E3 		mov	r2, #15
+ 1544 02c0 643084E2 		add	r3, r4, #100
+ 1545 02c4 6000A0E3 		mov	r0, #96
+ 1546 02c8 7A10A0E3 		mov	r1, #122
+ 138:../pantalla.c **** 		Lcd_Draw_Box(236, 2, 317, 50, 15);
+ 1547              		.loc 1 138 0
+ 1548 02cc 0250A0E1 		mov	r5, r2
+ 135:../pantalla.c **** 		Lcd_DspAscII8x16(96,122,BLACK,b);
+ 1549              		.loc 1 135 0
+ 1550 02d0 FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 138:../pantalla.c **** 		Lcd_Draw_Box(236, 2, 317, 50, 15);
+ 1551              		.loc 1 138 0
+ 1552 02d4 EC00A0E3 		mov	r0, #236
+ 1553 02d8 0210A0E3 		mov	r1, #2
+ 1554 02dc 88209FE5 		ldr	r2, .L21+4
+ 1555 02e0 3230A0E3 		mov	r3, #50
+ 1556 02e4 00508DE5 		str	r5, [sp, #0]
+ 1557 02e8 FEFFFFEB 		bl	Lcd_Draw_Box
+ 140:../pantalla.c **** 		Lcd_DspAscII6x8(246,12,BLACK,c);
+ 1558              		.loc 1 140 0
+ 1559 02ec 0520A0E1 		mov	r2, r5
+ 1560 02f0 783084E2 		add	r3, r4, #120
+ 1561 02f4 F600A0E3 		mov	r0, #246
+ 1562 02f8 0C10A0E3 		mov	r1, #12
+ 1563 02fc FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 142:../pantalla.c **** 		Lcd_DspAscII6x8(246,30,BLACK,d);
+ 1564              		.loc 1 142 0
+ 1565 0300 0520A0E1 		mov	r2, r5
+ 1566 0304 843084E2 		add	r3, r4, #132
+ 1567 0308 1E10A0E3 		mov	r1, #30
+ 1568 030c F600A0E3 		mov	r0, #246
+ 1569 0310 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 146:../pantalla.c **** 		Lcd_DspAscII6x8(0,200,BLACK,e);
+ 1570              		.loc 1 146 0
+ 1571 0314 0600A0E1 		mov	r0, r6
+ 1572 0318 0520A0E1 		mov	r2, r5
+ 1573 031c 903084E2 		add	r3, r4, #144
+ 1574 0320 C810A0E3 		mov	r1, #200
+ 1575 0324 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 148:../pantalla.c **** 		Lcd_DspAscII6x8(0,210,BLACK,f);
+ 1576              		.loc 1 148 0
+ 1577 0328 0600A0E1 		mov	r0, r6
+ 1578 032c 0520A0E1 		mov	r2, r5
+ 1579 0330 A03084E2 		add	r3, r4, #160
+ 1580 0334 D210A0E3 		mov	r1, #210
+ 1581 0338 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 150:../pantalla.c **** 		Lcd_DspAscII6x8(0,220,BLACK,g);
+ 1582              		.loc 1 150 0
+ 1583 033c 0600A0E1 		mov	r0, r6
+ 1584 0340 0520A0E1 		mov	r2, r5
+ 1585 0344 D43084E2 		add	r3, r4, #212
+ 1586 0348 DC10A0E3 		mov	r1, #220
+ 1587 034c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 152:../pantalla.c **** 		Lcd_DspAscII6x8(0,230,BLACK,h);
+ 1588              		.loc 1 152 0
+ 1589 0350 0600A0E1 		mov	r0, r6
+ 1590 0354 E610A0E3 		mov	r1, #230
+ 1591 0358 0520A0E1 		mov	r2, r5
+ 1592 035c 413F84E2 		add	r3, r4, #260
+ 1593 0360 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 1594 0364 C9FFFFEA 		b	.L18
+ 1595              	.L22:
+ 1596              		.align	2
+ 1597              	.L21:
+ 1598 0368 00000000 		.word	.LANCHOR0
+ 1599 036c 3D010000 		.word	317
+ 1600              	.LBE4:
+ 1601              		.cfi_endproc
+ 1602              	.LFE2:
+ 1604              		.align	2
+ 1605              		.global	Pantalla_juego
+ 1607              	Pantalla_juego:
+ 1608              	.LFB3:
+ 155:../pantalla.c **** /*
+ 156:../pantalla.c ****  * Pantalla de juego
+ 157:../pantalla.c ****  */
+ 158:../pantalla.c **** void Pantalla_juego(){
+ 1609              		.loc 1 158 0
+ 1610              		.cfi_startproc
+ 1611              		@ Function supports interworking.
+ 1612              		@ args = 0, pretend = 0, frame = 0
+ 1613              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1614 0370 0DC0A0E1 		mov	ip, sp
+ 1615              	.LCFI6:
+ 1616              		.cfi_def_cfa_register 12
+ 1617 0374 F0DF2DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, ip, lr, pc}
+ 1618 0378 04B04CE2 		sub	fp, ip, #4
+ 1619              		.cfi_offset 14, -8
+ 1620              		.cfi_offset 13, -12
+ 1621              		.cfi_offset 11, -16
+ 1622              		.cfi_offset 10, -20
+ 1623              		.cfi_offset 9, -24
+ 1624              		.cfi_offset 8, -28
+ 1625              		.cfi_offset 7, -32
+ 1626              		.cfi_offset 6, -36
+ 1627              		.cfi_offset 5, -40
+ 1628              		.cfi_offset 4, -44
+ 1629              	.LCFI7:
+ 1630              		.cfi_def_cfa 11, 4
+ 1631 037c 0CD04DE2 		sub	sp, sp, #12
+ 159:../pantalla.c **** 	int i,j;
+ 160:../pantalla.c **** 	static char snum[10];
+ 161:../pantalla.c **** 	if(primeraImpresion==1){
+ 1632              		.loc 1 161 0
+ 1633 0380 8C8F9FE5 		ldr	r8, .L120
+ 1634              		.loc 1 161 0
+ 1635 0384 007098E5 		ldr	r7, [r8, #0]
+ 1636 0388 010057E3 		cmp	r7, #1
+ 1637 038c D701000A 		beq	.L83
+ 1638              	.LBB5:
+ 162:../pantalla.c **** 		primeraImpresion=0;
+ 163:../pantalla.c **** 		Lcd_Clr();
+ 164:../pantalla.c **** 		// Inicializamos tiempos de la partida
+ 165:../pantalla.c **** 		tcalculos=0, tvolteos=0, nvolteos=0;
+ 166:../pantalla.c **** 		contador_multiplicador=0, tanterior=0, ttotal=0;
+ 167:../pantalla.c **** 		tinicio_juego=timer2_leer()/1000000;
+ 168:../pantalla.c **** 		contador_multiplicador=0;
+ 169:../pantalla.c **** 
+ 170:../pantalla.c **** 		// Tiempos
+ 171:../pantalla.c **** 		static char a[]="Tiempo total";
+ 172:../pantalla.c **** 		Lcd_DspAscII6x8(0,9,BLACK,a);
+ 173:../pantalla.c **** 		static char b[]="Tiempo calculos";
+ 174:../pantalla.c **** 		Lcd_DspAscII6x8(0,45,BLACK,b);
+ 175:../pantalla.c **** 		static char c[]="Tiempo volteos";
+ 176:../pantalla.c **** 		Lcd_DspAscII6x8(0,81,BLACK,c);
+ 177:../pantalla.c **** 		static char d[]="Numero volteos";
+ 178:../pantalla.c **** 		Lcd_DspAscII6x8(0,117,BLACK,d);
+ 179:../pantalla.c **** 		itoa(ttotal,snum);
+ 180:../pantalla.c **** 		Lcd_DspAscII6x8(0,21,BLACK,snum);
+ 181:../pantalla.c **** 		itoa(tcalculos,snum);
+ 182:../pantalla.c **** 		Lcd_DspAscII6x8(0,57,BLACK,snum);
+ 183:../pantalla.c **** 		itoa(tvolteos,snum);
+ 184:../pantalla.c **** 		Lcd_DspAscII6x8(0,93,BLACK,snum);
+ 185:../pantalla.c **** 		itoa(nvolteos,snum);
+ 186:../pantalla.c **** 		Lcd_DspAscII6x8(0,129,BLACK,snum);
+ 187:../pantalla.c **** 
+ 188:../pantalla.c **** 		//Boton abandonar
+ 189:../pantalla.c **** 		Lcd_Draw_Box(0,211,117,239,BLACK);
+ 190:../pantalla.c **** 		static char e[]="Abandonar";
+ 191:../pantalla.c **** 		Lcd_DspAscII6x8(31,221,BLACK,e);
+ 192:../pantalla.c **** 
+ 193:../pantalla.c **** 		//Boton jugar
+ 194:../pantalla.c **** 		Lcd_Draw_Box(119,211,319,239,BLACK);
+ 195:../pantalla.c **** 		static char f[]="Jugar";
+ 196:../pantalla.c **** 		Lcd_DspAscII6x8(204,221,BLACK,f);
+ 197:../pantalla.c **** 
+ 198:../pantalla.c **** 		//Numeros filas y columnas
+ 199:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 202:../pantalla.c **** 		}
+ 203:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 206:../pantalla.c **** 		}
+ 207:../pantalla.c **** 
+ 208:../pantalla.c **** 		//Recuadro tablero
+ 209:../pantalla.c **** 		Lcd_Draw_Box(119, 9, 319, 209, 15);
+ 210:../pantalla.c **** 		//Lineas horizontales tablero
+ 211:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 34 , 15, 1);
+ 212:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 59 , 15, 1);
+ 213:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 84 , 15, 1);
+ 214:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 109 , 15, 1);
+ 215:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 134 , 15, 1);
+ 216:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 159 , 15, 1);
+ 217:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 184 , 15, 1);
+ 218:../pantalla.c **** 		//Lineas verticales tablero
+ 219:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 144, 15, 1);
+ 220:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 169, 15, 1);
+ 221:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 194, 15, 1);
+ 222:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 219, 15, 1);
+ 223:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 244, 15, 1);
+ 224:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 269, 15, 1);
+ 225:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 294, 15, 1);
+ 226:../pantalla.c **** 
+ 227:../pantalla.c **** 		//FICHAS - matriz de cambios del tablero
+ 228:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 229:../pantalla.c **** 			for (j = 0; j < DIM; j++){
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 233:../pantalla.c **** 					ncambios--;
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 235:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 236:../pantalla.c **** 					cambios[i][j]=0;
+ 237:../pantalla.c **** 					ncambios--;
+ 238:../pantalla.c **** 				}
+ 239:../pantalla.c **** 			}
+ 240:../pantalla.c **** 		}
+ 241:../pantalla.c **** 
+ 242:../pantalla.c **** 		//FICHA GRIS
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 244:../pantalla.c **** 		oldfMov=fMov;						// guardamos su posicion
+ 245:../pantalla.c **** 		oldcMov=cMov;						// guardamos la ficha de debajo
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 247:../pantalla.c **** 
+ 248:../pantalla.c **** 	}else{
+ 249:../pantalla.c **** 		//Calculamos ttotal
+ 250:../pantalla.c **** 		unsigned int tactual=timer2_leer()/1000000;
+ 1639              		.loc 1 250 0
+ 1640 0390 FEFFFFEB 		bl	timer2_leer
+ 1641 0394 7C5F9FE5 		ldr	r5, .L120+4
+ 1642 0398 95208CE0 		umull	r2, ip, r5, r0
+ 251:../pantalla.c **** 		if(tactual < tanterior){
+ 1643              		.loc 1 251 0
+ 1644 039c 785F9FE5 		ldr	r5, .L120+8
+ 1645 03a0 281095E5 		ldr	r1, [r5, #40]
+ 250:../pantalla.c **** 		unsigned int tactual=timer2_leer()/1000000;
+ 1646              		.loc 1 250 0
+ 1647 03a4 2CC9A0E1 		mov	ip, ip, lsr #18
+ 1648              	.LVL0:
+ 1649              		.loc 1 251 0
+ 1650 03a8 01005CE1 		cmp	ip, r1
+ 252:../pantalla.c **** 			contador_multiplicador++;
+ 1651              		.loc 1 252 0
+ 1652 03ac 24109535 		ldrcc	r1, [r5, #36]
+ 1653 03b0 01108132 		addcc	r1, r1, #1
+ 1654 03b4 24108535 		strcc	r1, [r5, #36]
+ 253:../pantalla.c **** 		}
+ 254:../pantalla.c **** 		tanterior=tactual;
+ 255:../pantalla.c **** 		ttotal=(CONTADOR_COMPARADOR*contador_multiplicador)+tactual-tinicio_juego;
+ 1655              		.loc 1 255 0
+ 1656 03b8 246095E5 		ldr	r6, [r5, #36]
+ 1657 03bc 302095E5 		ldr	r2, [r5, #48]
+ 1658 03c0 864286E0 		add	r4, r6, r6, asl #5
+ 1659 03c4 843086E0 		add	r3, r6, r4, asl #1
+ 1660 03c8 830062E0 		rsb	r0, r2, r3, asl #1
+ 1661 03cc 0CE080E0 		add	lr, r0, ip
+ 256:../pantalla.c **** 
+ 257:../pantalla.c **** 		//Tiempos
+ 258:../pantalla.c **** 		static char snum[10];
+ 259:../pantalla.c **** 		LcdClrRect(0, 21, 100, 37, 0);		// eliminamos numero anterior
+ 1662              		.loc 1 259 0
+ 1663 03d0 0040A0E3 		mov	r4, #0
+ 254:../pantalla.c **** 		tanterior=tactual;
+ 1664              		.loc 1 254 0
+ 1665 03d4 406F9FE5 		ldr	r6, .L120+8
+ 1666 03d8 28C085E5 		str	ip, [r5, #40]
+ 255:../pantalla.c **** 		ttotal=(CONTADOR_COMPARADOR*contador_multiplicador)+tactual-tinicio_juego;
+ 1667              		.loc 1 255 0
+ 1668 03dc 2CE085E5 		str	lr, [r5, #44]
+ 1669              		.loc 1 259 0
+ 1670 03e0 6420A0E3 		mov	r2, #100
+ 1671 03e4 2530A0E3 		mov	r3, #37
+ 1672 03e8 0400A0E1 		mov	r0, r4
+ 1673 03ec 1510A0E3 		mov	r1, #21
+ 1674 03f0 00408DE5 		str	r4, [sp, #0]
+ 1675 03f4 FEFFFFEB 		bl	LcdClrRect
+ 1676              	.LVL1:
+ 260:../pantalla.c **** 		itoa(ttotal,snum);					// convertimos int a char
+ 1677              		.loc 1 260 0
+ 1678 03f8 D81086E2 		add	r1, r6, #216
+ 1679 03fc 2C0095E5 		ldr	r0, [r5, #44]
+ 1680 0400 FEFFFFEB 		bl	itoa
+ 261:../pantalla.c **** 		Lcd_DspAscII8x16(0,21,BLACK,snum);	// escribimos numero
+ 1681              		.loc 1 261 0
+ 1682 0404 0400A0E1 		mov	r0, r4
+ 1683 0408 1510A0E3 		mov	r1, #21
+ 1684 040c 0F20A0E3 		mov	r2, #15
+ 1685 0410 D83086E2 		add	r3, r6, #216
+ 1686 0414 FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 262:../pantalla.c **** 		LcdClrRect(0, 57, 100, 73, 0);
+ 1687              		.loc 1 262 0
+ 1688 0418 6420A0E3 		mov	r2, #100
+ 1689 041c 4930A0E3 		mov	r3, #73
+ 1690 0420 0400A0E1 		mov	r0, r4
+ 1691 0424 3910A0E3 		mov	r1, #57
+ 1692 0428 00408DE5 		str	r4, [sp, #0]
+ 1693 042c FEFFFFEB 		bl	LcdClrRect
+ 263:../pantalla.c **** 		itoa(tcalculos,snum);
+ 1694              		.loc 1 263 0
+ 1695 0430 D81086E2 		add	r1, r6, #216
+ 1696 0434 180095E5 		ldr	r0, [r5, #24]
+ 1697 0438 FEFFFFEB 		bl	itoa
+ 264:../pantalla.c **** 		Lcd_DspAscII8x16(0,57,BLACK,snum);
+ 1698              		.loc 1 264 0
+ 1699 043c 0400A0E1 		mov	r0, r4
+ 1700 0440 3910A0E3 		mov	r1, #57
+ 1701 0444 0F20A0E3 		mov	r2, #15
+ 1702 0448 D83086E2 		add	r3, r6, #216
+ 1703 044c FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 265:../pantalla.c **** 		LcdClrRect(0, 93, 100, 109, 0);
+ 1704              		.loc 1 265 0
+ 1705 0450 6420A0E3 		mov	r2, #100
+ 1706 0454 6D30A0E3 		mov	r3, #109
+ 1707 0458 0400A0E1 		mov	r0, r4
+ 1708 045c 5D10A0E3 		mov	r1, #93
+ 1709 0460 00408DE5 		str	r4, [sp, #0]
+ 1710 0464 FEFFFFEB 		bl	LcdClrRect
+ 266:../pantalla.c **** 		itoa(tvolteos,snum);
+ 1711              		.loc 1 266 0
+ 1712 0468 D81086E2 		add	r1, r6, #216
+ 1713 046c 1C0095E5 		ldr	r0, [r5, #28]
+ 1714 0470 FEFFFFEB 		bl	itoa
+ 267:../pantalla.c **** 		Lcd_DspAscII8x16(0,93,BLACK,snum);
+ 1715              		.loc 1 267 0
+ 1716 0474 0400A0E1 		mov	r0, r4
+ 1717 0478 5D10A0E3 		mov	r1, #93
+ 1718 047c 0F20A0E3 		mov	r2, #15
+ 1719 0480 D83086E2 		add	r3, r6, #216
+ 1720 0484 FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 268:../pantalla.c **** 		LcdClrRect(0, 129, 100,145, 0);
+ 1721              		.loc 1 268 0
+ 1722 0488 6420A0E3 		mov	r2, #100
+ 1723 048c 9130A0E3 		mov	r3, #145
+ 1724 0490 0400A0E1 		mov	r0, r4
+ 1725 0494 8110A0E3 		mov	r1, #129
+ 1726 0498 00408DE5 		str	r4, [sp, #0]
+ 1727 049c FEFFFFEB 		bl	LcdClrRect
+ 269:../pantalla.c **** 		itoa(nvolteos,snum);
+ 1728              		.loc 1 269 0
+ 1729 04a0 D81086E2 		add	r1, r6, #216
+ 1730 04a4 200095E5 		ldr	r0, [r5, #32]
+ 1731 04a8 FEFFFFEB 		bl	itoa
+ 270:../pantalla.c **** 		Lcd_DspAscII8x16(0,129,BLACK,snum);
+ 1732              		.loc 1 270 0
+ 1733 04ac 8110A0E3 		mov	r1, #129
+ 1734 04b0 0F20A0E3 		mov	r2, #15
+ 1735 04b4 D83086E2 		add	r3, r6, #216
+ 1736 04b8 0400A0E1 		mov	r0, r4
+ 1737 04bc FEFFFFEB 		bl	Lcd_DspAscII8x16
+ 271:../pantalla.c **** 
+ 272:../pantalla.c **** 		//UNDER FICHA GRIS
+ 273:../pantalla.c **** 		if((fMov!=oldfMov)|(cMov!=oldcMov)){	// Restauramos la ficha debajo de la ficha gris
+ 1738              		.loc 1 273 0
+ 1739 04c0 D03095E5 		ldr	r3, [r5, #208]
+ 1740 04c4 D42095E5 		ldr	r2, [r5, #212]
+ 1741 04c8 841085E2 		add	r1, r5, #132
+ 1742 04cc 021091E8 		ldmia	r1, {r1, ip}	@ phole ldm
+ 1743 04d0 030051E1 		cmp	r1, r3
+ 1744 04d4 02005C01 		cmpeq	ip, r2
+ 1745 04d8 BB03001A 		bne	.L84
+ 1746              	.L44:
+ 274:../pantalla.c **** 			LcdClrRect(120+(oldcMov*25),10+(oldfMov*25),120+23+(oldcMov*25),10+23+(oldfMov*25), 0);
+ 275:../pantalla.c **** 			if(underGris==1){
+ 276:../pantalla.c **** 				BitmapView(120+(oldcMov*25),10+(oldfMov*25),Stru_Bitmap_fichaBlanca);
+ 277:../pantalla.c **** 			}else if(underGris==2){
+ 278:../pantalla.c **** 				BitmapView(120+(oldcMov*25),10+(oldfMov*25),Stru_Bitmap_fichaNegra);
+ 279:../pantalla.c **** 			}
+ 280:../pantalla.c **** 		}
+ 281:../pantalla.c **** 
+ 282:../pantalla.c **** 		//FICHAS - matriz de cambios del tablero
+ 283:../pantalla.c **** 		if(ncambios>0){
+ 1747              		.loc 1 283 0
+ 1748 04dc 800095E5 		ldr	r0, [r5, #128]
+ 1749 04e0 000050E3 		cmp	r0, #0
+ 1750 04e4 F40000DA 		ble	.L46
+ 1751 04e8 304E9FE5 		ldr	r4, .L120+12
+ 284:../pantalla.c **** 			for (i = 0; i < DIM; i++){
+ 285:../pantalla.c **** 				for (j = 0; j < DIM; j++){
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1752              		.loc 1 288 0
+ 1753 04ec 648E9FE5 		ldr	r8, .L120+68
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 290:../pantalla.c **** 						ncambios--;
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 1754              		.loc 1 293 0
+ 1755 04f0 5CAE9FE5 		ldr	sl, .L120+64
+ 283:../pantalla.c **** 		if(ncambios>0){
+ 1756              		.loc 1 283 0
+ 1757 04f4 2170A0E3 		mov	r7, #33
+ 1758 04f8 0A60A0E3 		mov	r6, #10
+ 1759 04fc 2D0000EA 		b	.L63
+ 1760              	.LVL2:
+ 1761              	.L93:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1762              		.loc 1 291 0
+ 1763 0500 020053E3 		cmp	r3, #2
+ 1764 0504 6C01000A 		beq	.L85
+ 1765              	.LVL3:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1766              		.loc 1 286 0
+ 1767 0508 0130D4E5 		ldrb	r3, [r4, #1]	@ zero_extendqisi2
+ 1768 050c 010053E3 		cmp	r3, #1
+ 1769 0510 4300000A 		beq	.L49
+ 1770              	.L94:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1771              		.loc 1 291 0
+ 1772 0514 020053E3 		cmp	r3, #2
+ 1773 0518 5A01000A 		beq	.L86
+ 1774              	.LVL4:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1775              		.loc 1 286 0
+ 1776 051c 0230D4E5 		ldrb	r3, [r4, #2]	@ zero_extendqisi2
+ 1777 0520 010053E3 		cmp	r3, #1
+ 1778 0524 5600000A 		beq	.L51
+ 1779              	.L95:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1780              		.loc 1 291 0
+ 1781 0528 020053E3 		cmp	r3, #2
+ 1782 052c 4801000A 		beq	.L87
+ 1783              	.LVL5:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1784              		.loc 1 286 0
+ 1785 0530 0330D4E5 		ldrb	r3, [r4, #3]	@ zero_extendqisi2
+ 1786 0534 010053E3 		cmp	r3, #1
+ 1787 0538 6900000A 		beq	.L53
+ 1788              	.L96:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1789              		.loc 1 291 0
+ 1790 053c 020053E3 		cmp	r3, #2
+ 1791 0540 3601000A 		beq	.L88
+ 1792              	.LVL6:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1793              		.loc 1 286 0
+ 1794 0544 0430D4E5 		ldrb	r3, [r4, #4]	@ zero_extendqisi2
+ 1795 0548 010053E3 		cmp	r3, #1
+ 1796 054c 7C00000A 		beq	.L55
+ 1797              	.L97:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1798              		.loc 1 291 0
+ 1799 0550 020053E3 		cmp	r3, #2
+ 1800 0554 2401000A 		beq	.L89
+ 1801              	.LVL7:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1802              		.loc 1 286 0
+ 1803 0558 0530D4E5 		ldrb	r3, [r4, #5]	@ zero_extendqisi2
+ 1804 055c 010053E3 		cmp	r3, #1
+ 1805 0560 8F00000A 		beq	.L57
+ 1806              	.L98:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1807              		.loc 1 291 0
+ 1808 0564 020053E3 		cmp	r3, #2
+ 1809 0568 1201000A 		beq	.L90
+ 1810              	.LVL8:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1811              		.loc 1 286 0
+ 1812 056c 0630D4E5 		ldrb	r3, [r4, #6]	@ zero_extendqisi2
+ 1813 0570 010053E3 		cmp	r3, #1
+ 1814 0574 A200000A 		beq	.L59
+ 1815              	.L99:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1816              		.loc 1 291 0
+ 1817 0578 020053E3 		cmp	r3, #2
+ 1818 057c 0001000A 		beq	.L91
+ 1819              	.LVL9:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1820              		.loc 1 286 0
+ 1821 0580 0730D4E5 		ldrb	r3, [r4, #7]	@ zero_extendqisi2
+ 1822 0584 010053E3 		cmp	r3, #1
+ 1823 0588 B500000A 		beq	.L61
+ 1824              	.L100:
+ 291:../pantalla.c **** 					}else if(cambios[i][j] == 2){
+ 1825              		.loc 1 291 0
+ 1826 058c 020053E3 		cmp	r3, #2
+ 1827 0590 EE00000A 		beq	.L92
+ 1828              	.L62:
+ 1829              	.LVL10:
+ 290:../pantalla.c **** 						ncambios--;
+ 1830              		.loc 1 290 0
+ 1831 0594 192086E2 		add	r2, r6, #25
+ 1832 0598 0268A0E1 		mov	r6, r2, asl #16
+ 1833 059c 191087E2 		add	r1, r7, #25
+ 1834 05a0 2668A0E1 		mov	r6, r6, lsr #16
+ 1835 05a4 0178A0E1 		mov	r7, r1, asl #16
+ 284:../pantalla.c **** 			for (i = 0; i < DIM; i++){
+ 1836              		.loc 1 284 0
+ 1837 05a8 D20056E3 		cmp	r6, #210
+ 290:../pantalla.c **** 						ncambios--;
+ 1838              		.loc 1 290 0
+ 1839 05ac 084084E2 		add	r4, r4, #8
+ 1840 05b0 2778A0E1 		mov	r7, r7, lsr #16
+ 284:../pantalla.c **** 			for (i = 0; i < DIM; i++){
+ 1841              		.loc 1 284 0
+ 1842 05b4 C000000A 		beq	.L46
+ 1843              	.LVL11:
+ 1844              	.L63:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1845              		.loc 1 286 0 discriminator 1
+ 1846 05b8 0030D4E5 		ldrb	r3, [r4, #0]	@ zero_extendqisi2
+ 1847 05bc 010053E3 		cmp	r3, #1
+ 1848 05c0 CEFFFF1A 		bne	.L93
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 1849              		.loc 1 287 0
+ 1850 05c4 0638A0E1 		mov	r3, r6, asl #16
+ 1851 05c8 07E8A0E1 		mov	lr, r7, asl #16
+ 1852 05cc 4318A0E1 		mov	r1, r3, asr #16
+ 1853 05d0 7800A0E3 		mov	r0, #120
+ 1854 05d4 8F20A0E3 		mov	r2, #143
+ 1855 05d8 4E38A0E1 		mov	r3, lr, asr #16
+ 1856 05dc 0090A0E3 		mov	r9, #0
+ 1857 05e0 00908DE5 		str	r9, [sp, #0]
+ 1858 05e4 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1859              		.loc 1 288 0
+ 1860 05e8 341D9FE5 		ldr	r1, .L120+16
+ 1861 05ec 0C0098E8 		ldmia	r8, {r2, r3}
+ 1862 05f0 030091E8 		ldmia	r1, {r0, r1}
+ 1863              	.L75:
+ 1864 05f4 0DE0A0E1 		mov	lr, sp
+ 1865 05f8 03008EE8 		stmia	lr, {r0, r1}
+ 1866 05fc 7800A0E3 		mov	r0, #120
+ 1867 0600 0610A0E1 		mov	r1, r6
+ 1868 0604 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 1869              		.loc 1 290 0
+ 1870 0608 80C095E5 		ldr	ip, [r5, #128]
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1871              		.loc 1 286 0
+ 1872 060c 0130D4E5 		ldrb	r3, [r4, #1]	@ zero_extendqisi2
+ 290:../pantalla.c **** 						ncambios--;
+ 1873              		.loc 1 290 0
+ 1874 0610 01004CE2 		sub	r0, ip, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1875              		.loc 1 286 0
+ 1876 0614 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 1877              		.loc 1 289 0
+ 1878 0618 0090C4E5 		strb	r9, [r4, #0]
+ 290:../pantalla.c **** 						ncambios--;
+ 1879              		.loc 1 290 0
+ 1880 061c 800085E5 		str	r0, [r5, #128]
+ 1881              	.LVL12:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1882              		.loc 1 286 0
+ 1883 0620 BBFFFF1A 		bne	.L94
+ 1884              	.L49:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 1885              		.loc 1 287 0
+ 1886 0624 06E8A0E1 		mov	lr, r6, asl #16
+ 1887 0628 07C8A0E1 		mov	ip, r7, asl #16
+ 1888 062c 9100A0E3 		mov	r0, #145
+ 1889 0630 4E18A0E1 		mov	r1, lr, asr #16
+ 1890 0634 A820A0E3 		mov	r2, #168
+ 1891 0638 4C38A0E1 		mov	r3, ip, asr #16
+ 1892 063c 0090A0E3 		mov	r9, #0
+ 1893 0640 00908DE5 		str	r9, [sp, #0]
+ 1894 0644 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1895              		.loc 1 288 0
+ 1896 0648 D40C9FE5 		ldr	r0, .L120+16
+ 1897 064c 0C0098E8 		ldmia	r8, {r2, r3}
+ 1898 0650 030090E8 		ldmia	r0, {r0, r1}
+ 1899              	.L76:
+ 1900 0654 0DC0A0E1 		mov	ip, sp
+ 1901 0658 03008CE8 		stmia	ip, {r0, r1}
+ 1902 065c 9100A0E3 		mov	r0, #145
+ 1903 0660 0610A0E1 		mov	r1, r6
+ 1904 0664 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 1905              		.loc 1 290 0
+ 1906 0668 803095E5 		ldr	r3, [r5, #128]
+ 1907 066c 012043E2 		sub	r2, r3, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1908              		.loc 1 286 0
+ 1909 0670 0230D4E5 		ldrb	r3, [r4, #2]	@ zero_extendqisi2
+ 1910 0674 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 1911              		.loc 1 289 0
+ 1912 0678 0190C4E5 		strb	r9, [r4, #1]
+ 290:../pantalla.c **** 						ncambios--;
+ 1913              		.loc 1 290 0
+ 1914 067c 802085E5 		str	r2, [r5, #128]
+ 1915              	.LVL13:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1916              		.loc 1 286 0
+ 1917 0680 A8FFFF1A 		bne	.L95
+ 1918              	.L51:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 1919              		.loc 1 287 0
+ 1920 0684 06C8A0E1 		mov	ip, r6, asl #16
+ 1921 0688 0738A0E1 		mov	r3, r7, asl #16
+ 1922 068c AA00A0E3 		mov	r0, #170
+ 1923 0690 4C18A0E1 		mov	r1, ip, asr #16
+ 1924 0694 C120A0E3 		mov	r2, #193
+ 1925 0698 4338A0E1 		mov	r3, r3, asr #16
+ 1926 069c 0090A0E3 		mov	r9, #0
+ 1927 06a0 00908DE5 		str	r9, [sp, #0]
+ 1928 06a4 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1929              		.loc 1 288 0
+ 1930 06a8 740C9FE5 		ldr	r0, .L120+16
+ 1931 06ac 0C0098E8 		ldmia	r8, {r2, r3}
+ 1932 06b0 030090E8 		ldmia	r0, {r0, r1}
+ 1933              	.L77:
+ 1934 06b4 0DE0A0E1 		mov	lr, sp
+ 1935 06b8 03008EE8 		stmia	lr, {r0, r1}
+ 1936 06bc 0610A0E1 		mov	r1, r6
+ 1937 06c0 AA00A0E3 		mov	r0, #170
+ 1938 06c4 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 1939              		.loc 1 290 0
+ 1940 06c8 802095E5 		ldr	r2, [r5, #128]
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1941              		.loc 1 286 0
+ 1942 06cc 0330D4E5 		ldrb	r3, [r4, #3]	@ zero_extendqisi2
+ 290:../pantalla.c **** 						ncambios--;
+ 1943              		.loc 1 290 0
+ 1944 06d0 011042E2 		sub	r1, r2, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1945              		.loc 1 286 0
+ 1946 06d4 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 1947              		.loc 1 289 0
+ 1948 06d8 0290C4E5 		strb	r9, [r4, #2]
+ 290:../pantalla.c **** 						ncambios--;
+ 1949              		.loc 1 290 0
+ 1950 06dc 801085E5 		str	r1, [r5, #128]
+ 1951              	.LVL14:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1952              		.loc 1 286 0
+ 1953 06e0 95FFFF1A 		bne	.L96
+ 1954              	.L53:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 1955              		.loc 1 287 0
+ 1956 06e4 0628A0E1 		mov	r2, r6, asl #16
+ 1957 06e8 07E8A0E1 		mov	lr, r7, asl #16
+ 1958 06ec 4218A0E1 		mov	r1, r2, asr #16
+ 1959 06f0 C300A0E3 		mov	r0, #195
+ 1960 06f4 DA20A0E3 		mov	r2, #218
+ 1961 06f8 4E38A0E1 		mov	r3, lr, asr #16
+ 1962 06fc 0090A0E3 		mov	r9, #0
+ 1963 0700 00908DE5 		str	r9, [sp, #0]
+ 1964 0704 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1965              		.loc 1 288 0
+ 1966 0708 141C9FE5 		ldr	r1, .L120+16
+ 1967 070c 0C0098E8 		ldmia	r8, {r2, r3}
+ 1968 0710 030091E8 		ldmia	r1, {r0, r1}
+ 1969              	.L78:
+ 1970 0714 0DC0A0E1 		mov	ip, sp
+ 1971 0718 03008CE8 		stmia	ip, {r0, r1}
+ 1972 071c C300A0E3 		mov	r0, #195
+ 1973 0720 0610A0E1 		mov	r1, r6
+ 1974 0724 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 1975              		.loc 1 290 0
+ 1976 0728 803095E5 		ldr	r3, [r5, #128]
+ 1977 072c 010043E2 		sub	r0, r3, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1978              		.loc 1 286 0
+ 1979 0730 0430D4E5 		ldrb	r3, [r4, #4]	@ zero_extendqisi2
+ 1980 0734 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 1981              		.loc 1 289 0
+ 1982 0738 0390C4E5 		strb	r9, [r4, #3]
+ 290:../pantalla.c **** 						ncambios--;
+ 1983              		.loc 1 290 0
+ 1984 073c 800085E5 		str	r0, [r5, #128]
+ 1985              	.LVL15:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 1986              		.loc 1 286 0
+ 1987 0740 82FFFF1A 		bne	.L97
+ 1988              	.L55:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 1989              		.loc 1 287 0
+ 1990 0744 06C8A0E1 		mov	ip, r6, asl #16
+ 1991 0748 0738A0E1 		mov	r3, r7, asl #16
+ 1992 074c DC00A0E3 		mov	r0, #220
+ 1993 0750 4C18A0E1 		mov	r1, ip, asr #16
+ 1994 0754 F320A0E3 		mov	r2, #243
+ 1995 0758 4338A0E1 		mov	r3, r3, asr #16
+ 1996 075c 0090A0E3 		mov	r9, #0
+ 1997 0760 00908DE5 		str	r9, [sp, #0]
+ 1998 0764 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 1999              		.loc 1 288 0
+ 2000 0768 B40B9FE5 		ldr	r0, .L120+16
+ 2001 076c 0C0098E8 		ldmia	r8, {r2, r3}
+ 2002 0770 030090E8 		ldmia	r0, {r0, r1}
+ 2003              	.L79:
+ 2004 0774 0DE0A0E1 		mov	lr, sp
+ 2005 0778 03008EE8 		stmia	lr, {r0, r1}
+ 2006 077c 0610A0E1 		mov	r1, r6
+ 2007 0780 DC00A0E3 		mov	r0, #220
+ 2008 0784 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 2009              		.loc 1 290 0
+ 2010 0788 802095E5 		ldr	r2, [r5, #128]
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2011              		.loc 1 286 0
+ 2012 078c 0530D4E5 		ldrb	r3, [r4, #5]	@ zero_extendqisi2
+ 290:../pantalla.c **** 						ncambios--;
+ 2013              		.loc 1 290 0
+ 2014 0790 011042E2 		sub	r1, r2, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2015              		.loc 1 286 0
+ 2016 0794 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 2017              		.loc 1 289 0
+ 2018 0798 0490C4E5 		strb	r9, [r4, #4]
+ 290:../pantalla.c **** 						ncambios--;
+ 2019              		.loc 1 290 0
+ 2020 079c 801085E5 		str	r1, [r5, #128]
+ 2021              	.LVL16:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2022              		.loc 1 286 0
+ 2023 07a0 6FFFFF1A 		bne	.L98
+ 2024              	.L57:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2025              		.loc 1 287 0
+ 2026 07a4 0628A0E1 		mov	r2, r6, asl #16
+ 2027 07a8 07E8A0E1 		mov	lr, r7, asl #16
+ 2028 07ac 4218A0E1 		mov	r1, r2, asr #16
+ 2029 07b0 F500A0E3 		mov	r0, #245
+ 2030 07b4 432FA0E3 		mov	r2, #268
+ 2031 07b8 4E38A0E1 		mov	r3, lr, asr #16
+ 2032 07bc 0090A0E3 		mov	r9, #0
+ 2033 07c0 00908DE5 		str	r9, [sp, #0]
+ 2034 07c4 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2035              		.loc 1 288 0
+ 2036 07c8 541B9FE5 		ldr	r1, .L120+16
+ 2037 07cc 0C0098E8 		ldmia	r8, {r2, r3}
+ 2038 07d0 030091E8 		ldmia	r1, {r0, r1}
+ 2039              	.L80:
+ 2040 07d4 0DC0A0E1 		mov	ip, sp
+ 2041 07d8 03008CE8 		stmia	ip, {r0, r1}
+ 2042 07dc F500A0E3 		mov	r0, #245
+ 2043 07e0 0610A0E1 		mov	r1, r6
+ 2044 07e4 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 2045              		.loc 1 290 0
+ 2046 07e8 803095E5 		ldr	r3, [r5, #128]
+ 2047 07ec 010043E2 		sub	r0, r3, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2048              		.loc 1 286 0
+ 2049 07f0 0630D4E5 		ldrb	r3, [r4, #6]	@ zero_extendqisi2
+ 2050 07f4 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 2051              		.loc 1 289 0
+ 2052 07f8 0590C4E5 		strb	r9, [r4, #5]
+ 290:../pantalla.c **** 						ncambios--;
+ 2053              		.loc 1 290 0
+ 2054 07fc 800085E5 		str	r0, [r5, #128]
+ 2055              	.LVL17:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2056              		.loc 1 286 0
+ 2057 0800 5CFFFF1A 		bne	.L99
+ 2058              	.L59:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2059              		.loc 1 287 0
+ 2060 0804 06C8A0E1 		mov	ip, r6, asl #16
+ 2061 0808 0738A0E1 		mov	r3, r7, asl #16
+ 2062 080c 140B9FE5 		ldr	r0, .L120+20
+ 2063 0810 4C18A0E1 		mov	r1, ip, asr #16
+ 2064 0814 102B9FE5 		ldr	r2, .L120+24
+ 2065 0818 4338A0E1 		mov	r3, r3, asr #16
+ 2066 081c 0090A0E3 		mov	r9, #0
+ 2067 0820 00908DE5 		str	r9, [sp, #0]
+ 2068 0824 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2069              		.loc 1 288 0
+ 2070 0828 F40A9FE5 		ldr	r0, .L120+16
+ 2071 082c 0C0098E8 		ldmia	r8, {r2, r3}
+ 2072 0830 030090E8 		ldmia	r0, {r0, r1}
+ 2073              	.L81:
+ 2074 0834 0DE0A0E1 		mov	lr, sp
+ 2075 0838 03008EE8 		stmia	lr, {r0, r1}
+ 2076 083c 0610A0E1 		mov	r1, r6
+ 2077 0840 E00A9FE5 		ldr	r0, .L120+20
+ 2078 0844 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 2079              		.loc 1 290 0
+ 2080 0848 802095E5 		ldr	r2, [r5, #128]
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2081              		.loc 1 286 0
+ 2082 084c 0730D4E5 		ldrb	r3, [r4, #7]	@ zero_extendqisi2
+ 290:../pantalla.c **** 						ncambios--;
+ 2083              		.loc 1 290 0
+ 2084 0850 011042E2 		sub	r1, r2, #1
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2085              		.loc 1 286 0
+ 2086 0854 010053E3 		cmp	r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 2087              		.loc 1 289 0
+ 2088 0858 0690C4E5 		strb	r9, [r4, #6]
+ 290:../pantalla.c **** 						ncambios--;
+ 2089              		.loc 1 290 0
+ 2090 085c 801085E5 		str	r1, [r5, #128]
+ 2091              	.LVL18:
+ 286:../pantalla.c **** 					if(cambios[i][j] == 1){
+ 2092              		.loc 1 286 0
+ 2093 0860 49FFFF1A 		bne	.L100
+ 2094              	.L61:
+ 287:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2095              		.loc 1 287 0
+ 2096 0864 0628A0E1 		mov	r2, r6, asl #16
+ 2097 0868 07E8A0E1 		mov	lr, r7, asl #16
+ 2098 086c 4218A0E1 		mov	r1, r2, asr #16
+ 2099 0870 B80A9FE5 		ldr	r0, .L120+28
+ 2100 0874 B82A9FE5 		ldr	r2, .L120+32
+ 2101 0878 4E38A0E1 		mov	r3, lr, asr #16
+ 2102 087c 0090A0E3 		mov	r9, #0
+ 2103 0880 00908DE5 		str	r9, [sp, #0]
+ 2104 0884 FEFFFFEB 		bl	LcdClrRect
+ 288:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2105              		.loc 1 288 0
+ 2106 0888 941A9FE5 		ldr	r1, .L120+16
+ 2107 088c 0C0098E8 		ldmia	r8, {r2, r3}
+ 2108 0890 030091E8 		ldmia	r1, {r0, r1}
+ 2109              	.L82:
+ 2110 0894 0DC0A0E1 		mov	ip, sp
+ 2111 0898 03008CE8 		stmia	ip, {r0, r1}
+ 2112 089c 8C0A9FE5 		ldr	r0, .L120+28
+ 2113 08a0 0610A0E1 		mov	r1, r6
+ 2114 08a4 FEFFFFEB 		bl	BitmapView
+ 290:../pantalla.c **** 						ncambios--;
+ 2115              		.loc 1 290 0
+ 2116 08a8 803095E5 		ldr	r3, [r5, #128]
+ 2117 08ac 010043E2 		sub	r0, r3, #1
+ 289:../pantalla.c **** 						cambios[i][j]=0;
+ 2118              		.loc 1 289 0
+ 2119 08b0 0790C4E5 		strb	r9, [r4, #7]
+ 290:../pantalla.c **** 						ncambios--;
+ 2120              		.loc 1 290 0
+ 2121 08b4 800085E5 		str	r0, [r5, #128]
+ 2122 08b8 35FFFFEA 		b	.L62
+ 2123              	.LVL19:
+ 2124              	.L46:
+ 294:../pantalla.c **** 						cambios[i][j]=0;
+ 295:../pantalla.c **** 						ncambios--;
+ 296:../pantalla.c **** 					}
+ 297:../pantalla.c **** 				}
+ 298:../pantalla.c **** 			}
+ 299:../pantalla.c **** 		}
+ 300:../pantalla.c **** 
+ 301:../pantalla.c **** 		//FICHA GRIS
+ 302:../pantalla.c **** 		if((fMov!=oldfMov)|(cMov!=oldcMov)){
+ 2125              		.loc 1 302 0
+ 2126 08bc D44095E5 		ldr	r4, [r5, #212]
+ 2127 08c0 84C095E5 		ldr	ip, [r5, #132]
+ 2128 08c4 882095E5 		ldr	r2, [r5, #136]
+ 2129 08c8 D00095E5 		ldr	r0, [r5, #208]
+ 2130 08cc 00005CE1 		cmp	ip, r0
+ 2131 08d0 04005201 		cmpeq	r2, r4
+ 2132 08d4 404A9FE5 		ldr	r4, .L120+8
+ 2133 08d8 0200001A 		bne	.L101
+ 2134              	.L23:
+ 2135              	.LBE5:
+ 303:../pantalla.c **** 			BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 304:../pantalla.c **** 			oldfMov=fMov;						// colocamos la ficha gris,
+ 305:../pantalla.c **** 			oldcMov=cMov;						// guardamos su posicion,
+ 306:../pantalla.c **** 			underGris=toblerone[fMov][cMov];	// guardamos la ficha de debajo
+ 307:../pantalla.c **** 		}
+ 308:../pantalla.c **** 	}
+ 309:../pantalla.c **** }
+ 2136              		.loc 1 309 0
+ 2137 08dc 28D04BE2 		sub	sp, fp, #40
+ 2138 08e0 F06F9DE8 		ldmfd	sp, {r4, r5, r6, r7, r8, r9, sl, fp, sp, lr}
+ 2139 08e4 1EFF2FE1 		bx	lr
+ 2140              	.L101:
+ 2141              	.LBB6:
+ 303:../pantalla.c **** 			BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 2142              		.loc 1 303 0
+ 2143 08e8 483A9FE5 		ldr	r3, .L120+36
+ 2144 08ec 0C018CE0 		add	r0, ip, ip, asl #2
+ 2145 08f0 081083E2 		add	r1, r3, #8
+ 2146 08f4 022182E0 		add	r2, r2, r2, asl #2
+ 2147 08f8 00C180E0 		add	ip, r0, r0, asl #2
+ 2148 08fc 030091E8 		ldmia	r1, {r0, r1}
+ 2149 0900 02E182E0 		add	lr, r2, r2, asl #2
+ 2150 0904 0D20A0E1 		mov	r2, sp
+ 2151 0908 030082E8 		stmia	r2, {r0, r1}
+ 2152 090c 78E08EE2 		add	lr, lr, #120
+ 2153 0910 0AC08CE2 		add	ip, ip, #10
+ 2154 0914 0CC8A0E1 		mov	ip, ip, asl #16
+ 2155 0918 0EE8A0E1 		mov	lr, lr, asl #16
+ 2156 091c 0C0093E8 		ldmia	r3, {r2, r3}
+ 2157 0920 2C18A0E1 		mov	r1, ip, lsr #16
+ 2158 0924 2E08A0E1 		mov	r0, lr, lsr #16
+ 2159 0928 FEFFFFEB 		bl	BitmapView
+ 304:../pantalla.c **** 			oldfMov=fMov;						// colocamos la ficha gris,
+ 2160              		.loc 1 304 0
+ 2161 092c 842084E2 		add	r2, r4, #132
+ 2162 0930 0C0092E8 		ldmia	r2, {r2, r3}	@ phole ldm
+ 306:../pantalla.c **** 			underGris=toblerone[fMov][cMov];	// guardamos la ficha de debajo
+ 2163              		.loc 1 306 0
+ 2164 0934 820184E0 		add	r0, r4, r2, asl #3
+ 2165 0938 031080E0 		add	r1, r0, r3
+ 2166 093c 90C0D1E5 		ldrb	ip, [r1, #144]	@ zero_extendqisi2
+ 304:../pantalla.c **** 			oldfMov=fMov;						// colocamos la ficha gris,
+ 2167              		.loc 1 304 0
+ 2168 0940 D02084E5 		str	r2, [r4, #208]
+ 305:../pantalla.c **** 			oldcMov=cMov;						// guardamos su posicion,
+ 2169              		.loc 1 305 0
+ 2170 0944 D43084E5 		str	r3, [r4, #212]
+ 306:../pantalla.c **** 			underGris=toblerone[fMov][cMov];	// guardamos la ficha de debajo
+ 2171              		.loc 1 306 0
+ 2172 0948 8CC0C4E5 		strb	ip, [r4, #140]
+ 2173 094c E2FFFFEA 		b	.L23
+ 2174              	.LVL20:
+ 2175              	.L92:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2176              		.loc 1 292 0
+ 2177 0950 06C8A0E1 		mov	ip, r6, asl #16
+ 2178 0954 0738A0E1 		mov	r3, r7, asl #16
+ 2179 0958 D0099FE5 		ldr	r0, .L120+28
+ 2180 095c 4C18A0E1 		mov	r1, ip, asr #16
+ 2181 0960 CC299FE5 		ldr	r2, .L120+32
+ 2182 0964 4338A0E1 		mov	r3, r3, asr #16
+ 2183 0968 0090A0E3 		mov	r9, #0
+ 2184 096c 00908DE5 		str	r9, [sp, #0]
+ 2185 0970 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2186              		.loc 1 293 0
+ 2187 0974 D4099FE5 		ldr	r0, .L120+60
+ 2188 0978 0C009AE8 		ldmia	sl, {r2, r3}
+ 2189 097c 030090E8 		ldmia	r0, {r0, r1}
+ 2190 0980 C3FFFFEA 		b	.L82
+ 2191              	.LVL21:
+ 2192              	.L91:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2193              		.loc 1 292 0
+ 2194 0984 0628A0E1 		mov	r2, r6, asl #16
+ 2195 0988 07E8A0E1 		mov	lr, r7, asl #16
+ 2196 098c 4218A0E1 		mov	r1, r2, asr #16
+ 2197 0990 90099FE5 		ldr	r0, .L120+20
+ 2198 0994 90299FE5 		ldr	r2, .L120+24
+ 2199 0998 4E38A0E1 		mov	r3, lr, asr #16
+ 2200 099c 0090A0E3 		mov	r9, #0
+ 2201 09a0 00908DE5 		str	r9, [sp, #0]
+ 2202 09a4 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2203              		.loc 1 293 0
+ 2204 09a8 A0199FE5 		ldr	r1, .L120+60
+ 2205 09ac 0C009AE8 		ldmia	sl, {r2, r3}
+ 2206 09b0 030091E8 		ldmia	r1, {r0, r1}
+ 2207 09b4 9EFFFFEA 		b	.L81
+ 2208              	.LVL22:
+ 2209              	.L90:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2210              		.loc 1 292 0
+ 2211 09b8 06C8A0E1 		mov	ip, r6, asl #16
+ 2212 09bc 0738A0E1 		mov	r3, r7, asl #16
+ 2213 09c0 F500A0E3 		mov	r0, #245
+ 2214 09c4 4C18A0E1 		mov	r1, ip, asr #16
+ 2215 09c8 432FA0E3 		mov	r2, #268
+ 2216 09cc 4338A0E1 		mov	r3, r3, asr #16
+ 2217 09d0 0090A0E3 		mov	r9, #0
+ 2218 09d4 00908DE5 		str	r9, [sp, #0]
+ 2219 09d8 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2220              		.loc 1 293 0
+ 2221 09dc 6C099FE5 		ldr	r0, .L120+60
+ 2222 09e0 0C009AE8 		ldmia	sl, {r2, r3}
+ 2223 09e4 030090E8 		ldmia	r0, {r0, r1}
+ 2224 09e8 79FFFFEA 		b	.L80
+ 2225              	.LVL23:
+ 2226              	.L89:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2227              		.loc 1 292 0
+ 2228 09ec 0628A0E1 		mov	r2, r6, asl #16
+ 2229 09f0 07E8A0E1 		mov	lr, r7, asl #16
+ 2230 09f4 4218A0E1 		mov	r1, r2, asr #16
+ 2231 09f8 DC00A0E3 		mov	r0, #220
+ 2232 09fc F320A0E3 		mov	r2, #243
+ 2233 0a00 4E38A0E1 		mov	r3, lr, asr #16
+ 2234 0a04 0090A0E3 		mov	r9, #0
+ 2235 0a08 00908DE5 		str	r9, [sp, #0]
+ 2236 0a0c FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2237              		.loc 1 293 0
+ 2238 0a10 38199FE5 		ldr	r1, .L120+60
+ 2239 0a14 0C009AE8 		ldmia	sl, {r2, r3}
+ 2240 0a18 030091E8 		ldmia	r1, {r0, r1}
+ 2241 0a1c 54FFFFEA 		b	.L79
+ 2242              	.LVL24:
+ 2243              	.L88:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2244              		.loc 1 292 0
+ 2245 0a20 06C8A0E1 		mov	ip, r6, asl #16
+ 2246 0a24 0738A0E1 		mov	r3, r7, asl #16
+ 2247 0a28 C300A0E3 		mov	r0, #195
+ 2248 0a2c 4C18A0E1 		mov	r1, ip, asr #16
+ 2249 0a30 DA20A0E3 		mov	r2, #218
+ 2250 0a34 4338A0E1 		mov	r3, r3, asr #16
+ 2251 0a38 0090A0E3 		mov	r9, #0
+ 2252 0a3c 00908DE5 		str	r9, [sp, #0]
+ 2253 0a40 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2254              		.loc 1 293 0
+ 2255 0a44 04099FE5 		ldr	r0, .L120+60
+ 2256 0a48 0C009AE8 		ldmia	sl, {r2, r3}
+ 2257 0a4c 030090E8 		ldmia	r0, {r0, r1}
+ 2258 0a50 2FFFFFEA 		b	.L78
+ 2259              	.LVL25:
+ 2260              	.L87:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2261              		.loc 1 292 0
+ 2262 0a54 0628A0E1 		mov	r2, r6, asl #16
+ 2263 0a58 07E8A0E1 		mov	lr, r7, asl #16
+ 2264 0a5c 4218A0E1 		mov	r1, r2, asr #16
+ 2265 0a60 AA00A0E3 		mov	r0, #170
+ 2266 0a64 C120A0E3 		mov	r2, #193
+ 2267 0a68 4E38A0E1 		mov	r3, lr, asr #16
+ 2268 0a6c 0090A0E3 		mov	r9, #0
+ 2269 0a70 00908DE5 		str	r9, [sp, #0]
+ 2270 0a74 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2271              		.loc 1 293 0
+ 2272 0a78 D0189FE5 		ldr	r1, .L120+60
+ 2273 0a7c 0C009AE8 		ldmia	sl, {r2, r3}
+ 2274 0a80 030091E8 		ldmia	r1, {r0, r1}
+ 2275 0a84 0AFFFFEA 		b	.L77
+ 2276              	.LVL26:
+ 2277              	.L86:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2278              		.loc 1 292 0
+ 2279 0a88 0618A0E1 		mov	r1, r6, asl #16
+ 2280 0a8c 0738A0E1 		mov	r3, r7, asl #16
+ 2281 0a90 9100A0E3 		mov	r0, #145
+ 2282 0a94 4118A0E1 		mov	r1, r1, asr #16
+ 2283 0a98 A820A0E3 		mov	r2, #168
+ 2284 0a9c 4338A0E1 		mov	r3, r3, asr #16
+ 2285 0aa0 0090A0E3 		mov	r9, #0
+ 2286 0aa4 00908DE5 		str	r9, [sp, #0]
+ 2287 0aa8 FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2288              		.loc 1 293 0
+ 2289 0aac 9C289FE5 		ldr	r2, .L120+60
+ 2290 0ab0 030092E8 		ldmia	r2, {r0, r1}
+ 2291 0ab4 0C009AE8 		ldmia	sl, {r2, r3}
+ 2292 0ab8 E5FEFFEA 		b	.L76
+ 2293              	.LVL27:
+ 2294              	.L85:
+ 292:../pantalla.c **** 						LcdClrRect(120+(j*25),10+(i*25),120+23+(j*25),10+23+(i*25), 0);
+ 2295              		.loc 1 292 0
+ 2296 0abc 0628A0E1 		mov	r2, r6, asl #16
+ 2297 0ac0 07C8A0E1 		mov	ip, r7, asl #16
+ 2298 0ac4 4218A0E1 		mov	r1, r2, asr #16
+ 2299 0ac8 7800A0E3 		mov	r0, #120
+ 2300 0acc 8F20A0E3 		mov	r2, #143
+ 2301 0ad0 4C38A0E1 		mov	r3, ip, asr #16
+ 2302 0ad4 0090A0E3 		mov	r9, #0
+ 2303 0ad8 00908DE5 		str	r9, [sp, #0]
+ 2304 0adc FEFFFFEB 		bl	LcdClrRect
+ 293:../pantalla.c **** 						BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2305              		.loc 1 293 0
+ 2306 0ae0 68389FE5 		ldr	r3, .L120+60
+ 2307 0ae4 030093E8 		ldmia	r3, {r0, r1}
+ 2308 0ae8 0C009AE8 		ldmia	sl, {r2, r3}
+ 2309 0aec C0FEFFEA 		b	.L75
+ 2310              	.LVL28:
+ 2311              	.L83:
+ 2312              	.LBE6:
+ 2313              	.LBB7:
+ 165:../pantalla.c **** 		tcalculos=0, tvolteos=0, nvolteos=0;
+ 2314              		.loc 1 165 0
+ 2315 0af0 24489FE5 		ldr	r4, .L120+8
+ 162:../pantalla.c **** 		primeraImpresion=0;
+ 2316              		.loc 1 162 0
+ 2317 0af4 0060A0E3 		mov	r6, #0
+ 2318 0af8 006088E5 		str	r6, [r8, #0]
+ 163:../pantalla.c **** 		Lcd_Clr();
+ 2319              		.loc 1 163 0
+ 2320 0afc FEFFFFEB 		bl	Lcd_Clr
+ 165:../pantalla.c **** 		tcalculos=0, tvolteos=0, nvolteos=0;
+ 2321              		.loc 1 165 0
+ 2322 0b00 186084E5 		str	r6, [r4, #24]
+ 2323 0b04 1C6084E5 		str	r6, [r4, #28]
+ 2324 0b08 206084E5 		str	r6, [r4, #32]
+ 166:../pantalla.c **** 		contador_multiplicador=0, tanterior=0, ttotal=0;
+ 2325              		.loc 1 166 0
+ 2326 0b0c 246084E5 		str	r6, [r4, #36]
+ 2327 0b10 286084E5 		str	r6, [r4, #40]
+ 2328 0b14 2C6084E5 		str	r6, [r4, #44]
+ 167:../pantalla.c **** 		tinicio_juego=timer2_leer()/1000000;
+ 2329              		.loc 1 167 0
+ 2330 0b18 FEFFFFEB 		bl	timer2_leer
+ 2331 0b1c F4379FE5 		ldr	r3, .L120+4
+ 2332 0b20 932085E0 		umull	r2, r5, r3, r0
+ 2333 0b24 25C9A0E1 		mov	ip, r5, lsr #18
+ 2334 0b28 30C084E5 		str	ip, [r4, #48]
+ 172:../pantalla.c **** 		Lcd_DspAscII6x8(0,9,BLACK,a);
+ 2335              		.loc 1 172 0
+ 2336 0b2c 453F88E2 		add	r3, r8, #276
+ 2337 0b30 0600A0E1 		mov	r0, r6
+ 2338 0b34 0910A0E3 		mov	r1, #9
+ 2339 0b38 0F20A0E3 		mov	r2, #15
+ 168:../pantalla.c **** 		contador_multiplicador=0;
+ 2340              		.loc 1 168 0
+ 2341 0b3c 246084E5 		str	r6, [r4, #36]
+ 172:../pantalla.c **** 		Lcd_DspAscII6x8(0,9,BLACK,a);
+ 2342              		.loc 1 172 0
+ 2343 0b40 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 174:../pantalla.c **** 		Lcd_DspAscII6x8(0,45,BLACK,b);
+ 2344              		.loc 1 174 0
+ 2345 0b44 0600A0E1 		mov	r0, r6
+ 2346 0b48 493F88E2 		add	r3, r8, #292
+ 2347 0b4c 2D10A0E3 		mov	r1, #45
+ 2348 0b50 0F20A0E3 		mov	r2, #15
+ 2349 0b54 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 176:../pantalla.c **** 		Lcd_DspAscII6x8(0,81,BLACK,c);
+ 2350              		.loc 1 176 0
+ 2351 0b58 0600A0E1 		mov	r0, r6
+ 2352 0b5c 4D3F88E2 		add	r3, r8, #308
+ 2353 0b60 5110A0E3 		mov	r1, #81
+ 2354 0b64 0F20A0E3 		mov	r2, #15
+ 2355 0b68 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 178:../pantalla.c **** 		Lcd_DspAscII6x8(0,117,BLACK,d);
+ 2356              		.loc 1 178 0
+ 2357 0b6c 513F88E2 		add	r3, r8, #324
+ 2358 0b70 0600A0E1 		mov	r0, r6
+ 2359 0b74 0F20A0E3 		mov	r2, #15
+ 2360 0b78 7510A0E3 		mov	r1, #117
+ 2361 0b7c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 179:../pantalla.c **** 		itoa(ttotal,snum);
+ 2362              		.loc 1 179 0
+ 2363 0b80 341084E2 		add	r1, r4, #52
+ 2364 0b84 2C0094E5 		ldr	r0, [r4, #44]
+ 2365 0b88 FEFFFFEB 		bl	itoa
+ 180:../pantalla.c **** 		Lcd_DspAscII6x8(0,21,BLACK,snum);
+ 2366              		.loc 1 180 0
+ 2367 0b8c 0600A0E1 		mov	r0, r6
+ 2368 0b90 0F20A0E3 		mov	r2, #15
+ 2369 0b94 343084E2 		add	r3, r4, #52
+ 2370 0b98 1510A0E3 		mov	r1, #21
+ 2371 0b9c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 181:../pantalla.c **** 		itoa(tcalculos,snum);
+ 2372              		.loc 1 181 0
+ 2373 0ba0 341084E2 		add	r1, r4, #52
+ 2374 0ba4 180094E5 		ldr	r0, [r4, #24]
+ 2375 0ba8 FEFFFFEB 		bl	itoa
+ 182:../pantalla.c **** 		Lcd_DspAscII6x8(0,57,BLACK,snum);
+ 2376              		.loc 1 182 0
+ 2377 0bac 0600A0E1 		mov	r0, r6
+ 2378 0bb0 0F20A0E3 		mov	r2, #15
+ 2379 0bb4 343084E2 		add	r3, r4, #52
+ 2380 0bb8 3910A0E3 		mov	r1, #57
+ 2381 0bbc FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 183:../pantalla.c **** 		itoa(tvolteos,snum);
+ 2382              		.loc 1 183 0
+ 2383 0bc0 341084E2 		add	r1, r4, #52
+ 2384 0bc4 1C0094E5 		ldr	r0, [r4, #28]
+ 2385 0bc8 FEFFFFEB 		bl	itoa
+ 184:../pantalla.c **** 		Lcd_DspAscII6x8(0,93,BLACK,snum);
+ 2386              		.loc 1 184 0
+ 2387 0bcc 0600A0E1 		mov	r0, r6
+ 2388 0bd0 0F20A0E3 		mov	r2, #15
+ 2389 0bd4 343084E2 		add	r3, r4, #52
+ 2390 0bd8 5D10A0E3 		mov	r1, #93
+ 2391 0bdc FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 185:../pantalla.c **** 		itoa(nvolteos,snum);
+ 2392              		.loc 1 185 0
+ 2393 0be0 341084E2 		add	r1, r4, #52
+ 2394 0be4 200094E5 		ldr	r0, [r4, #32]
+ 2395 0be8 FEFFFFEB 		bl	itoa
+ 186:../pantalla.c **** 		Lcd_DspAscII6x8(0,129,BLACK,snum);
+ 2396              		.loc 1 186 0
+ 2397 0bec 0600A0E1 		mov	r0, r6
+ 2398 0bf0 0F20A0E3 		mov	r2, #15
+ 2399 0bf4 8110A0E3 		mov	r1, #129
+ 2400 0bf8 343084E2 		add	r3, r4, #52
+ 189:../pantalla.c **** 		Lcd_Draw_Box(0,211,117,239,BLACK);
+ 2401              		.loc 1 189 0
+ 2402 0bfc 0250A0E1 		mov	r5, r2
+ 186:../pantalla.c **** 		Lcd_DspAscII6x8(0,129,BLACK,snum);
+ 2403              		.loc 1 186 0
+ 2404 0c00 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 189:../pantalla.c **** 		Lcd_Draw_Box(0,211,117,239,BLACK);
+ 2405              		.loc 1 189 0
+ 2406 0c04 0600A0E1 		mov	r0, r6
+ 2407 0c08 D310A0E3 		mov	r1, #211
+ 2408 0c0c 7520A0E3 		mov	r2, #117
+ 2409 0c10 EF30A0E3 		mov	r3, #239
+ 2410 0c14 00508DE5 		str	r5, [sp, #0]
+ 2411 0c18 FEFFFFEB 		bl	Lcd_Draw_Box
+ 191:../pantalla.c **** 		Lcd_DspAscII6x8(31,221,BLACK,e);
+ 2412              		.loc 1 191 0
+ 2413 0c1c 0520A0E1 		mov	r2, r5
+ 2414 0c20 553F88E2 		add	r3, r8, #340
+ 2415 0c24 1F00A0E3 		mov	r0, #31
+ 2416 0c28 DD10A0E3 		mov	r1, #221
+ 2417 0c2c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 194:../pantalla.c **** 		Lcd_Draw_Box(119,211,319,239,BLACK);
+ 2418              		.loc 1 194 0
+ 2419 0c30 7700A0E3 		mov	r0, #119
+ 2420 0c34 D310A0E3 		mov	r1, #211
+ 2421 0c38 FC269FE5 		ldr	r2, .L120+40
+ 2422 0c3c EF30A0E3 		mov	r3, #239
+ 2423 0c40 00508DE5 		str	r5, [sp, #0]
+ 2424 0c44 FEFFFFEB 		bl	Lcd_Draw_Box
+ 196:../pantalla.c **** 		Lcd_DspAscII6x8(204,221,BLACK,f);
+ 2425              		.loc 1 196 0
+ 2426 0c48 0520A0E1 		mov	r2, r5
+ 2427 0c4c 163E88E2 		add	r3, r8, #352
+ 2428 0c50 DD10A0E3 		mov	r1, #221
+ 2429 0c54 CC00A0E3 		mov	r0, #204
+ 2430 0c58 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2431              	.LVL29:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2432              		.loc 1 200 0
+ 2433 0c5c 0600A0E1 		mov	r0, r6
+ 2434 0c60 341084E2 		add	r1, r4, #52
+ 2435 0c64 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2436              		.loc 1 201 0
+ 2437 0c68 0520A0E1 		mov	r2, r5
+ 2438 0c6c 343084E2 		add	r3, r4, #52
+ 2439 0c70 0610A0E1 		mov	r1, r6
+ 2440 0c74 8000A0E3 		mov	r0, #128
+ 2441 0c78 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2442              	.LVL30:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2443              		.loc 1 200 0
+ 2444 0c7c 0700A0E1 		mov	r0, r7
+ 2445 0c80 341084E2 		add	r1, r4, #52
+ 2446 0c84 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2447              		.loc 1 201 0
+ 2448 0c88 0520A0E1 		mov	r2, r5
+ 2449 0c8c 343084E2 		add	r3, r4, #52
+ 2450 0c90 0610A0E1 		mov	r1, r6
+ 2451 0c94 9900A0E3 		mov	r0, #153
+ 2452 0c98 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2453              	.LVL31:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2454              		.loc 1 200 0
+ 2455 0c9c 0200A0E3 		mov	r0, #2
+ 2456 0ca0 341084E2 		add	r1, r4, #52
+ 2457 0ca4 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2458              		.loc 1 201 0
+ 2459 0ca8 0520A0E1 		mov	r2, r5
+ 2460 0cac 343084E2 		add	r3, r4, #52
+ 2461 0cb0 0610A0E1 		mov	r1, r6
+ 2462 0cb4 B200A0E3 		mov	r0, #178
+ 2463 0cb8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2464              	.LVL32:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2465              		.loc 1 200 0
+ 2466 0cbc 0300A0E3 		mov	r0, #3
+ 2467 0cc0 341084E2 		add	r1, r4, #52
+ 2468 0cc4 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2469              		.loc 1 201 0
+ 2470 0cc8 0520A0E1 		mov	r2, r5
+ 2471 0ccc 343084E2 		add	r3, r4, #52
+ 2472 0cd0 0610A0E1 		mov	r1, r6
+ 2473 0cd4 CB00A0E3 		mov	r0, #203
+ 2474 0cd8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2475              	.LVL33:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2476              		.loc 1 200 0
+ 2477 0cdc 0400A0E3 		mov	r0, #4
+ 2478 0ce0 341084E2 		add	r1, r4, #52
+ 2479 0ce4 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2480              		.loc 1 201 0
+ 2481 0ce8 0520A0E1 		mov	r2, r5
+ 2482 0cec 343084E2 		add	r3, r4, #52
+ 2483 0cf0 0610A0E1 		mov	r1, r6
+ 2484 0cf4 E400A0E3 		mov	r0, #228
+ 2485 0cf8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2486              	.LVL34:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2487              		.loc 1 200 0
+ 2488 0cfc 0500A0E3 		mov	r0, #5
+ 2489 0d00 341084E2 		add	r1, r4, #52
+ 2490 0d04 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2491              		.loc 1 201 0
+ 2492 0d08 0520A0E1 		mov	r2, r5
+ 2493 0d0c 343084E2 		add	r3, r4, #52
+ 2494 0d10 0610A0E1 		mov	r1, r6
+ 2495 0d14 FD00A0E3 		mov	r0, #253
+ 2496 0d18 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2497              	.LVL35:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2498              		.loc 1 200 0
+ 2499 0d1c 0600A0E3 		mov	r0, #6
+ 2500 0d20 341084E2 		add	r1, r4, #52
+ 2501 0d24 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2502              		.loc 1 201 0
+ 2503 0d28 0520A0E1 		mov	r2, r5
+ 2504 0d2c 343084E2 		add	r3, r4, #52
+ 2505 0d30 0610A0E1 		mov	r1, r6
+ 2506 0d34 04069FE5 		ldr	r0, .L120+44
+ 2507 0d38 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2508              	.LVL36:
+ 200:../pantalla.c **** 			itoa(i,snum);
+ 2509              		.loc 1 200 0
+ 2510 0d3c 0700A0E3 		mov	r0, #7
+ 2511 0d40 341084E2 		add	r1, r4, #52
+ 2512 0d44 FEFFFFEB 		bl	itoa
+ 201:../pantalla.c **** 			Lcd_DspAscII6x8(128+25*i,0,BLACK,snum);
+ 2513              		.loc 1 201 0
+ 2514 0d48 0520A0E1 		mov	r2, r5
+ 2515 0d4c 343084E2 		add	r3, r4, #52
+ 2516 0d50 0610A0E1 		mov	r1, r6
+ 2517 0d54 E8059FE5 		ldr	r0, .L120+48
+ 2518 0d58 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2519              	.LVL37:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2520              		.loc 1 204 0
+ 2521 0d5c 0600A0E1 		mov	r0, r6
+ 2522 0d60 341084E2 		add	r1, r4, #52
+ 2523 0d64 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2524              		.loc 1 205 0
+ 2525 0d68 0520A0E1 		mov	r2, r5
+ 2526 0d6c 343084E2 		add	r3, r4, #52
+ 2527 0d70 1110A0E3 		mov	r1, #17
+ 2528 0d74 7000A0E3 		mov	r0, #112
+ 2529 0d78 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2530              	.LVL38:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2531              		.loc 1 204 0
+ 2532 0d7c 0700A0E1 		mov	r0, r7
+ 2533 0d80 341084E2 		add	r1, r4, #52
+ 2534 0d84 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2535              		.loc 1 205 0
+ 2536 0d88 0520A0E1 		mov	r2, r5
+ 2537 0d8c 343084E2 		add	r3, r4, #52
+ 2538 0d90 7000A0E3 		mov	r0, #112
+ 2539 0d94 2A10A0E3 		mov	r1, #42
+ 2540 0d98 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2541              	.LVL39:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2542              		.loc 1 204 0
+ 2543 0d9c 0200A0E3 		mov	r0, #2
+ 2544 0da0 341084E2 		add	r1, r4, #52
+ 2545 0da4 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2546              		.loc 1 205 0
+ 2547 0da8 0520A0E1 		mov	r2, r5
+ 2548 0dac 343084E2 		add	r3, r4, #52
+ 2549 0db0 7000A0E3 		mov	r0, #112
+ 2550 0db4 4310A0E3 		mov	r1, #67
+ 2551 0db8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2552              	.LVL40:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2553              		.loc 1 204 0
+ 2554 0dbc 0300A0E3 		mov	r0, #3
+ 2555 0dc0 341084E2 		add	r1, r4, #52
+ 2556 0dc4 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2557              		.loc 1 205 0
+ 2558 0dc8 0520A0E1 		mov	r2, r5
+ 2559 0dcc 343084E2 		add	r3, r4, #52
+ 2560 0dd0 7000A0E3 		mov	r0, #112
+ 2561 0dd4 5C10A0E3 		mov	r1, #92
+ 2562 0dd8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2563              	.LVL41:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2564              		.loc 1 204 0
+ 2565 0ddc 0400A0E3 		mov	r0, #4
+ 2566 0de0 341084E2 		add	r1, r4, #52
+ 2567 0de4 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2568              		.loc 1 205 0
+ 2569 0de8 0520A0E1 		mov	r2, r5
+ 2570 0dec 343084E2 		add	r3, r4, #52
+ 2571 0df0 7000A0E3 		mov	r0, #112
+ 2572 0df4 7510A0E3 		mov	r1, #117
+ 2573 0df8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2574              	.LVL42:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2575              		.loc 1 204 0
+ 2576 0dfc 0500A0E3 		mov	r0, #5
+ 2577 0e00 341084E2 		add	r1, r4, #52
+ 2578 0e04 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2579              		.loc 1 205 0
+ 2580 0e08 0520A0E1 		mov	r2, r5
+ 2581 0e0c 343084E2 		add	r3, r4, #52
+ 2582 0e10 7000A0E3 		mov	r0, #112
+ 2583 0e14 8E10A0E3 		mov	r1, #142
+ 2584 0e18 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2585              	.LVL43:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2586              		.loc 1 204 0
+ 2587 0e1c 0600A0E3 		mov	r0, #6
+ 2588 0e20 341084E2 		add	r1, r4, #52
+ 2589 0e24 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2590              		.loc 1 205 0
+ 2591 0e28 0520A0E1 		mov	r2, r5
+ 2592 0e2c 343084E2 		add	r3, r4, #52
+ 2593 0e30 7000A0E3 		mov	r0, #112
+ 2594 0e34 A710A0E3 		mov	r1, #167
+ 2595 0e38 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2596              	.LVL44:
+ 204:../pantalla.c **** 			itoa(i,snum);
+ 2597              		.loc 1 204 0
+ 2598 0e3c 0700A0E3 		mov	r0, #7
+ 2599 0e40 341084E2 		add	r1, r4, #52
+ 2600 0e44 FEFFFFEB 		bl	itoa
+ 205:../pantalla.c **** 			Lcd_DspAscII6x8(112,17+25*i,BLACK,snum);
+ 2601              		.loc 1 205 0
+ 2602 0e48 0520A0E1 		mov	r2, r5
+ 2603 0e4c 7000A0E3 		mov	r0, #112
+ 2604 0e50 C010A0E3 		mov	r1, #192
+ 2605 0e54 343084E2 		add	r3, r4, #52
+ 2606 0e58 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 2607              	.LVL45:
+ 209:../pantalla.c **** 		Lcd_Draw_Box(119, 9, 319, 209, 15);
+ 2608              		.loc 1 209 0
+ 2609 0e5c 7700A0E3 		mov	r0, #119
+ 2610 0e60 0910A0E3 		mov	r1, #9
+ 2611 0e64 D0249FE5 		ldr	r2, .L120+40
+ 2612 0e68 D130A0E3 		mov	r3, #209
+ 2613 0e6c 00508DE5 		str	r5, [sp, #0]
+ 2614 0e70 FEFFFFEB 		bl	Lcd_Draw_Box
+ 211:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 34 , 15, 1);
+ 2615              		.loc 1 211 0
+ 2616 0e74 0530A0E1 		mov	r3, r5
+ 2617 0e78 7700A0E3 		mov	r0, #119
+ 2618 0e7c B8149FE5 		ldr	r1, .L120+40
+ 2619 0e80 2220A0E3 		mov	r2, #34
+ 2620 0e84 00708DE5 		str	r7, [sp, #0]
+ 2621 0e88 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 212:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 59 , 15, 1);
+ 2622              		.loc 1 212 0
+ 2623 0e8c 0530A0E1 		mov	r3, r5
+ 2624 0e90 7700A0E3 		mov	r0, #119
+ 2625 0e94 A0149FE5 		ldr	r1, .L120+40
+ 2626 0e98 3B20A0E3 		mov	r2, #59
+ 2627 0e9c 00708DE5 		str	r7, [sp, #0]
+ 2628 0ea0 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 213:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 84 , 15, 1);
+ 2629              		.loc 1 213 0
+ 2630 0ea4 0530A0E1 		mov	r3, r5
+ 2631 0ea8 7700A0E3 		mov	r0, #119
+ 2632 0eac 88149FE5 		ldr	r1, .L120+40
+ 2633 0eb0 5420A0E3 		mov	r2, #84
+ 2634 0eb4 00708DE5 		str	r7, [sp, #0]
+ 2635 0eb8 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 214:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 109 , 15, 1);
+ 2636              		.loc 1 214 0
+ 2637 0ebc 0530A0E1 		mov	r3, r5
+ 2638 0ec0 7700A0E3 		mov	r0, #119
+ 2639 0ec4 70149FE5 		ldr	r1, .L120+40
+ 2640 0ec8 6D20A0E3 		mov	r2, #109
+ 2641 0ecc 00708DE5 		str	r7, [sp, #0]
+ 2642 0ed0 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 215:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 134 , 15, 1);
+ 2643              		.loc 1 215 0
+ 2644 0ed4 0530A0E1 		mov	r3, r5
+ 2645 0ed8 7700A0E3 		mov	r0, #119
+ 2646 0edc 58149FE5 		ldr	r1, .L120+40
+ 2647 0ee0 8620A0E3 		mov	r2, #134
+ 2648 0ee4 00708DE5 		str	r7, [sp, #0]
+ 2649 0ee8 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 216:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 159 , 15, 1);
+ 2650              		.loc 1 216 0
+ 2651 0eec 0530A0E1 		mov	r3, r5
+ 2652 0ef0 7700A0E3 		mov	r0, #119
+ 2653 0ef4 40149FE5 		ldr	r1, .L120+40
+ 2654 0ef8 9F20A0E3 		mov	r2, #159
+ 2655 0efc 00708DE5 		str	r7, [sp, #0]
+ 2656 0f00 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 217:../pantalla.c **** 		Lcd_Draw_HLine(119, 319 , 184 , 15, 1);
+ 2657              		.loc 1 217 0
+ 2658 0f04 0530A0E1 		mov	r3, r5
+ 2659 0f08 7700A0E3 		mov	r0, #119
+ 2660 0f0c 28149FE5 		ldr	r1, .L120+40
+ 2661 0f10 B820A0E3 		mov	r2, #184
+ 2662 0f14 00708DE5 		str	r7, [sp, #0]
+ 2663 0f18 FEFFFFEB 		bl	Lcd_Draw_HLine
+ 219:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 144, 15, 1);
+ 2664              		.loc 1 219 0
+ 2665 0f1c 0530A0E1 		mov	r3, r5
+ 2666 0f20 0900A0E3 		mov	r0, #9
+ 2667 0f24 D110A0E3 		mov	r1, #209
+ 2668 0f28 9020A0E3 		mov	r2, #144
+ 2669 0f2c 00708DE5 		str	r7, [sp, #0]
+ 2670 0f30 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 220:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 169, 15, 1);
+ 2671              		.loc 1 220 0
+ 2672 0f34 0530A0E1 		mov	r3, r5
+ 2673 0f38 0900A0E3 		mov	r0, #9
+ 2674 0f3c D110A0E3 		mov	r1, #209
+ 2675 0f40 A920A0E3 		mov	r2, #169
+ 2676 0f44 00708DE5 		str	r7, [sp, #0]
+ 2677 0f48 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 221:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 194, 15, 1);
+ 2678              		.loc 1 221 0
+ 2679 0f4c 0530A0E1 		mov	r3, r5
+ 2680 0f50 0900A0E3 		mov	r0, #9
+ 2681 0f54 D110A0E3 		mov	r1, #209
+ 2682 0f58 C220A0E3 		mov	r2, #194
+ 2683 0f5c 00708DE5 		str	r7, [sp, #0]
+ 2684 0f60 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 222:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 219, 15, 1);
+ 2685              		.loc 1 222 0
+ 2686 0f64 0530A0E1 		mov	r3, r5
+ 2687 0f68 0900A0E3 		mov	r0, #9
+ 2688 0f6c D110A0E3 		mov	r1, #209
+ 2689 0f70 DB20A0E3 		mov	r2, #219
+ 2690 0f74 00708DE5 		str	r7, [sp, #0]
+ 2691 0f78 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 223:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 244, 15, 1);
+ 2692              		.loc 1 223 0
+ 2693 0f7c 0530A0E1 		mov	r3, r5
+ 2694 0f80 0900A0E3 		mov	r0, #9
+ 2695 0f84 D110A0E3 		mov	r1, #209
+ 2696 0f88 F420A0E3 		mov	r2, #244
+ 2697 0f8c 00708DE5 		str	r7, [sp, #0]
+ 2698 0f90 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 224:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 269, 15, 1);
+ 2699              		.loc 1 224 0
+ 2700 0f94 0530A0E1 		mov	r3, r5
+ 2701 0f98 0900A0E3 		mov	r0, #9
+ 2702 0f9c D110A0E3 		mov	r1, #209
+ 2703 0fa0 A0239FE5 		ldr	r2, .L120+52
+ 2704 0fa4 00708DE5 		str	r7, [sp, #0]
+ 2705 0fa8 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 225:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 294, 15, 1);
+ 2706              		.loc 1 225 0
+ 2707 0fac 0530A0E1 		mov	r3, r5
+ 2708 0fb0 0900A0E3 		mov	r0, #9
+ 2709 0fb4 D110A0E3 		mov	r1, #209
+ 2710 0fb8 8C239FE5 		ldr	r2, .L120+56
+ 2711 0fbc 00708DE5 		str	r7, [sp, #0]
+ 235:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 2712              		.loc 1 235 0
+ 2713 0fc0 8C839FE5 		ldr	r8, .L120+64
+ 225:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 294, 15, 1);
+ 2714              		.loc 1 225 0
+ 2715 0fc4 FEFFFFEB 		bl	Lcd_Draw_VLine
+ 2716              	.LVL46:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2717              		.loc 1 231 0
+ 2718 0fc8 88739FE5 		ldr	r7, .L120+68
+ 225:../pantalla.c **** 		Lcd_Draw_VLine(9,  209, 294, 15, 1);
+ 2719              		.loc 1 225 0
+ 2720 0fcc 405084E2 		add	r5, r4, #64
+ 2721 0fd0 0A60A0E3 		mov	r6, #10
+ 2722 0fd4 2A0000EA 		b	.L41
+ 2723              	.LVL47:
+ 2724              	.L111:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2725              		.loc 1 234 0
+ 2726 0fd8 020053E3 		cmp	r3, #2
+ 2727 0fdc E200000A 		beq	.L102
+ 2728              	.LVL48:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2729              		.loc 1 230 0
+ 2730 0fe0 0130D5E5 		ldrb	r3, [r5, #1]	@ zero_extendqisi2
+ 2731 0fe4 010053E3 		cmp	r3, #1
+ 2732 0fe8 3800000A 		beq	.L27
+ 2733              	.L112:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2734              		.loc 1 234 0
+ 2735 0fec 020053E3 		cmp	r3, #2
+ 2736 0ff0 D900000A 		beq	.L103
+ 2737              	.LVL49:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2738              		.loc 1 230 0
+ 2739 0ff4 0230D5E5 		ldrb	r3, [r5, #2]	@ zero_extendqisi2
+ 2740 0ff8 010053E3 		cmp	r3, #1
+ 2741 0ffc 4300000A 		beq	.L29
+ 2742              	.L113:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2743              		.loc 1 234 0
+ 2744 1000 020053E3 		cmp	r3, #2
+ 2745 1004 E400000A 		beq	.L104
+ 2746              	.LVL50:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2747              		.loc 1 230 0
+ 2748 1008 0330D5E5 		ldrb	r3, [r5, #3]	@ zero_extendqisi2
+ 2749 100c 010053E3 		cmp	r3, #1
+ 2750 1010 4E00000A 		beq	.L31
+ 2751              	.L114:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2752              		.loc 1 234 0
+ 2753 1014 020053E3 		cmp	r3, #2
+ 2754 1018 DB00000A 		beq	.L105
+ 2755              	.LVL51:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2756              		.loc 1 230 0
+ 2757 101c 0430D5E5 		ldrb	r3, [r5, #4]	@ zero_extendqisi2
+ 2758 1020 010053E3 		cmp	r3, #1
+ 2759 1024 5900000A 		beq	.L33
+ 2760              	.L115:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2761              		.loc 1 234 0
+ 2762 1028 020053E3 		cmp	r3, #2
+ 2763 102c E200000A 		beq	.L106
+ 2764              	.LVL52:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2765              		.loc 1 230 0
+ 2766 1030 0530D5E5 		ldrb	r3, [r5, #5]	@ zero_extendqisi2
+ 2767 1034 010053E3 		cmp	r3, #1
+ 2768 1038 6400000A 		beq	.L35
+ 2769              	.L116:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2770              		.loc 1 234 0
+ 2771 103c 020053E3 		cmp	r3, #2
+ 2772 1040 D900000A 		beq	.L107
+ 2773              	.LVL53:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2774              		.loc 1 230 0
+ 2775 1044 0630D5E5 		ldrb	r3, [r5, #6]	@ zero_extendqisi2
+ 2776 1048 010053E3 		cmp	r3, #1
+ 2777 104c 6F00000A 		beq	.L37
+ 2778              	.L117:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2779              		.loc 1 234 0
+ 2780 1050 020053E3 		cmp	r3, #2
+ 2781 1054 C800000A 		beq	.L108
+ 2782              	.LVL54:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2783              		.loc 1 230 0
+ 2784 1058 0730D5E5 		ldrb	r3, [r5, #7]	@ zero_extendqisi2
+ 2785 105c 010053E3 		cmp	r3, #1
+ 2786 1060 7A00000A 		beq	.L39
+ 2787              	.L118:
+ 234:../pantalla.c **** 				}else if(cambios[i][j] == 2){
+ 2788              		.loc 1 234 0
+ 2789 1064 020053E3 		cmp	r3, #2
+ 2790 1068 A500000A 		beq	.L109
+ 2791              	.LVL55:
+ 233:../pantalla.c **** 					ncambios--;
+ 2792              		.loc 1 233 0
+ 2793 106c 190086E2 		add	r0, r6, #25
+ 2794 1070 0068A0E1 		mov	r6, r0, asl #16
+ 2795 1074 2668A0E1 		mov	r6, r6, lsr #16
+ 228:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 2796              		.loc 1 228 0
+ 2797 1078 D20056E3 		cmp	r6, #210
+ 233:../pantalla.c **** 					ncambios--;
+ 2798              		.loc 1 233 0
+ 2799 107c 085085E2 		add	r5, r5, #8
+ 228:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 2800              		.loc 1 228 0
+ 2801 1080 8500000A 		beq	.L110
+ 2802              	.LVL56:
+ 2803              	.L41:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2804              		.loc 1 230 0 discriminator 1
+ 2805 1084 0030D5E5 		ldrb	r3, [r5, #0]	@ zero_extendqisi2
+ 2806 1088 010053E3 		cmp	r3, #1
+ 2807 108c D1FFFF1A 		bne	.L111
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2808              		.loc 1 231 0
+ 2809 1090 8C129FE5 		ldr	r1, .L120+16
+ 2810 1094 0C0097E8 		ldmia	r7, {r2, r3}
+ 2811 1098 030091E8 		ldmia	r1, {r0, r1}
+ 2812              	.L66:
+ 2813 109c 0DE0A0E1 		mov	lr, sp
+ 2814 10a0 03008EE8 		stmia	lr, {r0, r1}
+ 2815 10a4 7800A0E3 		mov	r0, #120
+ 2816 10a8 0610A0E1 		mov	r1, r6
+ 2817 10ac FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2818              		.loc 1 233 0
+ 2819 10b0 803094E5 		ldr	r3, [r4, #128]
+ 2820 10b4 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2821              		.loc 1 230 0
+ 2822 10b8 0130D5E5 		ldrb	r3, [r5, #1]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2823              		.loc 1 232 0
+ 2824 10bc 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2825              		.loc 1 230 0
+ 2826 10c0 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2827              		.loc 1 232 0
+ 2828 10c4 0020C5E5 		strb	r2, [r5, #0]
+ 233:../pantalla.c **** 					ncambios--;
+ 2829              		.loc 1 233 0
+ 2830 10c8 80C084E5 		str	ip, [r4, #128]
+ 2831              	.LVL57:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2832              		.loc 1 230 0
+ 2833 10cc C6FFFF1A 		bne	.L112
+ 2834              	.L27:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2835              		.loc 1 231 0
+ 2836 10d0 4C129FE5 		ldr	r1, .L120+16
+ 2837 10d4 0C0097E8 		ldmia	r7, {r2, r3}
+ 2838 10d8 030091E8 		ldmia	r1, {r0, r1}
+ 2839              	.L67:
+ 2840 10dc 0DE0A0E1 		mov	lr, sp
+ 2841 10e0 03008EE8 		stmia	lr, {r0, r1}
+ 2842 10e4 9100A0E3 		mov	r0, #145
+ 2843 10e8 0610A0E1 		mov	r1, r6
+ 2844 10ec FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2845              		.loc 1 233 0
+ 2846 10f0 803094E5 		ldr	r3, [r4, #128]
+ 2847 10f4 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2848              		.loc 1 230 0
+ 2849 10f8 0230D5E5 		ldrb	r3, [r5, #2]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2850              		.loc 1 232 0
+ 2851 10fc 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2852              		.loc 1 230 0
+ 2853 1100 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2854              		.loc 1 232 0
+ 2855 1104 0120C5E5 		strb	r2, [r5, #1]
+ 233:../pantalla.c **** 					ncambios--;
+ 2856              		.loc 1 233 0
+ 2857 1108 80C084E5 		str	ip, [r4, #128]
+ 2858              	.LVL58:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2859              		.loc 1 230 0
+ 2860 110c BBFFFF1A 		bne	.L113
+ 2861              	.L29:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2862              		.loc 1 231 0
+ 2863 1110 0C129FE5 		ldr	r1, .L120+16
+ 2864 1114 0C0097E8 		ldmia	r7, {r2, r3}
+ 2865 1118 030091E8 		ldmia	r1, {r0, r1}
+ 2866              	.L68:
+ 2867 111c 0DE0A0E1 		mov	lr, sp
+ 2868 1120 03008EE8 		stmia	lr, {r0, r1}
+ 2869 1124 AA00A0E3 		mov	r0, #170
+ 2870 1128 0610A0E1 		mov	r1, r6
+ 2871 112c FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2872              		.loc 1 233 0
+ 2873 1130 803094E5 		ldr	r3, [r4, #128]
+ 2874 1134 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2875              		.loc 1 230 0
+ 2876 1138 0330D5E5 		ldrb	r3, [r5, #3]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2877              		.loc 1 232 0
+ 2878 113c 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2879              		.loc 1 230 0
+ 2880 1140 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2881              		.loc 1 232 0
+ 2882 1144 0220C5E5 		strb	r2, [r5, #2]
+ 233:../pantalla.c **** 					ncambios--;
+ 2883              		.loc 1 233 0
+ 2884 1148 80C084E5 		str	ip, [r4, #128]
+ 2885              	.LVL59:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2886              		.loc 1 230 0
+ 2887 114c B0FFFF1A 		bne	.L114
+ 2888              	.L31:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2889              		.loc 1 231 0
+ 2890 1150 CC119FE5 		ldr	r1, .L120+16
+ 2891 1154 0C0097E8 		ldmia	r7, {r2, r3}
+ 2892 1158 030091E8 		ldmia	r1, {r0, r1}
+ 2893              	.L69:
+ 2894 115c 0DE0A0E1 		mov	lr, sp
+ 2895 1160 03008EE8 		stmia	lr, {r0, r1}
+ 2896 1164 C300A0E3 		mov	r0, #195
+ 2897 1168 0610A0E1 		mov	r1, r6
+ 2898 116c FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2899              		.loc 1 233 0
+ 2900 1170 803094E5 		ldr	r3, [r4, #128]
+ 2901 1174 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2902              		.loc 1 230 0
+ 2903 1178 0430D5E5 		ldrb	r3, [r5, #4]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2904              		.loc 1 232 0
+ 2905 117c 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2906              		.loc 1 230 0
+ 2907 1180 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2908              		.loc 1 232 0
+ 2909 1184 0320C5E5 		strb	r2, [r5, #3]
+ 233:../pantalla.c **** 					ncambios--;
+ 2910              		.loc 1 233 0
+ 2911 1188 80C084E5 		str	ip, [r4, #128]
+ 2912              	.LVL60:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2913              		.loc 1 230 0
+ 2914 118c A5FFFF1A 		bne	.L115
+ 2915              	.L33:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2916              		.loc 1 231 0
+ 2917 1190 8C119FE5 		ldr	r1, .L120+16
+ 2918 1194 0C0097E8 		ldmia	r7, {r2, r3}
+ 2919 1198 030091E8 		ldmia	r1, {r0, r1}
+ 2920              	.L70:
+ 2921 119c 0DE0A0E1 		mov	lr, sp
+ 2922 11a0 03008EE8 		stmia	lr, {r0, r1}
+ 2923 11a4 DC00A0E3 		mov	r0, #220
+ 2924 11a8 0610A0E1 		mov	r1, r6
+ 2925 11ac FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2926              		.loc 1 233 0
+ 2927 11b0 803094E5 		ldr	r3, [r4, #128]
+ 2928 11b4 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2929              		.loc 1 230 0
+ 2930 11b8 0530D5E5 		ldrb	r3, [r5, #5]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2931              		.loc 1 232 0
+ 2932 11bc 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2933              		.loc 1 230 0
+ 2934 11c0 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2935              		.loc 1 232 0
+ 2936 11c4 0420C5E5 		strb	r2, [r5, #4]
+ 233:../pantalla.c **** 					ncambios--;
+ 2937              		.loc 1 233 0
+ 2938 11c8 80C084E5 		str	ip, [r4, #128]
+ 2939              	.LVL61:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2940              		.loc 1 230 0
+ 2941 11cc 9AFFFF1A 		bne	.L116
+ 2942              	.L35:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2943              		.loc 1 231 0
+ 2944 11d0 4C119FE5 		ldr	r1, .L120+16
+ 2945 11d4 0C0097E8 		ldmia	r7, {r2, r3}
+ 2946 11d8 030091E8 		ldmia	r1, {r0, r1}
+ 2947              	.L71:
+ 2948 11dc 0DE0A0E1 		mov	lr, sp
+ 2949 11e0 03008EE8 		stmia	lr, {r0, r1}
+ 2950 11e4 F500A0E3 		mov	r0, #245
+ 2951 11e8 0610A0E1 		mov	r1, r6
+ 2952 11ec FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2953              		.loc 1 233 0
+ 2954 11f0 803094E5 		ldr	r3, [r4, #128]
+ 2955 11f4 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2956              		.loc 1 230 0
+ 2957 11f8 0630D5E5 		ldrb	r3, [r5, #6]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2958              		.loc 1 232 0
+ 2959 11fc 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2960              		.loc 1 230 0
+ 2961 1200 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2962              		.loc 1 232 0
+ 2963 1204 0520C5E5 		strb	r2, [r5, #5]
+ 233:../pantalla.c **** 					ncambios--;
+ 2964              		.loc 1 233 0
+ 2965 1208 80C084E5 		str	ip, [r4, #128]
+ 2966              	.LVL62:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2967              		.loc 1 230 0
+ 2968 120c 8FFFFF1A 		bne	.L117
+ 2969              	.L37:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2970              		.loc 1 231 0
+ 2971 1210 0C119FE5 		ldr	r1, .L120+16
+ 2972 1214 0C0097E8 		ldmia	r7, {r2, r3}
+ 2973 1218 030091E8 		ldmia	r1, {r0, r1}
+ 2974              	.L72:
+ 2975 121c 0DE0A0E1 		mov	lr, sp
+ 2976 1220 03008EE8 		stmia	lr, {r0, r1}
+ 2977 1224 FC009FE5 		ldr	r0, .L120+20
+ 2978 1228 0610A0E1 		mov	r1, r6
+ 2979 122c FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 2980              		.loc 1 233 0
+ 2981 1230 803094E5 		ldr	r3, [r4, #128]
+ 2982 1234 01C043E2 		sub	ip, r3, #1
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2983              		.loc 1 230 0
+ 2984 1238 0730D5E5 		ldrb	r3, [r5, #7]	@ zero_extendqisi2
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2985              		.loc 1 232 0
+ 2986 123c 0020A0E3 		mov	r2, #0
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2987              		.loc 1 230 0
+ 2988 1240 010053E3 		cmp	r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 2989              		.loc 1 232 0
+ 2990 1244 0620C5E5 		strb	r2, [r5, #6]
+ 233:../pantalla.c **** 					ncambios--;
+ 2991              		.loc 1 233 0
+ 2992 1248 80C084E5 		str	ip, [r4, #128]
+ 2993              	.LVL63:
+ 230:../pantalla.c **** 				if(cambios[i][j] == 1){
+ 2994              		.loc 1 230 0
+ 2995 124c 84FFFF1A 		bne	.L118
+ 2996              	.L39:
+ 231:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaBlanca);
+ 2997              		.loc 1 231 0
+ 2998 1250 CC109FE5 		ldr	r1, .L120+16
+ 2999 1254 0C0097E8 		ldmia	r7, {r2, r3}
+ 3000 1258 030091E8 		ldmia	r1, {r0, r1}
+ 3001              	.L73:
+ 3002 125c 0DE0A0E1 		mov	lr, sp
+ 3003 1260 03008EE8 		stmia	lr, {r0, r1}
+ 3004 1264 C4009FE5 		ldr	r0, .L120+28
+ 3005 1268 0610A0E1 		mov	r1, r6
+ 3006 126c FEFFFFEB 		bl	BitmapView
+ 233:../pantalla.c **** 					ncambios--;
+ 3007              		.loc 1 233 0
+ 3008 1270 190086E2 		add	r0, r6, #25
+ 3009 1274 803094E5 		ldr	r3, [r4, #128]
+ 3010 1278 0068A0E1 		mov	r6, r0, asl #16
+ 3011 127c 2668A0E1 		mov	r6, r6, lsr #16
+ 3012 1280 01C043E2 		sub	ip, r3, #1
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 3013              		.loc 1 232 0
+ 3014 1284 0020A0E3 		mov	r2, #0
+ 228:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 3015              		.loc 1 228 0
+ 3016 1288 D20056E3 		cmp	r6, #210
+ 232:../pantalla.c **** 					cambios[i][j]=0;
+ 3017              		.loc 1 232 0
+ 3018 128c 0720C5E5 		strb	r2, [r5, #7]
+ 233:../pantalla.c **** 					ncambios--;
+ 3019              		.loc 1 233 0
+ 3020 1290 80C084E5 		str	ip, [r4, #128]
+ 3021              	.LVL64:
+ 3022 1294 085085E2 		add	r5, r5, #8
+ 228:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 3023              		.loc 1 228 0
+ 3024 1298 79FFFF1A 		bne	.L41
+ 3025              	.L110:
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3026              		.loc 1 243 0
+ 3027 129c 84E094E5 		ldr	lr, [r4, #132]
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3028              		.loc 1 246 0
+ 3029 12a0 90309FE5 		ldr	r3, .L120+36
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3030              		.loc 1 243 0
+ 3031 12a4 88C094E5 		ldr	ip, [r4, #136]
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3032              		.loc 1 246 0
+ 3033 12a8 0E018EE0 		add	r0, lr, lr, asl #2
+ 3034 12ac 081083E2 		add	r1, r3, #8
+ 3035 12b0 0C718CE0 		add	r7, ip, ip, asl #2
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3036              		.loc 1 243 0
+ 3037 12b4 8E2184E0 		add	r2, r4, lr, asl #3
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3038              		.loc 1 246 0
+ 3039 12b8 005180E0 		add	r5, r0, r0, asl #2
+ 3040 12bc 030091E8 		ldmia	r1, {r0, r1}
+ 3041 12c0 076187E0 		add	r6, r7, r7, asl #2
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3042              		.loc 1 243 0
+ 3043 12c4 0C7082E0 		add	r7, r2, ip
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3044              		.loc 1 246 0
+ 3045 12c8 0D20A0E1 		mov	r2, sp
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3046              		.loc 1 243 0
+ 3047 12cc 9070D7E5 		ldrb	r7, [r7, #144]	@ zero_extendqisi2
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3048              		.loc 1 246 0
+ 3049 12d0 030082E8 		stmia	r2, {r0, r1}
+ 3050 12d4 786086E2 		add	r6, r6, #120
+ 3051 12d8 0A5085E2 		add	r5, r5, #10
+ 3052 12dc 0668A0E1 		mov	r6, r6, asl #16
+ 3053 12e0 0558A0E1 		mov	r5, r5, asl #16
+ 3054 12e4 0C0093E8 		ldmia	r3, {r2, r3}
+ 3055 12e8 2608A0E1 		mov	r0, r6, lsr #16
+ 3056 12ec 2518A0E1 		mov	r1, r5, lsr #16
+ 243:../pantalla.c **** 		underGris=toblerone[fMov][cMov];	// colocamos la ficha gris
+ 3057              		.loc 1 243 0
+ 3058 12f0 8C70C4E5 		strb	r7, [r4, #140]
+ 244:../pantalla.c **** 		oldfMov=fMov;						// guardamos su posicion
+ 3059              		.loc 1 244 0
+ 3060 12f4 D0E084E5 		str	lr, [r4, #208]
+ 245:../pantalla.c **** 		oldcMov=cMov;						// guardamos la ficha de debajo
+ 3061              		.loc 1 245 0
+ 3062 12f8 D4C084E5 		str	ip, [r4, #212]
+ 246:../pantalla.c **** 		BitmapView(120+(cMov*25),10+(fMov*25),Stru_Bitmap_fichaGris);
+ 3063              		.loc 1 246 0
+ 3064 12fc FEFFFFEB 		bl	BitmapView
+ 3065 1300 75FDFFEA 		b	.L23
+ 3066              	.LVL65:
+ 3067              	.L109:
+ 235:../pantalla.c **** 					BitmapView(120+(j*25),10+(i*25),Stru_Bitmap_fichaNegra);
+ 3068              		.loc 1 235 0
+ 3069 1304 44009FE5 		ldr	r0, .L120+60
+ 3070 1308 0C0098E8 		ldmia	r8, {r2, r3}
+ 3071 130c 030090E8 		ldmia	r0, {r0, r1}
+ 3072 1310 D1FFFFEA 		b	.L73
+ 3073              	.L121:
+ 3074              		.align	2
+ 3075              	.L120:
+ 3076 1314 00000000 		.word	.LANCHOR0
+ 3077 1318 83DE1B43 		.word	1125899907
+ 3078 131c 00000000 		.word	.LANCHOR1
+ 3079 1320 40000000 		.word	.LANCHOR1+64
+ 3080 1324 08000000 		.word	Stru_Bitmap_fichaBlanca+8
+ 3081 1328 0E010000 		.word	270
+ 3082 132c 25010000 		.word	293
+ 3083 1330 27010000 		.word	295
+ 3084 1334 3E010000 		.word	318
+ 3085 1338 00000000 		.word	Stru_Bitmap_fichaGris
+ 3086 133c 3F010000 		.word	319
+ 3087 1340 16010000 		.word	278
+ 3088 1344 2F010000 		.word	303
+ 3089 1348 0D010000 		.word	269
+ 3090 134c 26010000 		.word	294
+ 3091 1350 08000000 		.word	Stru_Bitmap_fichaNegra+8
+ 3092 1354 00000000 		.word	Stru_Bitmap_fichaNegra
+ 3093 1358 00000000 		.word	Stru_Bitmap_fichaBlanca
+ 3094              	.LVL66:
+ 3095              	.L103:
+ 3096 135c 14001FE5 		ldr	r0, .L120+60
+ 3097 1360 0C0098E8 		ldmia	r8, {r2, r3}
+ 3098 1364 030090E8 		ldmia	r0, {r0, r1}
+ 3099 1368 5BFFFFEA 		b	.L67
+ 3100              	.LVL67:
+ 3101              	.L102:
+ 3102 136c 24001FE5 		ldr	r0, .L120+60
+ 3103 1370 0C0098E8 		ldmia	r8, {r2, r3}
+ 3104 1374 030090E8 		ldmia	r0, {r0, r1}
+ 3105 1378 47FFFFEA 		b	.L66
+ 3106              	.LVL68:
+ 3107              	.L108:
+ 3108 137c 34001FE5 		ldr	r0, .L120+60
+ 3109 1380 0C0098E8 		ldmia	r8, {r2, r3}
+ 3110 1384 030090E8 		ldmia	r0, {r0, r1}
+ 3111 1388 A3FFFFEA 		b	.L72
+ 3112              	.LVL69:
+ 3113              	.L105:
+ 3114 138c 44001FE5 		ldr	r0, .L120+60
+ 3115 1390 0C0098E8 		ldmia	r8, {r2, r3}
+ 3116 1394 030090E8 		ldmia	r0, {r0, r1}
+ 3117 1398 6FFFFFEA 		b	.L69
+ 3118              	.LVL70:
+ 3119              	.L104:
+ 3120 139c 54001FE5 		ldr	r0, .L120+60
+ 3121 13a0 0C0098E8 		ldmia	r8, {r2, r3}
+ 3122 13a4 030090E8 		ldmia	r0, {r0, r1}
+ 3123 13a8 5BFFFFEA 		b	.L68
+ 3124              	.LVL71:
+ 3125              	.L107:
+ 3126 13ac 64001FE5 		ldr	r0, .L120+60
+ 3127 13b0 0C0098E8 		ldmia	r8, {r2, r3}
+ 3128 13b4 030090E8 		ldmia	r0, {r0, r1}
+ 3129 13b8 87FFFFEA 		b	.L71
+ 3130              	.LVL72:
+ 3131              	.L106:
+ 3132 13bc 74001FE5 		ldr	r0, .L120+60
+ 3133 13c0 0C0098E8 		ldmia	r8, {r2, r3}
+ 3134 13c4 030090E8 		ldmia	r0, {r0, r1}
+ 3135 13c8 73FFFFEA 		b	.L70
+ 3136              	.LVL73:
+ 3137              	.L84:
+ 3138              	.LBE7:
+ 3139              	.LBB8:
+ 274:../pantalla.c **** 			LcdClrRect(120+(oldcMov*25),10+(oldfMov*25),120+23+(oldcMov*25),10+23+(oldfMov*25), 0);
+ 3140              		.loc 1 274 0
+ 3141 13cc 031183E0 		add	r1, r3, r3, asl #2
+ 3142 13d0 020182E0 		add	r0, r2, r2, asl #2
+ 3143 13d4 002180E0 		add	r2, r0, r0, asl #2
+ 3144 13d8 01E181E0 		add	lr, r1, r1, asl #2
+ 3145 13dc 02C8A0E1 		mov	ip, r2, asl #16
+ 3146 13e0 0E38A0E1 		mov	r3, lr, asl #16
+ 3147 13e4 1E078CE2 		add	r0, ip, #7864320
+ 3148 13e8 0A1883E2 		add	r1, r3, #655360
+ 3149 13ec 8F288CE2 		add	r2, ip, #9371648
+ 3150 13f0 21E883E2 		add	lr, r3, #2162688
+ 3151 13f4 4E38A0E1 		mov	r3, lr, asr #16
+ 3152 13f8 4008A0E1 		mov	r0, r0, asr #16
+ 3153 13fc 4118A0E1 		mov	r1, r1, asr #16
+ 3154 1400 4228A0E1 		mov	r2, r2, asr #16
+ 3155 1404 00408DE5 		str	r4, [sp, #0]
+ 3156 1408 FEFFFFEB 		bl	LcdClrRect
+ 275:../pantalla.c **** 			if(underGris==1){
+ 3157              		.loc 1 275 0
+ 3158 140c 8C30D6E5 		ldrb	r3, [r6, #140]	@ zero_extendqisi2
+ 3159 1410 010053E3 		cmp	r3, #1
+ 3160 1414 0800000A 		beq	.L119
+ 277:../pantalla.c **** 			}else if(underGris==2){
+ 3161              		.loc 1 277 0
+ 3162 1418 020053E3 		cmp	r3, #2
+ 3163 141c 2EFCFF1A 		bne	.L44
+ 278:../pantalla.c **** 				BitmapView(120+(oldcMov*25),10+(oldfMov*25),Stru_Bitmap_fichaNegra);
+ 3164              		.loc 1 278 0
+ 3165 1420 D0C086E2 		add	ip, r6, #208
+ 3166 1424 00509CE8 		ldmia	ip, {ip, lr}	@ phole ldm
+ 3167 1428 173083E2 		add	r3, r3, #23
+ 3168 142c 930E0EE0 		mul	lr, r3, lr
+ 3169 1430 930C0CE0 		mul	ip, r3, ip
+ 3170 1434 E8301FE5 		ldr	r3, .L120+64
+ 3171 1438 050000EA 		b	.L74
+ 3172              	.L119:
+ 276:../pantalla.c **** 				BitmapView(120+(oldcMov*25),10+(oldfMov*25),Stru_Bitmap_fichaBlanca);
+ 3173              		.loc 1 276 0
+ 3174 143c D0C086E2 		add	ip, r6, #208
+ 3175 1440 00509CE8 		ldmia	ip, {ip, lr}	@ phole ldm
+ 3176 1444 184083E2 		add	r4, r3, #24
+ 3177 1448 940E0EE0 		mul	lr, r4, lr
+ 3178 144c 940C0CE0 		mul	ip, r4, ip
+ 3179 1450 00311FE5 		ldr	r3, .L120+68
+ 3180              	.L74:
+ 278:../pantalla.c **** 				BitmapView(120+(oldcMov*25),10+(oldfMov*25),Stru_Bitmap_fichaNegra);
+ 3181              		.loc 1 278 0
+ 3182 1454 081083E2 		add	r1, r3, #8
+ 3183 1458 030091E8 		ldmia	r1, {r0, r1}
+ 3184 145c 0D20A0E1 		mov	r2, sp
+ 3185 1460 030082E8 		stmia	r2, {r0, r1}
+ 3186 1464 0A408CE2 		add	r4, ip, #10
+ 3187 1468 78E08EE2 		add	lr, lr, #120
+ 3188 146c 0EE8A0E1 		mov	lr, lr, asl #16
+ 3189 1470 04C8A0E1 		mov	ip, r4, asl #16
+ 3190 1474 0C0093E8 		ldmia	r3, {r2, r3}
+ 3191 1478 2E08A0E1 		mov	r0, lr, lsr #16
+ 3192 147c 2C18A0E1 		mov	r1, ip, lsr #16
+ 3193 1480 FEFFFFEB 		bl	BitmapView
+ 3194 1484 14FCFFEA 		b	.L44
+ 3195              	.LBE8:
+ 3196              		.cfi_endproc
+ 3197              	.LFE3:
+ 3199              		.align	2
+ 3200              		.global	LCD_imprimir
+ 3202              	LCD_imprimir:
+ 3203              	.LFB4:
+ 310:../pantalla.c **** 
+ 311:../pantalla.c **** /*
+ 312:../pantalla.c ****  * Imprime la pantalla actual si es necesario
+ 313:../pantalla.c ****  */
+ 314:../pantalla.c **** void LCD_imprimir(){
+ 3204              		.loc 1 314 0
+ 3205              		.cfi_startproc
+ 3206              		@ Function supports interworking.
+ 3207              		@ args = 0, pretend = 0, frame = 0
+ 3208              		@ frame_needed = 1, uses_anonymous_args = 0
+ 315:../pantalla.c **** 	if((DMA_ready==1) & (Hay_cambios==1)){
+ 3209              		.loc 1 315 0
+ 3210 1488 8C309FE5 		ldr	r3, .L132
+ 3211 148c 5A1F83E2 		add	r1, r3, #360
+ 3212 1490 060091E8 		ldmia	r1, {r1, r2}	@ phole ldm
+ 314:../pantalla.c **** void LCD_imprimir(){
+ 3213              		.loc 1 314 0
+ 3214 1494 0DC0A0E1 		mov	ip, sp
+ 3215              	.LCFI8:
+ 3216              		.cfi_def_cfa_register 12
+ 3217              		.loc 1 315 0
+ 3218 1498 010051E3 		cmp	r1, #1
+ 3219 149c 01005203 		cmpeq	r2, #1
+ 314:../pantalla.c **** void LCD_imprimir(){
+ 3220              		.loc 1 314 0
+ 3221 14a0 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3222 14a4 04B04CE2 		sub	fp, ip, #4
+ 3223              		.cfi_offset 14, -8
+ 3224              		.cfi_offset 13, -12
+ 3225              		.cfi_offset 11, -16
+ 3226              	.LCFI9:
+ 3227              		.cfi_def_cfa 11, 4
+ 3228              		.loc 1 315 0
+ 3229 14a8 0C00001A 		bne	.L122
+ 316:../pantalla.c **** 		DMA_ready=0;
+ 317:../pantalla.c **** 		Hay_cambios=0;
+ 318:../pantalla.c **** 
+ 319:../pantalla.c **** 		if(pantalla==PANTALLA_INICIO){		// Saltamos a las funciones de dibujado
+ 3230              		.loc 1 319 0
+ 3231 14ac 702193E5 		ldr	r2, [r3, #368]
+ 316:../pantalla.c **** 		DMA_ready=0;
+ 3232              		.loc 1 316 0
+ 3233 14b0 0000A0E3 		mov	r0, #0
+ 3234              		.loc 1 319 0
+ 3235 14b4 000052E1 		cmp	r2, r0
+ 316:../pantalla.c **** 		DMA_ready=0;
+ 3236              		.loc 1 316 0
+ 3237 14b8 6C0183E5 		str	r0, [r3, #364]
+ 317:../pantalla.c **** 		Hay_cambios=0;
+ 3238              		.loc 1 317 0
+ 3239 14bc 680183E5 		str	r0, [r3, #360]
+ 3240              		.loc 1 319 0
+ 3241 14c0 0900000A 		beq	.L128
+ 320:../pantalla.c **** 			Pantalla_inicial();				// según la pantalla actual.
+ 321:../pantalla.c **** 		}else if(pantalla==PANTALLA_JUEGO){
+ 3242              		.loc 1 321 0
+ 3243 14c4 010052E3 		cmp	r2, #1
+ 3244 14c8 0A00000A 		beq	.L129
+ 322:../pantalla.c **** 			Pantalla_juego();
+ 323:../pantalla.c **** 		}else if(pantalla==PANTALLA_FINAL){
+ 3245              		.loc 1 323 0
+ 3246 14cc 020052E3 		cmp	r2, #2
+ 3247 14d0 0B00000A 		beq	.L130
+ 324:../pantalla.c **** 			Pantalla_final();
+ 325:../pantalla.c **** 		}else if(pantalla==PANTALLA_CALIBRADO){
+ 3248              		.loc 1 325 0
+ 3249 14d4 030052E3 		cmp	r2, #3
+ 3250 14d8 0C00000A 		beq	.L131
+ 326:../pantalla.c **** 			Pantalla_calibrar();
+ 327:../pantalla.c **** 		}
+ 328:../pantalla.c **** 		Lcd_Dma_Trans();					// Iniciamos transferencia.
+ 3251              		.loc 1 328 0
+ 3252 14dc FEFFFFEB 		bl	Lcd_Dma_Trans
+ 3253              	.L122:
+ 329:../pantalla.c **** 	}
+ 330:../pantalla.c **** }
+ 3254              		.loc 1 330 0
+ 3255 14e0 0CD04BE2 		sub	sp, fp, #12
+ 3256 14e4 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3257 14e8 1EFF2FE1 		bx	lr
+ 3258              	.L128:
+ 320:../pantalla.c **** 			Pantalla_inicial();				// según la pantalla actual.
+ 3259              		.loc 1 320 0
+ 3260 14ec FEFFFFEB 		bl	Pantalla_inicial
+ 328:../pantalla.c **** 		Lcd_Dma_Trans();					// Iniciamos transferencia.
+ 3261              		.loc 1 328 0
+ 3262 14f0 FEFFFFEB 		bl	Lcd_Dma_Trans
+ 3263 14f4 F9FFFFEA 		b	.L122
+ 3264              	.L129:
+ 322:../pantalla.c **** 			Pantalla_juego();
+ 3265              		.loc 1 322 0
+ 3266 14f8 FEFFFFEB 		bl	Pantalla_juego
+ 328:../pantalla.c **** 		Lcd_Dma_Trans();					// Iniciamos transferencia.
+ 3267              		.loc 1 328 0
+ 3268 14fc FEFFFFEB 		bl	Lcd_Dma_Trans
+ 3269 1500 F6FFFFEA 		b	.L122
+ 3270              	.L130:
+ 324:../pantalla.c **** 			Pantalla_final();
+ 3271              		.loc 1 324 0
+ 3272 1504 FEFFFFEB 		bl	Pantalla_final
+ 328:../pantalla.c **** 		Lcd_Dma_Trans();					// Iniciamos transferencia.
+ 3273              		.loc 1 328 0
+ 3274 1508 FEFFFFEB 		bl	Lcd_Dma_Trans
+ 3275 150c F3FFFFEA 		b	.L122
+ 3276              	.L131:
+ 326:../pantalla.c **** 			Pantalla_calibrar();
+ 3277              		.loc 1 326 0
+ 3278 1510 FEFFFFEB 		bl	Pantalla_calibrar
+ 328:../pantalla.c **** 		Lcd_Dma_Trans();					// Iniciamos transferencia.
+ 3279              		.loc 1 328 0
+ 3280 1514 FEFFFFEB 		bl	Lcd_Dma_Trans
+ 3281 1518 F0FFFFEA 		b	.L122
+ 3282              	.L133:
+ 3283              		.align	2
+ 3284              	.L132:
+ 3285 151c 00000000 		.word	.LANCHOR0
+ 3286              		.cfi_endproc
+ 3287              	.LFE4:
+ 3289              		.align	2
+ 3290              		.global	LCD_pantalla
+ 3292              	LCD_pantalla:
+ 3293              	.LFB5:
+ 331:../pantalla.c **** /*
+ 332:../pantalla.c ****  * Indica pantalla a imprimir
+ 333:../pantalla.c ****  */
+ 334:../pantalla.c **** void LCD_pantalla(Pantalla p){
+ 3294              		.loc 1 334 0
+ 3295              		.cfi_startproc
+ 3296              		@ Function supports interworking.
+ 3297              		@ args = 0, pretend = 0, frame = 0
+ 3298              		@ frame_needed = 0, uses_anonymous_args = 0
+ 3299              		@ link register save eliminated.
+ 3300              	.LVL74:
+ 335:../pantalla.c **** 	pantalla=p;
+ 3301              		.loc 1 335 0
+ 3302 1520 0C309FE5 		ldr	r3, .L135
+ 336:../pantalla.c **** 	primeraImpresion=1;
+ 3303              		.loc 1 336 0
+ 3304 1524 0120A0E3 		mov	r2, #1
+ 335:../pantalla.c **** 	pantalla=p;
+ 3305              		.loc 1 335 0
+ 3306 1528 700183E5 		str	r0, [r3, #368]
+ 3307              		.loc 1 336 0
+ 3308 152c 002083E5 		str	r2, [r3, #0]
+ 337:../pantalla.c **** }
+ 3309              		.loc 1 337 0
+ 3310 1530 1EFF2FE1 		bx	lr
+ 3311              	.L136:
+ 3312              		.align	2
+ 3313              	.L135:
+ 3314 1534 00000000 		.word	.LANCHOR0
+ 3315              		.cfi_endproc
+ 3316              	.LFE5:
+ 3318              		.align	2
+ 3319              		.global	LCD_movimiento
+ 3321              	LCD_movimiento:
+ 3322              	.LFB6:
+ 338:../pantalla.c **** /*
+ 339:../pantalla.c ****  * Indica fila y columna a la que apunta la ficha gris
+ 340:../pantalla.c ****  */
+ 341:../pantalla.c **** void LCD_movimiento(int f,int c){
+ 3323              		.loc 1 341 0
+ 3324              		.cfi_startproc
+ 3325              		@ Function supports interworking.
+ 3326              		@ args = 0, pretend = 0, frame = 0
+ 3327              		@ frame_needed = 0, uses_anonymous_args = 0
+ 3328              		@ link register save eliminated.
+ 3329              	.LVL75:
+ 342:../pantalla.c **** 	cMov=c;
+ 3330              		.loc 1 342 0
+ 3331 1538 08309FE5 		ldr	r3, .L138
+ 3332 153c 881083E5 		str	r1, [r3, #136]
+ 343:../pantalla.c **** 	fMov=f;
+ 3333              		.loc 1 343 0
+ 3334 1540 840083E5 		str	r0, [r3, #132]
+ 344:../pantalla.c **** }
+ 3335              		.loc 1 344 0
+ 3336 1544 1EFF2FE1 		bx	lr
+ 3337              	.L139:
+ 3338              		.align	2
+ 3339              	.L138:
+ 3340 1548 00000000 		.word	.LANCHOR1
+ 3341              		.cfi_endproc
+ 3342              	.LFE6:
+ 3344              		.align	2
+ 3345              		.global	LCD_tablero
+ 3347              	LCD_tablero:
+ 3348              	.LFB7:
+ 345:../pantalla.c **** /*
+ 346:../pantalla.c ****  * Calcula los cambios que se han producido en el tablero.
+ 347:../pantalla.c ****  * Realiza una copia para calcular los cambios en la siguiente iteración.
+ 348:../pantalla.c ****  */
+ 349:../pantalla.c **** void LCD_tablero(char t[DIM][DIM]){
+ 3349              		.loc 1 349 0
+ 3350              		.cfi_startproc
+ 3351              		@ Function supports interworking.
+ 3352              		@ args = 0, pretend = 0, frame = 0
+ 3353              		@ frame_needed = 0, uses_anonymous_args = 0
+ 3354              		@ link register save eliminated.
+ 3355              	.LVL76:
+ 350:../pantalla.c **** 	int i,j;
+ 351:../pantalla.c **** 	if(primeraImpresion==1){
+ 3356              		.loc 1 351 0
+ 3357 154c CC179FE5 		ldr	r1, .L208
+ 3358 1550 003091E5 		ldr	r3, [r1, #0]
+ 3359 1554 010053E3 		cmp	r3, #1
+ 349:../pantalla.c **** void LCD_tablero(char t[DIM][DIM]){
+ 3360              		.loc 1 349 0
+ 3361 1558 04402DE5 		str	r4, [sp, #-4]!
+ 3362              	.LCFI10:
+ 3363              		.cfi_def_cfa_offset 4
+ 3364              		.loc 1 351 0
+ 3365 155c CB01000A 		beq	.L141
+ 3366              		.cfi_offset 4, -4
+ 3367 1560 BC279FE5 		ldr	r2, .L208+4
+ 3368              	.L200:
+ 3369              	.LVL77:
+ 352:../pantalla.c **** 		for (i = 0; i < DIM; i++){
+ 353:../pantalla.c **** 			for (j = 0; j < DIM; j++){
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 356:../pantalla.c **** 				ncambios=0;
+ 357:../pantalla.c **** 			}
+ 358:../pantalla.c **** 		}
+ 359:../pantalla.c **** 	}
+ 360:../pantalla.c **** 	for (i = 0; i < DIM; i++){
+ 361:../pantalla.c **** 		for (j = 0; j < DIM; j++){
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3370              		.loc 1 362 0 discriminator 1
+ 3371 1564 0040D0E5 		ldrb	r4, [r0, #0]	@ zero_extendqisi2
+ 3372 1568 9030D2E5 		ldrb	r3, [r2, #144]	@ zero_extendqisi2
+ 351:../pantalla.c **** 	if(primeraImpresion==1){
+ 3373              		.loc 1 351 0 discriminator 1
+ 3374 156c B0C79FE5 		ldr	ip, .L208+4
+ 3375              		.loc 1 362 0 discriminator 1
+ 3376 1570 040053E1 		cmp	r3, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3377              		.loc 1 363 0 discriminator 1
+ 3378 1574 9040CC15 		strneb	r4, [ip, #144]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3379              		.loc 1 364 0 discriminator 1
+ 3380 1578 4040CC15 		strneb	r4, [ip, #64]
+ 351:../pantalla.c **** 	if(primeraImpresion==1){
+ 3381              		.loc 1 351 0 discriminator 1
+ 3382 157c 803092E5 		ldr	r3, [r2, #128]
+ 3383              	.LVL78:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3384              		.loc 1 362 0 discriminator 1
+ 3385 1580 0140D0E5 		ldrb	r4, [r0, #1]	@ zero_extendqisi2
+ 3386 1584 9110D2E5 		ldrb	r1, [r2, #145]	@ zero_extendqisi2
+ 3387 1588 94C79FE5 		ldr	ip, .L208+4
+ 365:../pantalla.c **** 				ncambios++;
+ 3388              		.loc 1 365 0 discriminator 1
+ 3389 158c 01308312 		addne	r3, r3, #1
+ 3390              	.LVL79:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3391              		.loc 1 362 0 discriminator 1
+ 3392 1590 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3393              		.loc 1 363 0 discriminator 1
+ 3394 1594 9140CC15 		strneb	r4, [ip, #145]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3395              		.loc 1 364 0 discriminator 1
+ 3396 1598 4140CC15 		strneb	r4, [ip, #65]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3397              		.loc 1 362 0 discriminator 1
+ 3398 159c 9210D2E5 		ldrb	r1, [r2, #146]	@ zero_extendqisi2
+ 3399 15a0 0240D0E5 		ldrb	r4, [r0, #2]	@ zero_extendqisi2
+ 3400 15a4 78C79FE5 		ldr	ip, .L208+4
+ 3401              		.loc 1 365 0 discriminator 1
+ 3402 15a8 01308312 		addne	r3, r3, #1
+ 3403              	.LVL80:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3404              		.loc 1 362 0 discriminator 1
+ 3405 15ac 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3406              		.loc 1 363 0 discriminator 1
+ 3407 15b0 9240CC15 		strneb	r4, [ip, #146]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3408              		.loc 1 364 0 discriminator 1
+ 3409 15b4 4240CC15 		strneb	r4, [ip, #66]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3410              		.loc 1 362 0 discriminator 1
+ 3411 15b8 9310D2E5 		ldrb	r1, [r2, #147]	@ zero_extendqisi2
+ 3412 15bc 0340D0E5 		ldrb	r4, [r0, #3]	@ zero_extendqisi2
+ 3413 15c0 5CC79FE5 		ldr	ip, .L208+4
+ 3414              		.loc 1 365 0 discriminator 1
+ 3415 15c4 01308312 		addne	r3, r3, #1
+ 3416              	.LVL81:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3417              		.loc 1 362 0 discriminator 1
+ 3418 15c8 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3419              		.loc 1 363 0 discriminator 1
+ 3420 15cc 9340CC15 		strneb	r4, [ip, #147]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3421              		.loc 1 364 0 discriminator 1
+ 3422 15d0 4340CC15 		strneb	r4, [ip, #67]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3423              		.loc 1 362 0 discriminator 1
+ 3424 15d4 9410D2E5 		ldrb	r1, [r2, #148]	@ zero_extendqisi2
+ 3425 15d8 0440D0E5 		ldrb	r4, [r0, #4]	@ zero_extendqisi2
+ 3426 15dc 40C79FE5 		ldr	ip, .L208+4
+ 3427              		.loc 1 365 0 discriminator 1
+ 3428 15e0 01308312 		addne	r3, r3, #1
+ 3429              	.LVL82:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3430              		.loc 1 362 0 discriminator 1
+ 3431 15e4 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3432              		.loc 1 363 0 discriminator 1
+ 3433 15e8 9440CC15 		strneb	r4, [ip, #148]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3434              		.loc 1 364 0 discriminator 1
+ 3435 15ec 4440CC15 		strneb	r4, [ip, #68]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3436              		.loc 1 362 0 discriminator 1
+ 3437 15f0 9510D2E5 		ldrb	r1, [r2, #149]	@ zero_extendqisi2
+ 3438 15f4 0540D0E5 		ldrb	r4, [r0, #5]	@ zero_extendqisi2
+ 3439 15f8 24C79FE5 		ldr	ip, .L208+4
+ 3440              		.loc 1 365 0 discriminator 1
+ 3441 15fc 01308312 		addne	r3, r3, #1
+ 3442              	.LVL83:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3443              		.loc 1 362 0 discriminator 1
+ 3444 1600 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3445              		.loc 1 363 0 discriminator 1
+ 3446 1604 9540CC15 		strneb	r4, [ip, #149]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3447              		.loc 1 364 0 discriminator 1
+ 3448 1608 4540CC15 		strneb	r4, [ip, #69]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3449              		.loc 1 362 0 discriminator 1
+ 3450 160c 9610D2E5 		ldrb	r1, [r2, #150]	@ zero_extendqisi2
+ 3451 1610 0640D0E5 		ldrb	r4, [r0, #6]	@ zero_extendqisi2
+ 3452 1614 08C79FE5 		ldr	ip, .L208+4
+ 3453              		.loc 1 365 0 discriminator 1
+ 3454 1618 01308312 		addne	r3, r3, #1
+ 3455              	.LVL84:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3456              		.loc 1 362 0 discriminator 1
+ 3457 161c 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3458              		.loc 1 363 0 discriminator 1
+ 3459 1620 9640CC15 		strneb	r4, [ip, #150]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3460              		.loc 1 364 0 discriminator 1
+ 3461 1624 4640CC15 		strneb	r4, [ip, #70]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3462              		.loc 1 362 0 discriminator 1
+ 3463 1628 9710D2E5 		ldrb	r1, [r2, #151]	@ zero_extendqisi2
+ 3464 162c 0740D0E5 		ldrb	r4, [r0, #7]	@ zero_extendqisi2
+ 3465 1630 ECC69FE5 		ldr	ip, .L208+4
+ 3466              		.loc 1 365 0 discriminator 1
+ 3467 1634 01308312 		addne	r3, r3, #1
+ 3468              	.LVL85:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3469              		.loc 1 362 0 discriminator 1
+ 3470 1638 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3471              		.loc 1 363 0 discriminator 1
+ 3472 163c 9740CC15 		strneb	r4, [ip, #151]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3473              		.loc 1 364 0 discriminator 1
+ 3474 1640 4740CC15 		strneb	r4, [ip, #71]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3475              		.loc 1 362 0 discriminator 1
+ 3476 1644 9810D2E5 		ldrb	r1, [r2, #152]	@ zero_extendqisi2
+ 3477 1648 08C0D0E5 		ldrb	ip, [r0, #8]	@ zero_extendqisi2
+ 3478 164c D0469FE5 		ldr	r4, .L208+4
+ 3479              		.loc 1 365 0 discriminator 1
+ 3480 1650 01308312 		addne	r3, r3, #1
+ 3481              	.LVL86:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3482              		.loc 1 362 0 discriminator 1
+ 3483 1654 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3484              		.loc 1 363 0 discriminator 1
+ 3485 1658 98C0C415 		strneb	ip, [r4, #152]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3486              		.loc 1 364 0 discriminator 1
+ 3487 165c 48C0C415 		strneb	ip, [r4, #72]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3488              		.loc 1 362 0 discriminator 1
+ 3489 1660 081080E2 		add	r1, r0, #8
+ 3490 1664 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 3491 1668 9940D2E5 		ldrb	r4, [r2, #153]	@ zero_extendqisi2
+ 3492              		.loc 1 365 0 discriminator 1
+ 3493 166c 01308312 		addne	r3, r3, #1
+ 3494              	.LVL87:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3495              		.loc 1 362 0 discriminator 1
+ 3496 1670 0C0054E1 		cmp	r4, ip
+ 3497 1674 A8469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3498              		.loc 1 363 0 discriminator 1
+ 3499 1678 99C0C415 		strneb	ip, [r4, #153]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3500              		.loc 1 364 0 discriminator 1
+ 3501 167c 49C0C415 		strneb	ip, [r4, #73]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3502              		.loc 1 362 0 discriminator 1
+ 3503 1680 9A40D2E5 		ldrb	r4, [r2, #154]	@ zero_extendqisi2
+ 3504 1684 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 3505              		.loc 1 365 0 discriminator 1
+ 3506 1688 01308312 		addne	r3, r3, #1
+ 3507              	.LVL88:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3508              		.loc 1 362 0 discriminator 1
+ 3509 168c 0C0054E1 		cmp	r4, ip
+ 3510 1690 8C469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3511              		.loc 1 363 0 discriminator 1
+ 3512 1694 9AC0C415 		strneb	ip, [r4, #154]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3513              		.loc 1 364 0 discriminator 1
+ 3514 1698 4AC0C415 		strneb	ip, [r4, #74]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3515              		.loc 1 362 0 discriminator 1
+ 3516 169c 9B40D2E5 		ldrb	r4, [r2, #155]	@ zero_extendqisi2
+ 3517 16a0 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 3518              		.loc 1 365 0 discriminator 1
+ 3519 16a4 01308312 		addne	r3, r3, #1
+ 3520              	.LVL89:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3521              		.loc 1 362 0 discriminator 1
+ 3522 16a8 0C0054E1 		cmp	r4, ip
+ 3523 16ac 70469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3524              		.loc 1 363 0 discriminator 1
+ 3525 16b0 9BC0C415 		strneb	ip, [r4, #155]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3526              		.loc 1 364 0 discriminator 1
+ 3527 16b4 4BC0C415 		strneb	ip, [r4, #75]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3528              		.loc 1 362 0 discriminator 1
+ 3529 16b8 9C40D2E5 		ldrb	r4, [r2, #156]	@ zero_extendqisi2
+ 3530 16bc 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 3531              		.loc 1 365 0 discriminator 1
+ 3532 16c0 01308312 		addne	r3, r3, #1
+ 3533              	.LVL90:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3534              		.loc 1 362 0 discriminator 1
+ 3535 16c4 0C0054E1 		cmp	r4, ip
+ 3536 16c8 54469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3537              		.loc 1 363 0 discriminator 1
+ 3538 16cc 9CC0C415 		strneb	ip, [r4, #156]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3539              		.loc 1 364 0 discriminator 1
+ 3540 16d0 4CC0C415 		strneb	ip, [r4, #76]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3541              		.loc 1 362 0 discriminator 1
+ 3542 16d4 9D40D2E5 		ldrb	r4, [r2, #157]	@ zero_extendqisi2
+ 3543 16d8 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 3544              		.loc 1 365 0 discriminator 1
+ 3545 16dc 01308312 		addne	r3, r3, #1
+ 3546              	.LVL91:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3547              		.loc 1 362 0 discriminator 1
+ 3548 16e0 0C0054E1 		cmp	r4, ip
+ 3549 16e4 38469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3550              		.loc 1 363 0 discriminator 1
+ 3551 16e8 9DC0C415 		strneb	ip, [r4, #157]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3552              		.loc 1 364 0 discriminator 1
+ 3553 16ec 4DC0C415 		strneb	ip, [r4, #77]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3554              		.loc 1 362 0 discriminator 1
+ 3555 16f0 9E40D2E5 		ldrb	r4, [r2, #158]	@ zero_extendqisi2
+ 3556 16f4 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 3557              		.loc 1 365 0 discriminator 1
+ 3558 16f8 01308312 		addne	r3, r3, #1
+ 3559              	.LVL92:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3560              		.loc 1 362 0 discriminator 1
+ 3561 16fc 0C0054E1 		cmp	r4, ip
+ 3562 1700 1C469FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3563              		.loc 1 363 0 discriminator 1
+ 3564 1704 9EC0C415 		strneb	ip, [r4, #158]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3565              		.loc 1 364 0 discriminator 1
+ 3566 1708 4EC0C415 		strneb	ip, [r4, #78]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3567              		.loc 1 362 0 discriminator 1
+ 3568 170c 0740D1E5 		ldrb	r4, [r1, #7]	@ zero_extendqisi2
+ 3569 1710 9F10D2E5 		ldrb	r1, [r2, #159]	@ zero_extendqisi2
+ 3570 1714 08C69FE5 		ldr	ip, .L208+4
+ 3571              		.loc 1 365 0 discriminator 1
+ 3572 1718 01308312 		addne	r3, r3, #1
+ 3573              	.LVL93:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3574              		.loc 1 362 0 discriminator 1
+ 3575 171c 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3576              		.loc 1 363 0 discriminator 1
+ 3577 1720 9F40CC15 		strneb	r4, [ip, #159]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3578              		.loc 1 364 0 discriminator 1
+ 3579 1724 4F40CC15 		strneb	r4, [ip, #79]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3580              		.loc 1 362 0 discriminator 1
+ 3581 1728 A010D2E5 		ldrb	r1, [r2, #160]	@ zero_extendqisi2
+ 3582 172c 10C0D0E5 		ldrb	ip, [r0, #16]	@ zero_extendqisi2
+ 3583 1730 EC459FE5 		ldr	r4, .L208+4
+ 3584              		.loc 1 365 0 discriminator 1
+ 3585 1734 01308312 		addne	r3, r3, #1
+ 3586              	.LVL94:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3587              		.loc 1 362 0 discriminator 1
+ 3588 1738 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3589              		.loc 1 363 0 discriminator 1
+ 3590 173c A0C0C415 		strneb	ip, [r4, #160]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3591              		.loc 1 364 0 discriminator 1
+ 3592 1740 50C0C415 		strneb	ip, [r4, #80]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3593              		.loc 1 362 0 discriminator 1
+ 3594 1744 101080E2 		add	r1, r0, #16
+ 3595 1748 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 3596 174c A140D2E5 		ldrb	r4, [r2, #161]	@ zero_extendqisi2
+ 3597              		.loc 1 365 0 discriminator 1
+ 3598 1750 01308312 		addne	r3, r3, #1
+ 3599              	.LVL95:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3600              		.loc 1 362 0 discriminator 1
+ 3601 1754 0C0054E1 		cmp	r4, ip
+ 3602 1758 C4459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3603              		.loc 1 363 0 discriminator 1
+ 3604 175c A1C0C415 		strneb	ip, [r4, #161]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3605              		.loc 1 364 0 discriminator 1
+ 3606 1760 51C0C415 		strneb	ip, [r4, #81]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3607              		.loc 1 362 0 discriminator 1
+ 3608 1764 A240D2E5 		ldrb	r4, [r2, #162]	@ zero_extendqisi2
+ 3609 1768 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 3610              		.loc 1 365 0 discriminator 1
+ 3611 176c 01308312 		addne	r3, r3, #1
+ 3612              	.LVL96:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3613              		.loc 1 362 0 discriminator 1
+ 3614 1770 0C0054E1 		cmp	r4, ip
+ 3615 1774 A8459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3616              		.loc 1 363 0 discriminator 1
+ 3617 1778 A2C0C415 		strneb	ip, [r4, #162]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3618              		.loc 1 364 0 discriminator 1
+ 3619 177c 52C0C415 		strneb	ip, [r4, #82]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3620              		.loc 1 362 0 discriminator 1
+ 3621 1780 A340D2E5 		ldrb	r4, [r2, #163]	@ zero_extendqisi2
+ 3622 1784 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 3623              		.loc 1 365 0 discriminator 1
+ 3624 1788 01308312 		addne	r3, r3, #1
+ 3625              	.LVL97:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3626              		.loc 1 362 0 discriminator 1
+ 3627 178c 0C0054E1 		cmp	r4, ip
+ 3628 1790 8C459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3629              		.loc 1 363 0 discriminator 1
+ 3630 1794 A3C0C415 		strneb	ip, [r4, #163]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3631              		.loc 1 364 0 discriminator 1
+ 3632 1798 53C0C415 		strneb	ip, [r4, #83]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3633              		.loc 1 362 0 discriminator 1
+ 3634 179c A440D2E5 		ldrb	r4, [r2, #164]	@ zero_extendqisi2
+ 3635 17a0 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 3636              		.loc 1 365 0 discriminator 1
+ 3637 17a4 01308312 		addne	r3, r3, #1
+ 3638              	.LVL98:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3639              		.loc 1 362 0 discriminator 1
+ 3640 17a8 0C0054E1 		cmp	r4, ip
+ 3641 17ac 70459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3642              		.loc 1 363 0 discriminator 1
+ 3643 17b0 A4C0C415 		strneb	ip, [r4, #164]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3644              		.loc 1 364 0 discriminator 1
+ 3645 17b4 54C0C415 		strneb	ip, [r4, #84]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3646              		.loc 1 362 0 discriminator 1
+ 3647 17b8 A540D2E5 		ldrb	r4, [r2, #165]	@ zero_extendqisi2
+ 3648 17bc 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 3649              		.loc 1 365 0 discriminator 1
+ 3650 17c0 01308312 		addne	r3, r3, #1
+ 3651              	.LVL99:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3652              		.loc 1 362 0 discriminator 1
+ 3653 17c4 0C0054E1 		cmp	r4, ip
+ 3654 17c8 54459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3655              		.loc 1 363 0 discriminator 1
+ 3656 17cc A5C0C415 		strneb	ip, [r4, #165]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3657              		.loc 1 364 0 discriminator 1
+ 3658 17d0 55C0C415 		strneb	ip, [r4, #85]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3659              		.loc 1 362 0 discriminator 1
+ 3660 17d4 A640D2E5 		ldrb	r4, [r2, #166]	@ zero_extendqisi2
+ 3661 17d8 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 3662              		.loc 1 365 0 discriminator 1
+ 3663 17dc 01308312 		addne	r3, r3, #1
+ 3664              	.LVL100:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3665              		.loc 1 362 0 discriminator 1
+ 3666 17e0 0C0054E1 		cmp	r4, ip
+ 3667 17e4 38459FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3668              		.loc 1 363 0 discriminator 1
+ 3669 17e8 A6C0C415 		strneb	ip, [r4, #166]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3670              		.loc 1 364 0 discriminator 1
+ 3671 17ec 56C0C415 		strneb	ip, [r4, #86]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3672              		.loc 1 362 0 discriminator 1
+ 3673 17f0 0740D1E5 		ldrb	r4, [r1, #7]	@ zero_extendqisi2
+ 3674 17f4 A710D2E5 		ldrb	r1, [r2, #167]	@ zero_extendqisi2
+ 3675 17f8 24C59FE5 		ldr	ip, .L208+4
+ 3676              		.loc 1 365 0 discriminator 1
+ 3677 17fc 01308312 		addne	r3, r3, #1
+ 3678              	.LVL101:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3679              		.loc 1 362 0 discriminator 1
+ 3680 1800 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3681              		.loc 1 363 0 discriminator 1
+ 3682 1804 A740CC15 		strneb	r4, [ip, #167]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3683              		.loc 1 364 0 discriminator 1
+ 3684 1808 5740CC15 		strneb	r4, [ip, #87]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3685              		.loc 1 362 0 discriminator 1
+ 3686 180c A810D2E5 		ldrb	r1, [r2, #168]	@ zero_extendqisi2
+ 3687 1810 18C0D0E5 		ldrb	ip, [r0, #24]	@ zero_extendqisi2
+ 3688 1814 08459FE5 		ldr	r4, .L208+4
+ 3689              		.loc 1 365 0 discriminator 1
+ 3690 1818 01308312 		addne	r3, r3, #1
+ 3691              	.LVL102:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3692              		.loc 1 362 0 discriminator 1
+ 3693 181c 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3694              		.loc 1 363 0 discriminator 1
+ 3695 1820 A8C0C415 		strneb	ip, [r4, #168]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3696              		.loc 1 364 0 discriminator 1
+ 3697 1824 58C0C415 		strneb	ip, [r4, #88]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3698              		.loc 1 362 0 discriminator 1
+ 3699 1828 181080E2 		add	r1, r0, #24
+ 3700 182c 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 3701 1830 A940D2E5 		ldrb	r4, [r2, #169]	@ zero_extendqisi2
+ 3702              		.loc 1 365 0 discriminator 1
+ 3703 1834 01308312 		addne	r3, r3, #1
+ 3704              	.LVL103:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3705              		.loc 1 362 0 discriminator 1
+ 3706 1838 0C0054E1 		cmp	r4, ip
+ 3707 183c E0449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3708              		.loc 1 363 0 discriminator 1
+ 3709 1840 A9C0C415 		strneb	ip, [r4, #169]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3710              		.loc 1 364 0 discriminator 1
+ 3711 1844 59C0C415 		strneb	ip, [r4, #89]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3712              		.loc 1 362 0 discriminator 1
+ 3713 1848 AA40D2E5 		ldrb	r4, [r2, #170]	@ zero_extendqisi2
+ 3714 184c 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 3715              		.loc 1 365 0 discriminator 1
+ 3716 1850 01308312 		addne	r3, r3, #1
+ 3717              	.LVL104:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3718              		.loc 1 362 0 discriminator 1
+ 3719 1854 0C0054E1 		cmp	r4, ip
+ 3720 1858 C4449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3721              		.loc 1 363 0 discriminator 1
+ 3722 185c AAC0C415 		strneb	ip, [r4, #170]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3723              		.loc 1 364 0 discriminator 1
+ 3724 1860 5AC0C415 		strneb	ip, [r4, #90]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3725              		.loc 1 362 0 discriminator 1
+ 3726 1864 AB40D2E5 		ldrb	r4, [r2, #171]	@ zero_extendqisi2
+ 3727 1868 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 3728              		.loc 1 365 0 discriminator 1
+ 3729 186c 01308312 		addne	r3, r3, #1
+ 3730              	.LVL105:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3731              		.loc 1 362 0 discriminator 1
+ 3732 1870 0C0054E1 		cmp	r4, ip
+ 3733 1874 A8449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3734              		.loc 1 363 0 discriminator 1
+ 3735 1878 ABC0C415 		strneb	ip, [r4, #171]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3736              		.loc 1 364 0 discriminator 1
+ 3737 187c 5BC0C415 		strneb	ip, [r4, #91]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3738              		.loc 1 362 0 discriminator 1
+ 3739 1880 AC40D2E5 		ldrb	r4, [r2, #172]	@ zero_extendqisi2
+ 3740 1884 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 3741              		.loc 1 365 0 discriminator 1
+ 3742 1888 01308312 		addne	r3, r3, #1
+ 3743              	.LVL106:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3744              		.loc 1 362 0 discriminator 1
+ 3745 188c 0C0054E1 		cmp	r4, ip
+ 3746 1890 8C449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3747              		.loc 1 363 0 discriminator 1
+ 3748 1894 ACC0C415 		strneb	ip, [r4, #172]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3749              		.loc 1 364 0 discriminator 1
+ 3750 1898 5CC0C415 		strneb	ip, [r4, #92]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3751              		.loc 1 362 0 discriminator 1
+ 3752 189c AD40D2E5 		ldrb	r4, [r2, #173]	@ zero_extendqisi2
+ 3753 18a0 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 3754              		.loc 1 365 0 discriminator 1
+ 3755 18a4 01308312 		addne	r3, r3, #1
+ 3756              	.LVL107:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3757              		.loc 1 362 0 discriminator 1
+ 3758 18a8 0C0054E1 		cmp	r4, ip
+ 3759 18ac 70449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3760              		.loc 1 363 0 discriminator 1
+ 3761 18b0 ADC0C415 		strneb	ip, [r4, #173]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3762              		.loc 1 364 0 discriminator 1
+ 3763 18b4 5DC0C415 		strneb	ip, [r4, #93]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3764              		.loc 1 362 0 discriminator 1
+ 3765 18b8 AE40D2E5 		ldrb	r4, [r2, #174]	@ zero_extendqisi2
+ 3766 18bc 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 3767              		.loc 1 365 0 discriminator 1
+ 3768 18c0 01308312 		addne	r3, r3, #1
+ 3769              	.LVL108:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3770              		.loc 1 362 0 discriminator 1
+ 3771 18c4 0C0054E1 		cmp	r4, ip
+ 3772 18c8 54449FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3773              		.loc 1 363 0 discriminator 1
+ 3774 18cc AEC0C415 		strneb	ip, [r4, #174]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3775              		.loc 1 364 0 discriminator 1
+ 3776 18d0 5EC0C415 		strneb	ip, [r4, #94]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3777              		.loc 1 362 0 discriminator 1
+ 3778 18d4 0740D1E5 		ldrb	r4, [r1, #7]	@ zero_extendqisi2
+ 3779 18d8 AF10D2E5 		ldrb	r1, [r2, #175]	@ zero_extendqisi2
+ 3780 18dc 40C49FE5 		ldr	ip, .L208+4
+ 3781              		.loc 1 365 0 discriminator 1
+ 3782 18e0 01308312 		addne	r3, r3, #1
+ 3783              	.LVL109:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3784              		.loc 1 362 0 discriminator 1
+ 3785 18e4 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3786              		.loc 1 363 0 discriminator 1
+ 3787 18e8 AF40CC15 		strneb	r4, [ip, #175]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3788              		.loc 1 364 0 discriminator 1
+ 3789 18ec 5F40CC15 		strneb	r4, [ip, #95]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3790              		.loc 1 362 0 discriminator 1
+ 3791 18f0 B010D2E5 		ldrb	r1, [r2, #176]	@ zero_extendqisi2
+ 3792 18f4 20C0D0E5 		ldrb	ip, [r0, #32]	@ zero_extendqisi2
+ 3793 18f8 24449FE5 		ldr	r4, .L208+4
+ 3794              		.loc 1 365 0 discriminator 1
+ 3795 18fc 01308312 		addne	r3, r3, #1
+ 3796              	.LVL110:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3797              		.loc 1 362 0 discriminator 1
+ 3798 1900 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3799              		.loc 1 363 0 discriminator 1
+ 3800 1904 B0C0C415 		strneb	ip, [r4, #176]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3801              		.loc 1 364 0 discriminator 1
+ 3802 1908 60C0C415 		strneb	ip, [r4, #96]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3803              		.loc 1 362 0 discriminator 1
+ 3804 190c 201080E2 		add	r1, r0, #32
+ 3805 1910 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 3806 1914 B140D2E5 		ldrb	r4, [r2, #177]	@ zero_extendqisi2
+ 3807              		.loc 1 365 0 discriminator 1
+ 3808 1918 01308312 		addne	r3, r3, #1
+ 3809              	.LVL111:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3810              		.loc 1 362 0 discriminator 1
+ 3811 191c 0C0054E1 		cmp	r4, ip
+ 3812 1920 FC439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3813              		.loc 1 363 0 discriminator 1
+ 3814 1924 B1C0C415 		strneb	ip, [r4, #177]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3815              		.loc 1 364 0 discriminator 1
+ 3816 1928 61C0C415 		strneb	ip, [r4, #97]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3817              		.loc 1 362 0 discriminator 1
+ 3818 192c B240D2E5 		ldrb	r4, [r2, #178]	@ zero_extendqisi2
+ 3819 1930 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 3820              		.loc 1 365 0 discriminator 1
+ 3821 1934 01308312 		addne	r3, r3, #1
+ 3822              	.LVL112:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3823              		.loc 1 362 0 discriminator 1
+ 3824 1938 0C0054E1 		cmp	r4, ip
+ 3825 193c E0439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3826              		.loc 1 363 0 discriminator 1
+ 3827 1940 B2C0C415 		strneb	ip, [r4, #178]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3828              		.loc 1 364 0 discriminator 1
+ 3829 1944 62C0C415 		strneb	ip, [r4, #98]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3830              		.loc 1 362 0 discriminator 1
+ 3831 1948 B340D2E5 		ldrb	r4, [r2, #179]	@ zero_extendqisi2
+ 3832 194c 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 3833              		.loc 1 365 0 discriminator 1
+ 3834 1950 01308312 		addne	r3, r3, #1
+ 3835              	.LVL113:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3836              		.loc 1 362 0 discriminator 1
+ 3837 1954 0C0054E1 		cmp	r4, ip
+ 3838 1958 C4439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3839              		.loc 1 363 0 discriminator 1
+ 3840 195c B3C0C415 		strneb	ip, [r4, #179]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3841              		.loc 1 364 0 discriminator 1
+ 3842 1960 63C0C415 		strneb	ip, [r4, #99]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3843              		.loc 1 362 0 discriminator 1
+ 3844 1964 B440D2E5 		ldrb	r4, [r2, #180]	@ zero_extendqisi2
+ 3845 1968 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 3846              		.loc 1 365 0 discriminator 1
+ 3847 196c 01308312 		addne	r3, r3, #1
+ 3848              	.LVL114:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3849              		.loc 1 362 0 discriminator 1
+ 3850 1970 0C0054E1 		cmp	r4, ip
+ 3851 1974 A8439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3852              		.loc 1 363 0 discriminator 1
+ 3853 1978 B4C0C415 		strneb	ip, [r4, #180]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3854              		.loc 1 364 0 discriminator 1
+ 3855 197c 64C0C415 		strneb	ip, [r4, #100]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3856              		.loc 1 362 0 discriminator 1
+ 3857 1980 B540D2E5 		ldrb	r4, [r2, #181]	@ zero_extendqisi2
+ 3858 1984 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 3859              		.loc 1 365 0 discriminator 1
+ 3860 1988 01308312 		addne	r3, r3, #1
+ 3861              	.LVL115:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3862              		.loc 1 362 0 discriminator 1
+ 3863 198c 0C0054E1 		cmp	r4, ip
+ 3864 1990 8C439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3865              		.loc 1 363 0 discriminator 1
+ 3866 1994 B5C0C415 		strneb	ip, [r4, #181]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3867              		.loc 1 364 0 discriminator 1
+ 3868 1998 65C0C415 		strneb	ip, [r4, #101]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3869              		.loc 1 362 0 discriminator 1
+ 3870 199c B640D2E5 		ldrb	r4, [r2, #182]	@ zero_extendqisi2
+ 3871 19a0 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 3872              		.loc 1 365 0 discriminator 1
+ 3873 19a4 01308312 		addne	r3, r3, #1
+ 3874              	.LVL116:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3875              		.loc 1 362 0 discriminator 1
+ 3876 19a8 0C0054E1 		cmp	r4, ip
+ 3877 19ac 70439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3878              		.loc 1 363 0 discriminator 1
+ 3879 19b0 B6C0C415 		strneb	ip, [r4, #182]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3880              		.loc 1 364 0 discriminator 1
+ 3881 19b4 66C0C415 		strneb	ip, [r4, #102]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3882              		.loc 1 362 0 discriminator 1
+ 3883 19b8 0740D1E5 		ldrb	r4, [r1, #7]	@ zero_extendqisi2
+ 3884 19bc B710D2E5 		ldrb	r1, [r2, #183]	@ zero_extendqisi2
+ 3885 19c0 5CC39FE5 		ldr	ip, .L208+4
+ 3886              		.loc 1 365 0 discriminator 1
+ 3887 19c4 01308312 		addne	r3, r3, #1
+ 3888              	.LVL117:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3889              		.loc 1 362 0 discriminator 1
+ 3890 19c8 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3891              		.loc 1 363 0 discriminator 1
+ 3892 19cc B740CC15 		strneb	r4, [ip, #183]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3893              		.loc 1 364 0 discriminator 1
+ 3894 19d0 6740CC15 		strneb	r4, [ip, #103]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3895              		.loc 1 362 0 discriminator 1
+ 3896 19d4 B810D2E5 		ldrb	r1, [r2, #184]	@ zero_extendqisi2
+ 3897 19d8 28C0D0E5 		ldrb	ip, [r0, #40]	@ zero_extendqisi2
+ 3898 19dc 40439FE5 		ldr	r4, .L208+4
+ 3899              		.loc 1 365 0 discriminator 1
+ 3900 19e0 01308312 		addne	r3, r3, #1
+ 3901              	.LVL118:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3902              		.loc 1 362 0 discriminator 1
+ 3903 19e4 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3904              		.loc 1 363 0 discriminator 1
+ 3905 19e8 B8C0C415 		strneb	ip, [r4, #184]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3906              		.loc 1 364 0 discriminator 1
+ 3907 19ec 68C0C415 		strneb	ip, [r4, #104]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3908              		.loc 1 362 0 discriminator 1
+ 3909 19f0 281080E2 		add	r1, r0, #40
+ 3910 19f4 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 3911 19f8 B940D2E5 		ldrb	r4, [r2, #185]	@ zero_extendqisi2
+ 3912              		.loc 1 365 0 discriminator 1
+ 3913 19fc 01308312 		addne	r3, r3, #1
+ 3914              	.LVL119:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3915              		.loc 1 362 0 discriminator 1
+ 3916 1a00 0C0054E1 		cmp	r4, ip
+ 3917 1a04 18439FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3918              		.loc 1 363 0 discriminator 1
+ 3919 1a08 B9C0C415 		strneb	ip, [r4, #185]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3920              		.loc 1 364 0 discriminator 1
+ 3921 1a0c 69C0C415 		strneb	ip, [r4, #105]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3922              		.loc 1 362 0 discriminator 1
+ 3923 1a10 BA40D2E5 		ldrb	r4, [r2, #186]	@ zero_extendqisi2
+ 3924 1a14 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 3925              		.loc 1 365 0 discriminator 1
+ 3926 1a18 01308312 		addne	r3, r3, #1
+ 3927              	.LVL120:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3928              		.loc 1 362 0 discriminator 1
+ 3929 1a1c 0C0054E1 		cmp	r4, ip
+ 3930 1a20 FC429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3931              		.loc 1 363 0 discriminator 1
+ 3932 1a24 BAC0C415 		strneb	ip, [r4, #186]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3933              		.loc 1 364 0 discriminator 1
+ 3934 1a28 6AC0C415 		strneb	ip, [r4, #106]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3935              		.loc 1 362 0 discriminator 1
+ 3936 1a2c BB40D2E5 		ldrb	r4, [r2, #187]	@ zero_extendqisi2
+ 3937 1a30 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 3938              		.loc 1 365 0 discriminator 1
+ 3939 1a34 01308312 		addne	r3, r3, #1
+ 3940              	.LVL121:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3941              		.loc 1 362 0 discriminator 1
+ 3942 1a38 0C0054E1 		cmp	r4, ip
+ 3943 1a3c E0429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3944              		.loc 1 363 0 discriminator 1
+ 3945 1a40 BBC0C415 		strneb	ip, [r4, #187]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3946              		.loc 1 364 0 discriminator 1
+ 3947 1a44 6BC0C415 		strneb	ip, [r4, #107]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3948              		.loc 1 362 0 discriminator 1
+ 3949 1a48 BC40D2E5 		ldrb	r4, [r2, #188]	@ zero_extendqisi2
+ 3950 1a4c 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 3951              		.loc 1 365 0 discriminator 1
+ 3952 1a50 01308312 		addne	r3, r3, #1
+ 3953              	.LVL122:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3954              		.loc 1 362 0 discriminator 1
+ 3955 1a54 0C0054E1 		cmp	r4, ip
+ 3956 1a58 C4429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3957              		.loc 1 363 0 discriminator 1
+ 3958 1a5c BCC0C415 		strneb	ip, [r4, #188]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3959              		.loc 1 364 0 discriminator 1
+ 3960 1a60 6CC0C415 		strneb	ip, [r4, #108]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3961              		.loc 1 362 0 discriminator 1
+ 3962 1a64 BD40D2E5 		ldrb	r4, [r2, #189]	@ zero_extendqisi2
+ 3963 1a68 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 3964              		.loc 1 365 0 discriminator 1
+ 3965 1a6c 01308312 		addne	r3, r3, #1
+ 3966              	.LVL123:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3967              		.loc 1 362 0 discriminator 1
+ 3968 1a70 0C0054E1 		cmp	r4, ip
+ 3969 1a74 A8429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3970              		.loc 1 363 0 discriminator 1
+ 3971 1a78 BDC0C415 		strneb	ip, [r4, #189]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3972              		.loc 1 364 0 discriminator 1
+ 3973 1a7c 6DC0C415 		strneb	ip, [r4, #109]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3974              		.loc 1 362 0 discriminator 1
+ 3975 1a80 BE40D2E5 		ldrb	r4, [r2, #190]	@ zero_extendqisi2
+ 3976 1a84 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 3977              		.loc 1 365 0 discriminator 1
+ 3978 1a88 01308312 		addne	r3, r3, #1
+ 3979              	.LVL124:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3980              		.loc 1 362 0 discriminator 1
+ 3981 1a8c 0C0054E1 		cmp	r4, ip
+ 3982 1a90 8C429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3983              		.loc 1 363 0 discriminator 1
+ 3984 1a94 BEC0C415 		strneb	ip, [r4, #190]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3985              		.loc 1 364 0 discriminator 1
+ 3986 1a98 6EC0C415 		strneb	ip, [r4, #110]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3987              		.loc 1 362 0 discriminator 1
+ 3988 1a9c 0740D1E5 		ldrb	r4, [r1, #7]	@ zero_extendqisi2
+ 3989 1aa0 BF10D2E5 		ldrb	r1, [r2, #191]	@ zero_extendqisi2
+ 3990 1aa4 78C29FE5 		ldr	ip, .L208+4
+ 3991              		.loc 1 365 0 discriminator 1
+ 3992 1aa8 01308312 		addne	r3, r3, #1
+ 3993              	.LVL125:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 3994              		.loc 1 362 0 discriminator 1
+ 3995 1aac 040051E1 		cmp	r1, r4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 3996              		.loc 1 363 0 discriminator 1
+ 3997 1ab0 BF40CC15 		strneb	r4, [ip, #191]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 3998              		.loc 1 364 0 discriminator 1
+ 3999 1ab4 6F40CC15 		strneb	r4, [ip, #111]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4000              		.loc 1 362 0 discriminator 1
+ 4001 1ab8 C010D2E5 		ldrb	r1, [r2, #192]	@ zero_extendqisi2
+ 4002 1abc 30C0D0E5 		ldrb	ip, [r0, #48]	@ zero_extendqisi2
+ 4003 1ac0 5C429FE5 		ldr	r4, .L208+4
+ 4004              		.loc 1 365 0 discriminator 1
+ 4005 1ac4 01308312 		addne	r3, r3, #1
+ 4006              	.LVL126:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4007              		.loc 1 362 0 discriminator 1
+ 4008 1ac8 0C0051E1 		cmp	r1, ip
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4009              		.loc 1 363 0 discriminator 1
+ 4010 1acc C0C0C415 		strneb	ip, [r4, #192]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4011              		.loc 1 364 0 discriminator 1
+ 4012 1ad0 70C0C415 		strneb	ip, [r4, #112]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4013              		.loc 1 362 0 discriminator 1
+ 4014 1ad4 301080E2 		add	r1, r0, #48
+ 4015 1ad8 01C0D1E5 		ldrb	ip, [r1, #1]	@ zero_extendqisi2
+ 4016 1adc C140D2E5 		ldrb	r4, [r2, #193]	@ zero_extendqisi2
+ 4017              		.loc 1 365 0 discriminator 1
+ 4018 1ae0 01308312 		addne	r3, r3, #1
+ 4019              	.LVL127:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4020              		.loc 1 362 0 discriminator 1
+ 4021 1ae4 0C0054E1 		cmp	r4, ip
+ 4022 1ae8 34429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4023              		.loc 1 363 0 discriminator 1
+ 4024 1aec C1C0C415 		strneb	ip, [r4, #193]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4025              		.loc 1 364 0 discriminator 1
+ 4026 1af0 71C0C415 		strneb	ip, [r4, #113]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4027              		.loc 1 362 0 discriminator 1
+ 4028 1af4 C240D2E5 		ldrb	r4, [r2, #194]	@ zero_extendqisi2
+ 4029 1af8 02C0D1E5 		ldrb	ip, [r1, #2]	@ zero_extendqisi2
+ 4030              		.loc 1 365 0 discriminator 1
+ 4031 1afc 01308312 		addne	r3, r3, #1
+ 4032              	.LVL128:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4033              		.loc 1 362 0 discriminator 1
+ 4034 1b00 0C0054E1 		cmp	r4, ip
+ 4035 1b04 18429FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4036              		.loc 1 363 0 discriminator 1
+ 4037 1b08 C2C0C415 		strneb	ip, [r4, #194]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4038              		.loc 1 364 0 discriminator 1
+ 4039 1b0c 72C0C415 		strneb	ip, [r4, #114]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4040              		.loc 1 362 0 discriminator 1
+ 4041 1b10 C340D2E5 		ldrb	r4, [r2, #195]	@ zero_extendqisi2
+ 4042 1b14 03C0D1E5 		ldrb	ip, [r1, #3]	@ zero_extendqisi2
+ 4043              		.loc 1 365 0 discriminator 1
+ 4044 1b18 01308312 		addne	r3, r3, #1
+ 4045              	.LVL129:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4046              		.loc 1 362 0 discriminator 1
+ 4047 1b1c 0C0054E1 		cmp	r4, ip
+ 4048 1b20 FC419FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4049              		.loc 1 363 0 discriminator 1
+ 4050 1b24 C3C0C415 		strneb	ip, [r4, #195]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4051              		.loc 1 364 0 discriminator 1
+ 4052 1b28 73C0C415 		strneb	ip, [r4, #115]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4053              		.loc 1 362 0 discriminator 1
+ 4054 1b2c C440D2E5 		ldrb	r4, [r2, #196]	@ zero_extendqisi2
+ 4055 1b30 04C0D1E5 		ldrb	ip, [r1, #4]	@ zero_extendqisi2
+ 4056              		.loc 1 365 0 discriminator 1
+ 4057 1b34 01308312 		addne	r3, r3, #1
+ 4058              	.LVL130:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4059              		.loc 1 362 0 discriminator 1
+ 4060 1b38 0C0054E1 		cmp	r4, ip
+ 4061 1b3c E0419FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4062              		.loc 1 363 0 discriminator 1
+ 4063 1b40 C4C0C415 		strneb	ip, [r4, #196]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4064              		.loc 1 364 0 discriminator 1
+ 4065 1b44 74C0C415 		strneb	ip, [r4, #116]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4066              		.loc 1 362 0 discriminator 1
+ 4067 1b48 C540D2E5 		ldrb	r4, [r2, #197]	@ zero_extendqisi2
+ 4068 1b4c 05C0D1E5 		ldrb	ip, [r1, #5]	@ zero_extendqisi2
+ 4069              		.loc 1 365 0 discriminator 1
+ 4070 1b50 01308312 		addne	r3, r3, #1
+ 4071              	.LVL131:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4072              		.loc 1 362 0 discriminator 1
+ 4073 1b54 0C0054E1 		cmp	r4, ip
+ 4074 1b58 C4419FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4075              		.loc 1 363 0 discriminator 1
+ 4076 1b5c C5C0C415 		strneb	ip, [r4, #197]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4077              		.loc 1 364 0 discriminator 1
+ 4078 1b60 75C0C415 		strneb	ip, [r4, #117]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4079              		.loc 1 362 0 discriminator 1
+ 4080 1b64 C640D2E5 		ldrb	r4, [r2, #198]	@ zero_extendqisi2
+ 4081 1b68 06C0D1E5 		ldrb	ip, [r1, #6]	@ zero_extendqisi2
+ 4082              		.loc 1 365 0 discriminator 1
+ 4083 1b6c 01308312 		addne	r3, r3, #1
+ 4084              	.LVL132:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4085              		.loc 1 362 0 discriminator 1
+ 4086 1b70 0C0054E1 		cmp	r4, ip
+ 4087 1b74 A8419FE5 		ldr	r4, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4088              		.loc 1 363 0 discriminator 1
+ 4089 1b78 C6C0C415 		strneb	ip, [r4, #198]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4090              		.loc 1 364 0 discriminator 1
+ 4091 1b7c 76C0C415 		strneb	ip, [r4, #118]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4092              		.loc 1 362 0 discriminator 1
+ 4093 1b80 C7C0D2E5 		ldrb	ip, [r2, #199]	@ zero_extendqisi2
+ 4094 1b84 0710D1E5 		ldrb	r1, [r1, #7]	@ zero_extendqisi2
+ 4095              		.loc 1 365 0 discriminator 1
+ 4096 1b88 01308312 		addne	r3, r3, #1
+ 4097              	.LVL133:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4098              		.loc 1 362 0 discriminator 1
+ 4099 1b8c 01005CE1 		cmp	ip, r1
+ 4100 1b90 8CC19FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4101              		.loc 1 363 0 discriminator 1
+ 4102 1b94 C710CC15 		strneb	r1, [ip, #199]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4103              		.loc 1 364 0 discriminator 1
+ 4104 1b98 7710CC15 		strneb	r1, [ip, #119]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4105              		.loc 1 362 0 discriminator 1
+ 4106 1b9c C8C0D2E5 		ldrb	ip, [r2, #200]	@ zero_extendqisi2
+ 4107 1ba0 3810D0E5 		ldrb	r1, [r0, #56]	@ zero_extendqisi2
+ 4108              		.loc 1 365 0 discriminator 1
+ 4109 1ba4 01308312 		addne	r3, r3, #1
+ 4110              	.LVL134:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4111              		.loc 1 362 0 discriminator 1
+ 4112 1ba8 01005CE1 		cmp	ip, r1
+ 4113 1bac 70C19FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4114              		.loc 1 363 0 discriminator 1
+ 4115 1bb0 C810CC15 		strneb	r1, [ip, #200]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4116              		.loc 1 364 0 discriminator 1
+ 4117 1bb4 7810CC15 		strneb	r1, [ip, #120]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4118              		.loc 1 362 0 discriminator 1
+ 4119 1bb8 380080E2 		add	r0, r0, #56
+ 4120              	.LVL135:
+ 4121 1bbc 0110D0E5 		ldrb	r1, [r0, #1]	@ zero_extendqisi2
+ 4122 1bc0 C9C0D2E5 		ldrb	ip, [r2, #201]	@ zero_extendqisi2
+ 4123              		.loc 1 365 0 discriminator 1
+ 4124 1bc4 01308312 		addne	r3, r3, #1
+ 4125              	.LVL136:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4126              		.loc 1 362 0 discriminator 1
+ 4127 1bc8 01005CE1 		cmp	ip, r1
+ 4128 1bcc 50C19FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4129              		.loc 1 363 0 discriminator 1
+ 4130 1bd0 C910CC15 		strneb	r1, [ip, #201]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4131              		.loc 1 364 0 discriminator 1
+ 4132 1bd4 7910CC15 		strneb	r1, [ip, #121]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4133              		.loc 1 362 0 discriminator 1
+ 4134 1bd8 CAC0D2E5 		ldrb	ip, [r2, #202]	@ zero_extendqisi2
+ 4135 1bdc 0210D0E5 		ldrb	r1, [r0, #2]	@ zero_extendqisi2
+ 4136              		.loc 1 365 0 discriminator 1
+ 4137 1be0 01308312 		addne	r3, r3, #1
+ 4138              	.LVL137:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4139              		.loc 1 362 0 discriminator 1
+ 4140 1be4 01005CE1 		cmp	ip, r1
+ 4141 1be8 34C19FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4142              		.loc 1 363 0 discriminator 1
+ 4143 1bec CA10CC15 		strneb	r1, [ip, #202]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4144              		.loc 1 364 0 discriminator 1
+ 4145 1bf0 7A10CC15 		strneb	r1, [ip, #122]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4146              		.loc 1 362 0 discriminator 1
+ 4147 1bf4 CBC0D2E5 		ldrb	ip, [r2, #203]	@ zero_extendqisi2
+ 4148 1bf8 0310D0E5 		ldrb	r1, [r0, #3]	@ zero_extendqisi2
+ 4149              		.loc 1 365 0 discriminator 1
+ 4150 1bfc 01308312 		addne	r3, r3, #1
+ 4151              	.LVL138:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4152              		.loc 1 362 0 discriminator 1
+ 4153 1c00 01005CE1 		cmp	ip, r1
+ 4154 1c04 18C19FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4155              		.loc 1 363 0 discriminator 1
+ 4156 1c08 CB10CC15 		strneb	r1, [ip, #203]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4157              		.loc 1 364 0 discriminator 1
+ 4158 1c0c 7B10CC15 		strneb	r1, [ip, #123]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4159              		.loc 1 362 0 discriminator 1
+ 4160 1c10 CCC0D2E5 		ldrb	ip, [r2, #204]	@ zero_extendqisi2
+ 4161 1c14 0410D0E5 		ldrb	r1, [r0, #4]	@ zero_extendqisi2
+ 4162              		.loc 1 365 0 discriminator 1
+ 4163 1c18 01308312 		addne	r3, r3, #1
+ 4164              	.LVL139:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4165              		.loc 1 362 0 discriminator 1
+ 4166 1c1c 01005CE1 		cmp	ip, r1
+ 4167 1c20 FCC09FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4168              		.loc 1 363 0 discriminator 1
+ 4169 1c24 CC10CC15 		strneb	r1, [ip, #204]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4170              		.loc 1 364 0 discriminator 1
+ 4171 1c28 7C10CC15 		strneb	r1, [ip, #124]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4172              		.loc 1 362 0 discriminator 1
+ 4173 1c2c CDC0D2E5 		ldrb	ip, [r2, #205]	@ zero_extendqisi2
+ 4174 1c30 0510D0E5 		ldrb	r1, [r0, #5]	@ zero_extendqisi2
+ 4175              		.loc 1 365 0 discriminator 1
+ 4176 1c34 01308312 		addne	r3, r3, #1
+ 4177              	.LVL140:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4178              		.loc 1 362 0 discriminator 1
+ 4179 1c38 01005CE1 		cmp	ip, r1
+ 4180 1c3c E0C09FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4181              		.loc 1 363 0 discriminator 1
+ 4182 1c40 CD10CC15 		strneb	r1, [ip, #205]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4183              		.loc 1 364 0 discriminator 1
+ 4184 1c44 7D10CC15 		strneb	r1, [ip, #125]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4185              		.loc 1 362 0 discriminator 1
+ 4186 1c48 CEC0D2E5 		ldrb	ip, [r2, #206]	@ zero_extendqisi2
+ 4187 1c4c 0610D0E5 		ldrb	r1, [r0, #6]	@ zero_extendqisi2
+ 4188              		.loc 1 365 0 discriminator 1
+ 4189 1c50 01308312 		addne	r3, r3, #1
+ 4190              	.LVL141:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4191              		.loc 1 362 0 discriminator 1
+ 4192 1c54 01005CE1 		cmp	ip, r1
+ 4193 1c58 C4C09FE5 		ldr	ip, .L208+4
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4194              		.loc 1 363 0 discriminator 1
+ 4195 1c5c CE10CC15 		strneb	r1, [ip, #206]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4196              		.loc 1 364 0 discriminator 1
+ 4197 1c60 7E10CC15 		strneb	r1, [ip, #126]
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4198              		.loc 1 362 0 discriminator 1
+ 4199 1c64 CF10D2E5 		ldrb	r1, [r2, #207]	@ zero_extendqisi2
+ 4200 1c68 07C0D0E5 		ldrb	ip, [r0, #7]	@ zero_extendqisi2
+ 4201              		.loc 1 365 0 discriminator 1
+ 4202 1c6c 01308312 		addne	r3, r3, #1
+ 4203              	.LVL142:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4204              		.loc 1 362 0 discriminator 1
+ 4205 1c70 AC009FE5 		ldr	r0, .L208+4
+ 4206              	.LVL143:
+ 4207 1c74 0C0051E1 		cmp	r1, ip
+ 4208              		.loc 1 365 0 discriminator 1
+ 4209 1c78 01308312 		addne	r3, r3, #1
+ 4210              	.LVL144:
+ 363:../pantalla.c **** 				toblerone[i][j]=t[i][j];
+ 4211              		.loc 1 363 0 discriminator 1
+ 4212 1c7c CFC0C015 		strneb	ip, [r0, #207]
+ 364:../pantalla.c **** 				cambios[i][j]=t[i][j];
+ 4213              		.loc 1 364 0 discriminator 1
+ 4214 1c80 7FC0C015 		strneb	ip, [r0, #127]
+ 4215              		.loc 1 365 0 discriminator 1
+ 4216 1c84 803082E5 		str	r3, [r2, #128]
+ 366:../pantalla.c **** 			}
+ 367:../pantalla.c **** 		}
+ 368:../pantalla.c **** 	}
+ 369:../pantalla.c **** }
+ 4217              		.loc 1 369 0 discriminator 1
+ 4218 1c88 04409DE4 		ldmfd	sp!, {r4}
+ 4219 1c8c 1EFF2FE1 		bx	lr
+ 4220              	.LVL145:
+ 4221              	.L141:
+ 362:../pantalla.c **** 			if(toblerone[i][j]!=t[i][j]){
+ 4222              		.loc 1 362 0
+ 4223 1c90 8C209FE5 		ldr	r2, .L208+4
+ 4224              	.LVL146:
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4225              		.loc 1 354 0
+ 4226 1c94 0010A0E3 		mov	r1, #0
+ 4227 1c98 901082E5 		str	r1, [r2, #144]
+ 4228 1c9c 941082E5 		str	r1, [r2, #148]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4229              		.loc 1 355 0
+ 4230 1ca0 401082E5 		str	r1, [r2, #64]
+ 4231 1ca4 441082E5 		str	r1, [r2, #68]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4232              		.loc 1 354 0
+ 4233 1ca8 981082E5 		str	r1, [r2, #152]
+ 4234 1cac 9C1082E5 		str	r1, [r2, #156]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4235              		.loc 1 355 0
+ 4236 1cb0 481082E5 		str	r1, [r2, #72]
+ 4237 1cb4 4C1082E5 		str	r1, [r2, #76]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4238              		.loc 1 354 0
+ 4239 1cb8 A01082E5 		str	r1, [r2, #160]
+ 4240 1cbc A41082E5 		str	r1, [r2, #164]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4241              		.loc 1 355 0
+ 4242 1cc0 501082E5 		str	r1, [r2, #80]
+ 4243 1cc4 541082E5 		str	r1, [r2, #84]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4244              		.loc 1 354 0
+ 4245 1cc8 A81082E5 		str	r1, [r2, #168]
+ 4246 1ccc AC1082E5 		str	r1, [r2, #172]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4247              		.loc 1 355 0
+ 4248 1cd0 581082E5 		str	r1, [r2, #88]
+ 4249 1cd4 5C1082E5 		str	r1, [r2, #92]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4250              		.loc 1 354 0
+ 4251 1cd8 B01082E5 		str	r1, [r2, #176]
+ 4252 1cdc B41082E5 		str	r1, [r2, #180]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4253              		.loc 1 355 0
+ 4254 1ce0 601082E5 		str	r1, [r2, #96]
+ 4255 1ce4 641082E5 		str	r1, [r2, #100]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4256              		.loc 1 354 0
+ 4257 1ce8 B81082E5 		str	r1, [r2, #184]
+ 4258 1cec BC1082E5 		str	r1, [r2, #188]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4259              		.loc 1 355 0
+ 4260 1cf0 681082E5 		str	r1, [r2, #104]
+ 4261 1cf4 6C1082E5 		str	r1, [r2, #108]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4262              		.loc 1 354 0
+ 4263 1cf8 C01082E5 		str	r1, [r2, #192]
+ 4264 1cfc C41082E5 		str	r1, [r2, #196]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4265              		.loc 1 355 0
+ 4266 1d00 701082E5 		str	r1, [r2, #112]
+ 4267 1d04 741082E5 		str	r1, [r2, #116]
+ 354:../pantalla.c **** 				toblerone[i][j]=0;
+ 4268              		.loc 1 354 0
+ 4269 1d08 C81082E5 		str	r1, [r2, #200]
+ 4270 1d0c CC1082E5 		str	r1, [r2, #204]
+ 355:../pantalla.c **** 				cambios[i][j]=0;
+ 4271              		.loc 1 355 0
+ 4272 1d10 781082E5 		str	r1, [r2, #120]
+ 4273 1d14 7C1082E5 		str	r1, [r2, #124]
+ 4274              	.LVL147:
+ 4275 1d18 801082E5 		str	r1, [r2, #128]
+ 4276 1d1c 10FEFFEA 		b	.L200
+ 4277              	.L209:
+ 4278              		.align	2
+ 4279              	.L208:
+ 4280 1d20 00000000 		.word	.LANCHOR0
+ 4281 1d24 00000000 		.word	.LANCHOR1
+ 4282              		.cfi_endproc
+ 4283              	.LFE7:
+ 4285              		.align	2
+ 4286              		.global	LCD_tcalculo
+ 4288              	LCD_tcalculo:
+ 4289              	.LFB8:
+ 370:../pantalla.c **** /*
+ 371:../pantalla.c ****  * Actualiza tcalculos
+ 372:../pantalla.c ****  */
+ 373:../pantalla.c **** void LCD_tcalculo(unsigned int t){
+ 4290              		.loc 1 373 0
+ 4291              		.cfi_startproc
+ 4292              		@ Function supports interworking.
+ 4293              		@ args = 0, pretend = 0, frame = 0
+ 4294              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4295              		@ link register save eliminated.
+ 4296              	.LVL148:
+ 374:../pantalla.c **** 	tcalculos+=t;
+ 4297              		.loc 1 374 0
+ 4298 1d28 0C309FE5 		ldr	r3, .L211
+ 4299 1d2c 181093E5 		ldr	r1, [r3, #24]
+ 4300 1d30 012080E0 		add	r2, r0, r1
+ 4301 1d34 182083E5 		str	r2, [r3, #24]
+ 375:../pantalla.c **** }
+ 4302              		.loc 1 375 0
+ 4303 1d38 1EFF2FE1 		bx	lr
+ 4304              	.L212:
+ 4305              		.align	2
+ 4306              	.L211:
+ 4307 1d3c 00000000 		.word	.LANCHOR1
+ 4308              		.cfi_endproc
+ 4309              	.LFE8:
+ 4311              		.align	2
+ 4312              		.global	LCD_tvolteo
+ 4314              	LCD_tvolteo:
+ 4315              	.LFB9:
+ 376:../pantalla.c **** /*
+ 377:../pantalla.c ****  * Actualiza tvolteos y nvolteos
+ 378:../pantalla.c ****  */
+ 379:../pantalla.c **** void LCD_tvolteo(unsigned int t){
+ 4316              		.loc 1 379 0
+ 4317              		.cfi_startproc
+ 4318              		@ Function supports interworking.
+ 4319              		@ args = 0, pretend = 0, frame = 0
+ 4320              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4321              		@ link register save eliminated.
+ 4322              	.LVL149:
+ 380:../pantalla.c **** 	tvolteos+=t;
+ 4323              		.loc 1 380 0
+ 4324 1d40 18309FE5 		ldr	r3, .L214
+ 4325 1d44 1C2083E2 		add	r2, r3, #28
+ 4326 1d48 041092E8 		ldmia	r2, {r2, ip}	@ phole ldm
+ 4327 1d4c 021080E0 		add	r1, r0, r2
+ 381:../pantalla.c **** 	nvolteos++;
+ 4328              		.loc 1 381 0
+ 4329 1d50 01208CE2 		add	r2, ip, #1
+ 380:../pantalla.c **** 	tvolteos+=t;
+ 4330              		.loc 1 380 0
+ 4331 1d54 1C1083E5 		str	r1, [r3, #28]
+ 4332              		.loc 1 381 0
+ 4333 1d58 202083E5 		str	r2, [r3, #32]
+ 382:../pantalla.c **** }
+ 4334              		.loc 1 382 0
+ 4335 1d5c 1EFF2FE1 		bx	lr
+ 4336              	.L215:
+ 4337              		.align	2
+ 4338              	.L214:
+ 4339 1d60 00000000 		.word	.LANCHOR1
+ 4340              		.cfi_endproc
+ 4341              	.LFE9:
+ 4343              		.align	2
+ 4344              		.global	LCD_esquina
+ 4346              	LCD_esquina:
+ 4347              	.LFB10:
+ 383:../pantalla.c **** /*
+ 384:../pantalla.c ****  * Indica siguiente esquina a calibrar
+ 385:../pantalla.c ****  */
+ 386:../pantalla.c **** void LCD_esquina(int e){
+ 4348              		.loc 1 386 0
+ 4349              		.cfi_startproc
+ 4350              		@ Function supports interworking.
+ 4351              		@ args = 0, pretend = 0, frame = 0
+ 4352              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4353              		@ link register save eliminated.
+ 4354              	.LVL150:
+ 387:../pantalla.c **** 	esquina=e;
+ 4355              		.loc 1 387 0
+ 4356 1d64 04309FE5 		ldr	r3, .L217
+ 4357 1d68 140083E5 		str	r0, [r3, #20]
+ 388:../pantalla.c **** }
+ 4358              		.loc 1 388 0
+ 4359 1d6c 1EFF2FE1 		bx	lr
+ 4360              	.L218:
+ 4361              		.align	2
+ 4362              	.L217:
+ 4363 1d70 00000000 		.word	.LANCHOR1
+ 4364              		.cfi_endproc
+ 4365              	.LFE10:
+ 4367              		.align	2
+ 4368              		.global	LCD_fichas
+ 4370              	LCD_fichas:
+ 4371              	.LFB11:
+ 389:../pantalla.c **** /*
+ 390:../pantalla.c ****  * Indica resultado al final de la partida
+ 391:../pantalla.c ****  */
+ 392:../pantalla.c **** void LCD_fichas(int b, int n){
+ 4372              		.loc 1 392 0
+ 4373              		.cfi_startproc
+ 4374              		@ Function supports interworking.
+ 4375              		@ args = 0, pretend = 0, frame = 0
+ 4376              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4377              		@ link register save eliminated.
+ 4378              	.LVL151:
+ 393:../pantalla.c **** 	blancas=b;
+ 4379              		.loc 1 393 0
+ 4380 1d74 08309FE5 		ldr	r3, .L220
+ 4381 1d78 100083E5 		str	r0, [r3, #16]
+ 394:../pantalla.c **** 	negras=n;
+ 4382              		.loc 1 394 0
+ 4383 1d7c 001083E5 		str	r1, [r3, #0]
+ 395:../pantalla.c **** }
+ 4384              		.loc 1 395 0
+ 4385 1d80 1EFF2FE1 		bx	lr
+ 4386              	.L221:
+ 4387              		.align	2
+ 4388              	.L220:
+ 4389 1d84 00000000 		.word	.LANCHOR1
+ 4390              		.cfi_endproc
+ 4391              	.LFE11:
+ 4393              		.align	2
+ 4394              		.global	LCD_DMA_ready
+ 4396              	LCD_DMA_ready:
+ 4397              	.LFB12:
+ 396:../pantalla.c **** /*
+ 397:../pantalla.c ****  * Indica que la transferencia dma ha finalizado
+ 398:../pantalla.c ****  */
+ 399:../pantalla.c **** void LCD_DMA_ready(){
+ 4398              		.loc 1 399 0
+ 4399              		.cfi_startproc
+ 4400              		@ Function supports interworking.
+ 4401              		@ args = 0, pretend = 0, frame = 0
+ 4402              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4403              		@ link register save eliminated.
+ 400:../pantalla.c **** 	DMA_ready=1;
+ 4404              		.loc 1 400 0
+ 4405 1d88 08309FE5 		ldr	r3, .L223
+ 4406 1d8c 0120A0E3 		mov	r2, #1
+ 4407 1d90 6C2183E5 		str	r2, [r3, #364]
+ 401:../pantalla.c **** }
+ 4408              		.loc 1 401 0
+ 4409 1d94 1EFF2FE1 		bx	lr
+ 4410              	.L224:
+ 4411              		.align	2
+ 4412              	.L223:
+ 4413 1d98 00000000 		.word	.LANCHOR0
+ 4414              		.cfi_endproc
+ 4415              	.LFE12:
+ 4417              		.align	2
+ 4418              		.global	LCD_Hay_cambios
+ 4420              	LCD_Hay_cambios:
+ 4421              	.LFB13:
+ 402:../pantalla.c **** /*
+ 403:../pantalla.c ****  * Indica que hay que ejecutar una transferencia
+ 404:../pantalla.c ****  */
+ 405:../pantalla.c **** void LCD_Hay_cambios(){
+ 4422              		.loc 1 405 0
+ 4423              		.cfi_startproc
+ 4424              		@ Function supports interworking.
+ 4425              		@ args = 0, pretend = 0, frame = 0
+ 4426              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4427              		@ link register save eliminated.
+ 406:../pantalla.c **** 	Hay_cambios=1;
+ 4428              		.loc 1 406 0
+ 4429 1d9c 08309FE5 		ldr	r3, .L226
+ 4430 1da0 0120A0E3 		mov	r2, #1
+ 4431 1da4 682183E5 		str	r2, [r3, #360]
+ 407:../pantalla.c **** }
+ 4432              		.loc 1 407 0
+ 4433 1da8 1EFF2FE1 		bx	lr
+ 4434              	.L227:
+ 4435              		.align	2
+ 4436              	.L226:
+ 4437 1dac 00000000 		.word	.LANCHOR0
+ 4438              		.cfi_endproc
+ 4439              	.LFE13:
+ 4441              		.align	2
+ 4442              		.global	LCD_Refresca_ttotal
+ 4444              	LCD_Refresca_ttotal:
+ 4445              	.LFB14:
+ 408:../pantalla.c **** /*
+ 409:../pantalla.c ****  * Si hay que actualizar el ttotal, pone Hay_cambios a 1
+ 410:../pantalla.c ****  */
+ 411:../pantalla.c **** void LCD_Refresca_ttotal(){
+ 4446              		.loc 1 411 0
+ 4447              		.cfi_startproc
+ 4448              		@ Function supports interworking.
+ 4449              		@ args = 0, pretend = 0, frame = 0
+ 4450              		@ frame_needed = 0, uses_anonymous_args = 0
+ 4451              		@ link register save eliminated.
+ 412:../pantalla.c **** 	static int contador=0;
+ 413:../pantalla.c **** 	if(pantalla==PANTALLA_JUEGO){
+ 4452              		.loc 1 413 0
+ 4453 1db0 2C309FE5 		ldr	r3, .L230
+ 4454 1db4 702193E5 		ldr	r2, [r3, #368]
+ 4455 1db8 010052E3 		cmp	r2, #1
+ 4456 1dbc 1EFF2F11 		bxne	lr
+ 414:../pantalla.c **** 		contador++;
+ 4457              		.loc 1 414 0
+ 4458 1dc0 20109FE5 		ldr	r1, .L230+4
+ 4459 1dc4 E4C091E5 		ldr	ip, [r1, #228]
+ 4460 1dc8 01008CE2 		add	r0, ip, #1
+ 415:../pantalla.c **** 		if(contador==60){	//Esta funcion se ejecuta 60 veces por segundo
+ 4461              		.loc 1 415 0
+ 4462 1dcc 3C0050E3 		cmp	r0, #60
+ 414:../pantalla.c **** 		contador++;
+ 4463              		.loc 1 414 0
+ 4464 1dd0 E40081E5 		str	r0, [r1, #228]
+ 416:../pantalla.c **** 			contador=0;
+ 4465              		.loc 1 416 0
+ 4466 1dd4 0000A003 		moveq	r0, #0
+ 4467 1dd8 E4008105 		streq	r0, [r1, #228]
+ 417:../pantalla.c **** 			Hay_cambios=1;
+ 4468              		.loc 1 417 0
+ 4469 1ddc 68218305 		streq	r2, [r3, #360]
+ 4470 1de0 1EFF2FE1 		bx	lr
+ 4471              	.L231:
+ 4472              		.align	2
+ 4473              	.L230:
+ 4474 1de4 00000000 		.word	.LANCHOR0
+ 4475 1de8 00000000 		.word	.LANCHOR1
+ 4476              		.cfi_endproc
+ 4477              	.LFE14:
+ 4479              		.data
+ 4480              		.align	2
+ 4481              		.set	.LANCHOR0,. + 0
+ 4484              	primeraImpresion:
+ 4485 0000 01000000 		.word	1
+ 4488              	a.4128:
+ 4489 0004 46696E20 		.ascii	"Fin del juego\000"
+ 4489      64656C20 
+ 4489      6A756567 
+ 4489      6F00
+ 4490 0012 0000     		.space	2
+ 4493              	b.4130:
+ 4494 0014 4E656772 		.ascii	"Negras\000"
+ 4494      617300
+ 4495 001b 00       		.space	1
+ 4498              	c.4131:
+ 4499 001c 426C616E 		.ascii	"Blancas\000"
+ 4499      63617300 
+ 4502              	d.4132:
+ 4503 0024 566F6C76 		.ascii	"Volver a jugar\000"
+ 4503      65722061 
+ 4503      206A7567 
+ 4503      617200
+ 4504 0033 00       		.space	1
+ 4507              	e.4133:
+ 4508 0034 53616C69 		.ascii	"Salir\000"
+ 4508      7200
+ 4509 003a 0000     		.space	2
+ 4512              	a.4136:
+ 4513 003c 48617A20 		.ascii	"Haz click en el cuadrado\000"
+ 4513      636C6963 
+ 4513      6B20656E 
+ 4513      20656C20 
+ 4513      63756164 
+ 4514 0055 000000   		.space	3
+ 4517              	a.4139:
+ 4518 0058 52657665 		.ascii	"Reversi 8\000"
+ 4518      72736920 
+ 4518      3800
+ 4519 0062 0000     		.space	2
+ 4522              	b.4140:
+ 4523 0064 546F7175 		.ascii	"Toque para jugar\000"
+ 4523      65207061 
+ 4523      7261206A 
+ 4523      75676172 
+ 4523      00
+ 4524 0075 000000   		.space	3
+ 4527              	c.4141:
+ 4528 0078 43616C69 		.ascii	"Calibrar\000"
+ 4528      62726172 
+ 4528      00
+ 4529 0081 000000   		.space	3
+ 4532              	d.4142:
+ 4533 0084 70616E74 		.ascii	"pantalla\000"
+ 4533      616C6C61 
+ 4533      00
+ 4534 008d 000000   		.space	3
+ 4537              	e.4143:
+ 4538 0090 496E7374 		.ascii	"Instrucciones:\000"
+ 4538      72756363 
+ 4538      696F6E65 
+ 4538      733A00
+ 4539 009f 00       		.space	1
+ 4542              	f.4144:
+ 4543 00a0 50756C73 		.ascii	"Pulse los botones para seleccionar fila y columna\000"
+ 4543      65206C6F 
+ 4543      7320626F 
+ 4543      746F6E65 
+ 4543      73207061 
+ 4544 00d2 0000     		.space	2
+ 4547              	g.4145:
+ 4548 00d4 50756C73 		.ascii	"Pulse la pantalla para efectuar el movimiento\000"
+ 4548      65206C61 
+ 4548      2070616E 
+ 4548      74616C6C 
+ 4548      61207061 
+ 4549 0102 0000     		.space	2
+ 4552              	h.4146:
+ 4553 0104 2073656C 		.ascii	" seleccionado\000"
+ 4553      65636369 
+ 4553      6F6E6164 
+ 4553      6F00
+ 4554 0112 0000     		.space	2
+ 4557              	a.4152:
+ 4558 0114 5469656D 		.ascii	"Tiempo total\000"
+ 4558      706F2074 
+ 4558      6F74616C 
+ 4558      00
+ 4559 0121 000000   		.space	3
+ 4562              	b.4153:
+ 4563 0124 5469656D 		.ascii	"Tiempo calculos\000"
+ 4563      706F2063 
+ 4563      616C6375 
+ 4563      6C6F7300 
+ 4566              	c.4154:
+ 4567 0134 5469656D 		.ascii	"Tiempo volteos\000"
+ 4567      706F2076 
+ 4567      6F6C7465 
+ 4567      6F7300
+ 4568 0143 00       		.space	1
+ 4571              	d.4155:
+ 4572 0144 4E756D65 		.ascii	"Numero volteos\000"
+ 4572      726F2076 
+ 4572      6F6C7465 
+ 4572      6F7300
+ 4573 0153 00       		.space	1
+ 4576              	e.4156:
+ 4577 0154 4162616E 		.ascii	"Abandonar\000"
+ 4577      646F6E61 
+ 4577      7200
+ 4578 015e 0000     		.space	2
+ 4581              	f.4157:
+ 4582 0160 4A756761 		.ascii	"Jugar\000"
+ 4582      7200
+ 4583 0166 0000     		.space	2
+ 4586              	Hay_cambios:
+ 4587 0168 01000000 		.word	1
+ 4590              	DMA_ready:
+ 4591 016c 01000000 		.word	1
+ 4594              	pantalla:
+ 4595 0170 03000000 		.word	3
+ 4596              		.bss
+ 4597              		.align	2
+ 4598              		.set	.LANCHOR1,. + 0
+ 4601              	negras:
+ 4602 0000 00000000 		.space	4
+ 4605              	snum.4129:
+ 4606 0004 00000000 		.space	10
+ 4606      00000000 
+ 4606      0000
+ 4607 000e 0000     		.space	2
+ 4610              	blancas:
+ 4611 0010 00000000 		.space	4
+ 4614              	esquina:
+ 4615 0014 00000000 		.space	4
+ 4618              	tcalculos:
+ 4619 0018 00000000 		.space	4
+ 4622              	tvolteos:
+ 4623 001c 00000000 		.space	4
+ 4626              	nvolteos:
+ 4627 0020 00000000 		.space	4
+ 4630              	contador_multiplicador:
+ 4631 0024 00000000 		.space	4
+ 4634              	tanterior:
+ 4635 0028 00000000 		.space	4
+ 4638              	ttotal:
+ 4639 002c 00000000 		.space	4
+ 4642              	tinicio_juego:
+ 4643 0030 00000000 		.space	4
+ 4646              	snum.4151:
+ 4647 0034 00000000 		.space	10
+ 4647      00000000 
+ 4647      0000
+ 4648 003e 0000     		.space	2
+ 4651              	cambios:
+ 4652 0040 00000000 		.space	64
+ 4652      00000000 
+ 4652      00000000 
+ 4652      00000000 
+ 4652      00000000 
+ 4655              	ncambios:
+ 4656 0080 00000000 		.space	4
+ 4659              	fMov:
+ 4660 0084 00000000 		.space	4
+ 4663              	cMov:
+ 4664 0088 00000000 		.space	4
+ 4667              	underGris:
+ 4668 008c 00       		.space	1
+ 4669 008d 000000   		.space	3
+ 4672              	toblerone:
+ 4673 0090 00000000 		.space	64
+ 4673      00000000 
+ 4673      00000000 
+ 4673      00000000 
+ 4673      00000000 
+ 4676              	oldfMov:
+ 4677 00d0 00000000 		.space	4
+ 4680              	oldcMov:
+ 4681 00d4 00000000 		.space	4
+ 4684              	snum.4171:
+ 4685 00d8 00000000 		.space	10
+ 4685      00000000 
+ 4685      0000
+ 4686 00e2 0000     		.space	2
+ 4689              	contador.4223:
+ 4690 00e4 00000000 		.space	4
+ 4691              		.text
+ 4692              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 pantalla.c
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1243   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1246   .text:00000000 Pantalla_final
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1356   .text:00000118 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1362   .text:00000120 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1365   .text:00000120 Pantalla_calibrar
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1487   .text:00000260 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1494   .text:00000270 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1497   .text:00000270 Pantalla_inicial
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1598   .text:00000368 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1604   .text:00000370 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:1607   .text:00000370 Pantalla_juego
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3076   .text:00001314 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3096   .text:0000135c $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3202   .text:00001488 LCD_imprimir
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3285   .text:0000151c $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3289   .text:00001520 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3292   .text:00001520 LCD_pantalla
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3314   .text:00001534 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3318   .text:00001538 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3321   .text:00001538 LCD_movimiento
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3340   .text:00001548 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3344   .text:0000154c $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:3347   .text:0000154c LCD_tablero
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4280   .text:00001d20 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4285   .text:00001d28 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4288   .text:00001d28 LCD_tcalculo
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4307   .text:00001d3c $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4311   .text:00001d40 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4314   .text:00001d40 LCD_tvolteo
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4339   .text:00001d60 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4343   .text:00001d64 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4346   .text:00001d64 LCD_esquina
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4363   .text:00001d70 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4367   .text:00001d74 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4370   .text:00001d74 LCD_fichas
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4389   .text:00001d84 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4393   .text:00001d88 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4396   .text:00001d88 LCD_DMA_ready
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4413   .text:00001d98 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4417   .text:00001d9c $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4420   .text:00001d9c LCD_Hay_cambios
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4437   .text:00001dac $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4441   .text:00001db0 $a
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4444   .text:00001db0 LCD_Refresca_ttotal
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4474   .text:00001de4 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4480   .data:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4484   .data:00000000 primeraImpresion
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4488   .data:00000004 a.4128
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4493   .data:00000014 b.4130
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4498   .data:0000001c c.4131
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4502   .data:00000024 d.4132
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4507   .data:00000034 e.4133
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4512   .data:0000003c a.4136
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4517   .data:00000058 a.4139
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4522   .data:00000064 b.4140
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4527   .data:00000078 c.4141
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4532   .data:00000084 d.4142
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4537   .data:00000090 e.4143
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4542   .data:000000a0 f.4144
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4547   .data:000000d4 g.4145
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4552   .data:00000104 h.4146
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4557   .data:00000114 a.4152
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4562   .data:00000124 b.4153
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4566   .data:00000134 c.4154
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4571   .data:00000144 d.4155
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4576   .data:00000154 e.4156
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4581   .data:00000160 f.4157
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4586   .data:00000168 Hay_cambios
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4590   .data:0000016c DMA_ready
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4594   .data:00000170 pantalla
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4597   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4601   .bss:00000000 negras
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4605   .bss:00000004 snum.4129
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4610   .bss:00000010 blancas
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4614   .bss:00000014 esquina
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4618   .bss:00000018 tcalculos
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4622   .bss:0000001c tvolteos
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4626   .bss:00000020 nvolteos
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4630   .bss:00000024 contador_multiplicador
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4634   .bss:00000028 tanterior
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4638   .bss:0000002c ttotal
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4642   .bss:00000030 tinicio_juego
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4646   .bss:00000034 snum.4151
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4651   .bss:00000040 cambios
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4655   .bss:00000080 ncambios
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4659   .bss:00000084 fMov
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4663   .bss:00000088 cMov
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4667   .bss:0000008c underGris
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4672   .bss:00000090 toblerone
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4676   .bss:000000d0 oldfMov
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4680   .bss:000000d4 oldcMov
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4684   .bss:000000d8 snum.4171
+C:\Users\sergi\AppData\Local\Temp\cc4GwqPu.s:4689   .bss:000000e4 contador.4223
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+Lcd_Clr
+Lcd_DspAscII8x16
+Lcd_DspAscII6x8
+itoa
+Lcd_Draw_Box
+LcdClrRect
+timer2_leer
+BitmapView
+Lcd_Draw_HLine
+Lcd_Draw_VLine
+Stru_Bitmap_fichaBlanca
+Stru_Bitmap_fichaGris
+Stru_Bitmap_fichaNegra
+Lcd_Dma_Trans

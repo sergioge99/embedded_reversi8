@@ -1,0 +1,1047 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"tp.c"
+  21              	.Ltext0:
+  22              		.file 1 "../tp.c"
+ 2220              		.align	2
+ 2221              		.global	touchpad_ISR
+ 2223              	touchpad_ISR:
+ 2224              	.LFB1:
+   1:../tp.c       **** /*********************************************************************************************
+   2:../tp.c       **** * Fichero:	tp.c
+   3:../tp.c       **** * Autor1:	Sergio García Esteban	755844
+   4:../tp.c       **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../tp.c       **** * Descrip:	Funciones de manejo de la pantalla tactil
+   6:../tp.c       **** * Version:
+   7:../tp.c       **** *********************************************************************************************/
+   8:../tp.c       **** 
+   9:../tp.c       **** /*--- include files ---*/
+  10:../tp.c       **** #include "tp.h"
+  11:../tp.c       **** #include "cola_depuracion.h"
+  12:../tp.c       **** #include "44blib.h"
+  13:../tp.c       **** #include "timer2.h"
+  14:../tp.c       **** #include <stdint.h>
+  15:../tp.c       **** 
+  16:../tp.c       **** /*--- variables globales ---*/
+  17:../tp.c       **** static int calibrar=4,primerClick=1,primeraInterrupcion=1;
+  18:../tp.c       **** static unsigned int  Xmax, Ymax, Xmin, Ymin; //Valores maximos de medicion
+  19:../tp.c       **** 
+  20:../tp.c       **** 
+  21:../tp.c       **** /* declaración de función que es rutina de servicio de interrupción*/
+  22:../tp.c       **** void touchpad_ISR() __attribute__((interrupt("IRQ")));
+  23:../tp.c       **** 
+  24:../tp.c       **** /*********************************************************************************************
+  25:../tp.c       **** * Calibra la pantalla, establece nuevos maximos de mediciones.
+  26:../tp.c       **** *********************************************************************************************/
+  27:../tp.c       **** void touchpad_calibrar(ULONG tx, ULONG ty){
+  28:../tp.c       ****     if(primerClick == 1){
+  29:../tp.c       ****     	primerClick=0;
+  30:../tp.c       ****     	Xmax = tx;				// En la primera pulsación asignamos sin comparar
+  31:../tp.c       ****     	Xmin = tx;
+  32:../tp.c       ****     	Ymax = ty;
+  33:../tp.c       ****     	Ymin = ty;
+  34:../tp.c       ****     }else{
+  35:../tp.c       **** 		if(tx < Xmin){			// En las siguientes, comprobamos que es mejor maximo/minimo
+  36:../tp.c       **** 			Xmin=tx;
+  37:../tp.c       **** 		}else if(tx > Xmax){
+  38:../tp.c       **** 			Xmax=tx;
+  39:../tp.c       **** 		}
+  40:../tp.c       **** 		if(ty > Ymax){
+  41:../tp.c       **** 			Ymax=ty;
+  42:../tp.c       **** 		}else if(ty < Ymax){
+  43:../tp.c       **** 			Ymin=ty;
+  44:../tp.c       **** 		}
+  45:../tp.c       **** 	}
+  46:../tp.c       ****     calibrar--;
+  47:../tp.c       **** }
+  48:../tp.c       **** 
+  49:../tp.c       **** /*********************************************************************************************
+  50:../tp.c       **** * ISR pantalla tactil
+  51:../tp.c       **** ********************************************************************************************/
+  52:../tp.c       **** void touchpad_ISR(){
+ 2225              		.loc 1 52 0
+ 2226              		.cfi_startproc
+ 2227              		@ Interrupt Service Routine.
+ 2228              		@ args = 0, pretend = 0, frame = 0
+ 2229              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2230 0000 04C02DE5 		str	ip, [sp, #-4]!
+ 2231 0004 0DC0A0E1 		mov	ip, sp
+ 2232              	.LCFI0:
+ 2233              		.cfi_def_cfa_register 12
+ 2234 0008 FFDB2DE9 		stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, fp, ip, lr, pc}
+  53:../tp.c       **** 	if(primeraInterrupcion==0){
+ 2235              		.loc 1 53 0
+ 2236 000c 10539FE5 		ldr	r5, .L34
+ 2237              		.cfi_offset 14, -8
+ 2238              		.cfi_offset 13, -12
+ 2239              		.cfi_offset 11, -16
+ 2240              		.cfi_offset 9, -20
+ 2241              		.cfi_offset 8, -24
+ 2242              		.cfi_offset 7, -28
+ 2243              		.cfi_offset 6, -32
+ 2244              		.cfi_offset 5, -36
+ 2245              		.cfi_offset 4, -40
+ 2246              		.cfi_offset 3, -44
+ 2247              		.cfi_offset 2, -48
+ 2248              		.cfi_offset 1, -52
+ 2249              		.cfi_offset 0, -56
+ 2250 0010 003095E5 		ldr	r3, [r5, #0]
+ 2251 0014 000053E3 		cmp	r3, #0
+  54:../tp.c       **** 		rINTMSK |= BIT_EINT2;
+  55:../tp.c       **** 		static int   i;
+  56:../tp.c       **** 		//char fail = 0;	//NO SE USA
+  57:../tp.c       **** 		static ULONG tmp;
+  58:../tp.c       **** 		static ULONG Pt[9];
+  59:../tp.c       **** 
+  60:../tp.c       **** //---------------- * AD CONVERSOR X-POSITION * ---------------------
+  61:../tp.c       **** 
+  62:../tp.c       **** 		// TSPX(GPE4_Q4(+)) TSPY(GPE5_Q3(-)) TSMY(GPE6_Q2(+)) TSMX(GPE7_Q1(-))
+  63:../tp.c       **** 		//       0               1                 1                0
+  64:../tp.c       **** 		rPDATE=0x68;
+  65:../tp.c       **** 		rADCCON=0x1<<2;					// AIN1
+  66:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+  67:../tp.c       **** 
+  68:../tp.c       **** 		for( i=0; i<8; i++ )
+  69:../tp.c       **** 		{
+  70:../tp.c       **** 			rADCCON |= 0x1;				// Start X-position A/D conversion
+  71:../tp.c       **** 			while( rADCCON & 0x1 );		// Check if Enable_start is low
+  72:../tp.c       **** 			while( !(rADCCON & 0x40) );	// Check ECFLG
+  73:../tp.c       **** 			Pt[i] = (0x3ff&rADCDAT);
+  74:../tp.c       **** 		}
+  75:../tp.c       **** 		// read X-position AVERAGE value
+  76:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+  77:../tp.c       **** 
+  78:../tp.c       **** 		tmp = Pt[8];
+  79:../tp.c       **** 
+  80:../tp.c       **** //---------------- * AD CONVERSOR Y-POSITION * ---------------------
+  81:../tp.c       **** 
+  82:../tp.c       **** 		// TSPX(GPE4_Q4(-)) TSPY(GPE5_Q3(+)) TSMY(GPE6_Q2(-)) TSMX(GPE7_Q1(+))
+  83:../tp.c       **** 		//       1               0                 0                1
+  84:../tp.c       **** 		rPDATE=0x98;
+  85:../tp.c       **** 		rADCCON=0x0<<2;		        	// AIN0
+  86:../tp.c       **** 
+  87:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+  88:../tp.c       **** 		for( i=0; i<8; i++ )
+  89:../tp.c       **** 		{
+  90:../tp.c       **** 			rADCCON |= 0x1;             // Start Y-position conversion
+  91:../tp.c       **** 			while( rADCCON & 0x1 );     // Check if Enable_start is low
+  92:../tp.c       **** 			while( !(rADCCON & 0x40) ); // Check ECFLG
+  93:../tp.c       **** 			Pt[i] = (0x3ff&rADCDAT);
+  94:../tp.c       **** 		}
+  95:../tp.c       **** 		// read Y-position AVERAGE value
+  96:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+  97:../tp.c       **** //-------------------------------------------------------------------------------------
+  98:../tp.c       **** 	
+  99:../tp.c       **** 		/* --- COORDENADAS --- */
+ 100:../tp.c       **** 
+ 101:../tp.c       **** 		if(calibrar==0){
+ 102:../tp.c       **** 			if(tmp < Xmin){		//si estan fuera de los maximos, asignamos el maximo
+ 103:../tp.c       **** 				tmp = Xmin;
+ 104:../tp.c       **** 			}else if(tmp > Xmax){
+ 105:../tp.c       **** 				tmp = Xmax;
+ 106:../tp.c       **** 			}else if(Pt[8] < Ymin){
+ 107:../tp.c       **** 				Pt[8] = Ymin;
+ 108:../tp.c       **** 			}else if(Pt[8] > Ymax){
+ 109:../tp.c       **** 				Pt[8] = Ymax;
+ 110:../tp.c       **** 			}
+ 111:../tp.c       **** 	
+ 112:../tp.c       **** 			tmp = 320*(tmp - Xmin)/(Xmax - Xmin);   	// calculamos coordenadas en pixeles
+ 113:../tp.c       **** 			Pt[8] = 240*(Pt[8] - Xmin)/(Ymax - Ymin);
+ 114:../tp.c       **** 	
+ 115:../tp.c       **** 			uint32_t auxData = tmp & (0x00000fff);		// añadimos las coordenadas a la info del evento
+ 116:../tp.c       **** 			auxData |= ( (Pt[8] & (0x00000fff))<<12 );	// auxData=00YYYXXX
+ 117:../tp.c       **** 			push_debug(ev_tactil,auxData);				// guardamos evento
+ 118:../tp.c       **** 
+ 119:../tp.c       **** 
+ 120:../tp.c       **** 		}else{	// calibrar > 0
+ 121:../tp.c       **** 			push_debug(ev_tactil,0);	//si calibra, evento con coordenadas 0,0
+ 122:../tp.c       **** 			touchpad_calibrar(tmp,Pt[8]);
+ 123:../tp.c       **** 		}
+ 124:../tp.c       **** 
+ 125:../tp.c       **** 		rPDATE = 0xb8;                  // should be enabled
+ 126:../tp.c       **** 		DelayTime(3000);                // delay to set up the next channel
+ 127:../tp.c       **** 	}else{
+ 128:../tp.c       **** 		primeraInterrupcion=0;	//SI ES LA PRIMERA, PONEMOS A 0 Y LIMPIAMOS PENDING
+ 2252              		.loc 1 128 0
+ 2253 0018 0030A013 		movne	r3, #0
+  52:../tp.c       **** void touchpad_ISR(){
+ 2254              		.loc 1 52 0
+ 2255 001c 04B04CE2 		sub	fp, ip, #4
+ 2256              	.LCFI1:
+ 2257              		.cfi_def_cfa 11, 4
+ 2258              		.loc 1 128 0
+ 2259 0020 00308515 		strne	r3, [r5, #0]
+  53:../tp.c       **** 	if(primeraInterrupcion==0){
+ 2260              		.loc 1 53 0
+ 2261 0024 0600000A 		beq	.L31
+ 2262              	.L21:
+ 129:../tp.c       **** 	}
+ 130:../tp.c       ****     rI_ISPC = BIT_EINT2;            	// clear pending_bit
+ 2263              		.loc 1 130 0
+ 2264 0028 0205A0E3 		mov	r0, #8388608
+ 2265 002c 1E36A0E3 		mov	r3, #31457280
+ 2266 0030 240083E5 		str	r0, [r3, #36]
+ 131:../tp.c       **** }
+ 2267              		.loc 1 131 0
+ 2268 0034 34D04BE2 		sub	sp, fp, #52
+ 2269 0038 FF6B9DE8 		ldmfd	sp, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, fp, sp, lr}
+ 2270 003c 04C09DE4 		ldmfd	sp!, {ip}
+ 2271 0040 04F05EE2 		subs	pc, lr, #4
+ 2272              	.L31:
+ 2273              	.LBB6:
+  54:../tp.c       **** 		rINTMSK |= BIT_EINT2;
+ 2274              		.loc 1 54 0
+ 2275 0044 1EC6A0E3 		mov	ip, #31457280
+ 2276 0048 0C009CE5 		ldr	r0, [ip, #12]
+  64:../tp.c       **** 		rPDATE=0x68;
+ 2277              		.loc 1 64 0
+ 2278 004c D4629FE5 		ldr	r6, .L34+4
+  54:../tp.c       **** 		rINTMSK |= BIT_EINT2;
+ 2279              		.loc 1 54 0
+ 2280 0050 028580E3 		orr	r8, r0, #8388608
+  64:../tp.c       **** 		rPDATE=0x68;
+ 2281              		.loc 1 64 0
+ 2282 0054 6820A0E3 		mov	r2, #104
+  65:../tp.c       **** 		rADCCON=0x1<<2;					// AIN1
+ 2283              		.loc 1 65 0
+ 2284 0058 0410A0E3 		mov	r1, #4
+ 2285 005c 7547A0E3 		mov	r4, #30670848
+  66:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+ 2286              		.loc 1 66 0
+ 2287 0060 C4729FE5 		ldr	r7, .L34+8
+  54:../tp.c       **** 		rINTMSK |= BIT_EINT2;
+ 2288              		.loc 1 54 0
+ 2289 0064 0C808CE5 		str	r8, [ip, #12]
+  66:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+ 2290              		.loc 1 66 0
+ 2291 0068 FA0FA0E3 		mov	r0, #1000
+  64:../tp.c       **** 		rPDATE=0x68;
+ 2292              		.loc 1 64 0
+ 2293 006c 2C2086E5 		str	r2, [r6, #44]
+  65:../tp.c       **** 		rADCCON=0x1<<2;					// AIN1
+ 2294              		.loc 1 65 0
+ 2295 0070 001084E5 		str	r1, [r4, #0]
+  66:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+ 2296              		.loc 1 66 0
+ 2297 0074 FEFFFFEB 		bl	DelayTime
+  52:../tp.c       **** void touchpad_ISR(){
+ 2298              		.loc 1 52 0
+ 2299 0078 208087E2 		add	r8, r7, #32
+ 2300              	.LBE6:
+ 2301 007c 0720A0E1 		mov	r2, r7
+ 2302              	.LBB16:
+  71:../tp.c       **** 			while( rADCCON & 0x1 );		// Check if Enable_start is low
+ 2303              		.loc 1 71 0
+ 2304 0080 0410A0E1 		mov	r1, r4
+ 2305              	.L5:
+  70:../tp.c       **** 			rADCCON |= 0x1;				// Start X-position A/D conversion
+ 2306              		.loc 1 70 0
+ 2307 0084 003094E5 		ldr	r3, [r4, #0]
+ 2308 0088 01E083E3 		orr	lr, r3, #1
+ 2309 008c 00E084E5 		str	lr, [r4, #0]
+ 2310              	.L3:
+  71:../tp.c       **** 			while( rADCCON & 0x1 );		// Check if Enable_start is low
+ 2311              		.loc 1 71 0 discriminator 1
+ 2312 0090 006094E5 		ldr	r6, [r4, #0]
+ 2313 0094 010016E3 		tst	r6, #1
+ 2314 0098 FCFFFF1A 		bne	.L3
+ 2315              	.L23:
+  72:../tp.c       **** 			while( !(rADCCON & 0x40) );	// Check ECFLG
+ 2316              		.loc 1 72 0 discriminator 1
+ 2317 009c 00C094E5 		ldr	ip, [r4, #0]
+ 2318 00a0 40001CE3 		tst	ip, #64
+ 2319 00a4 7567A0E3 		mov	r6, #30670848
+ 2320 00a8 FBFFFF0A 		beq	.L23
+  73:../tp.c       **** 			Pt[i] = (0x3ff&rADCDAT);
+ 2321              		.loc 1 73 0
+ 2322 00ac 083091E5 		ldr	r3, [r1, #8]
+ 2323 00b0 03EBA0E1 		mov	lr, r3, asl #22
+ 2324 00b4 2E0BA0E1 		mov	r0, lr, lsr #22
+ 2325 00b8 0400A2E5 		str	r0, [r2, #4]!
+  68:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2326              		.loc 1 68 0
+ 2327 00bc 080052E1 		cmp	r2, r8
+ 2328 00c0 EFFFFF1A 		bne	.L5
+ 2329 00c4 64429FE5 		ldr	r4, .L34+12
+  76:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2330              		.loc 1 76 0
+ 2331 00c8 090094E8 		ldmia	r4, {r0, r3}
+ 2332 00cc 000083E0 		add	r0, r3, r0
+ 2333 00d0 083084E2 		add	r3, r4, #8
+ 2334 00d4 084093E8 		ldmia	r3, {r3, lr}	@ phole ldm
+ 2335 00d8 102094E5 		ldr	r2, [r4, #16]
+ 2336 00dc 031080E0 		add	r1, r0, r3
+ 2337 00e0 0EC081E0 		add	ip, r1, lr
+ 2338 00e4 143094E5 		ldr	r3, [r4, #20]
+ 2339 00e8 02008CE0 		add	r0, ip, r2
+ 2340 00ec 182084E2 		add	r2, r4, #24
+ 2341 00f0 041092E8 		ldmia	r2, {r2, ip}	@ phole ldm
+ 2342 00f4 03E080E0 		add	lr, r0, r3
+ 2343 00f8 02108EE0 		add	r1, lr, r2
+ 2344 00fc 0C0081E0 		add	r0, r1, ip
+  84:../tp.c       **** 		rPDATE=0x98;
+ 2345              		.loc 1 84 0
+ 2346 0100 20329FE5 		ldr	r3, .L34+4
+  76:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2347              		.loc 1 76 0
+ 2348 0104 A0C1A0E1 		mov	ip, r0, lsr #3
+  68:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2349              		.loc 1 68 0
+ 2350 0108 0820A0E3 		mov	r2, #8
+  84:../tp.c       **** 		rPDATE=0x98;
+ 2351              		.loc 1 84 0
+ 2352 010c 98E0A0E3 		mov	lr, #152
+  85:../tp.c       **** 		rADCCON=0x0<<2;		        	// AIN0
+ 2353              		.loc 1 85 0
+ 2354 0110 0010A0E3 		mov	r1, #0
+  84:../tp.c       **** 		rPDATE=0x98;
+ 2355              		.loc 1 84 0
+ 2356 0114 2CE083E5 		str	lr, [r3, #44]
+  87:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+ 2357              		.loc 1 87 0
+ 2358 0118 FA0FA0E3 		mov	r0, #1000
+  68:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2359              		.loc 1 68 0
+ 2360 011c 242084E5 		str	r2, [r4, #36]
+  76:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2361              		.loc 1 76 0
+ 2362 0120 20C084E5 		str	ip, [r4, #32]
+  78:../tp.c       **** 		tmp = Pt[8];
+ 2363              		.loc 1 78 0
+ 2364 0124 28C084E5 		str	ip, [r4, #40]
+  85:../tp.c       **** 		rADCCON=0x0<<2;		        	// AIN0
+ 2365              		.loc 1 85 0
+ 2366 0128 001086E5 		str	r1, [r6, #0]
+  87:../tp.c       **** 		DelayTime(1000);                // delay to set up the next channel
+ 2367              		.loc 1 87 0
+ 2368 012c FEFFFFEB 		bl	DelayTime
+  91:../tp.c       **** 			while( rADCCON & 0x1 );     // Check if Enable_start is low
+ 2369              		.loc 1 91 0
+ 2370 0130 0620A0E1 		mov	r2, r6
+ 2371              	.L8:
+  90:../tp.c       **** 			rADCCON |= 0x1;             // Start Y-position conversion
+ 2372              		.loc 1 90 0
+ 2373 0134 001096E5 		ldr	r1, [r6, #0]
+ 2374 0138 01C081E3 		orr	ip, r1, #1
+ 2375 013c 00C086E5 		str	ip, [r6, #0]
+ 2376              	.L6:
+  91:../tp.c       **** 			while( rADCCON & 0x1 );     // Check if Enable_start is low
+ 2377              		.loc 1 91 0 discriminator 1
+ 2378 0140 00E096E5 		ldr	lr, [r6, #0]
+ 2379 0144 01001EE3 		tst	lr, #1
+ 2380 0148 FCFFFF1A 		bne	.L6
+ 2381              	.L22:
+  92:../tp.c       **** 			while( !(rADCCON & 0x40) ); // Check ECFLG
+ 2382              		.loc 1 92 0 discriminator 1
+ 2383 014c 000096E5 		ldr	r0, [r6, #0]
+ 2384 0150 400010E3 		tst	r0, #64
+ 2385 0154 FCFFFF0A 		beq	.L22
+  93:../tp.c       **** 			Pt[i] = (0x3ff&rADCDAT);
+ 2386              		.loc 1 93 0
+ 2387 0158 081092E5 		ldr	r1, [r2, #8]
+ 2388 015c 01CBA0E1 		mov	ip, r1, asl #22
+ 2389 0160 2C3BA0E1 		mov	r3, ip, lsr #22
+ 2390 0164 0430A7E5 		str	r3, [r7, #4]!
+  88:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2391              		.loc 1 88 0
+ 2392 0168 070058E1 		cmp	r8, r7
+ 2393 016c F0FFFF1A 		bne	.L8
+  96:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2394              		.loc 1 96 0
+ 2395 0170 084094E8 		ldmia	r4, {r3, lr}
+ 2396 0174 03E08EE0 		add	lr, lr, r3
+ 2397 0178 080084E2 		add	r0, r4, #8
+ 2398 017c 410090E8 		ldmia	r0, {r0, r6}	@ phole ldm
+ 2399 0180 00708EE0 		add	r7, lr, r0
+ 2400 0184 108094E5 		ldr	r8, [r4, #16]
+ 2401 0188 061087E0 		add	r1, r7, r6
+ 2402 018c 143094E5 		ldr	r3, [r4, #20]
+ 2403 0190 08C081E0 		add	ip, r1, r8
+ 2404 0194 182094E5 		ldr	r2, [r4, #24]
+ 2405 0198 03008CE0 		add	r0, ip, r3
+ 2406 019c 1CE094E5 		ldr	lr, [r4, #28]
+ 2407 01a0 026080E0 		add	r6, r0, r2
+ 101:../tp.c       **** 		if(calibrar==0){
+ 2408              		.loc 1 101 0
+ 2409 01a4 040095E5 		ldr	r0, [r5, #4]
+  96:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2410              		.loc 1 96 0
+ 2411 01a8 0E7086E0 		add	r7, r6, lr
+  88:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2412              		.loc 1 88 0
+ 2413 01ac 0880A0E3 		mov	r8, #8
+  96:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2414              		.loc 1 96 0
+ 2415 01b0 A771A0E1 		mov	r7, r7, lsr #3
+ 101:../tp.c       **** 		if(calibrar==0){
+ 2416              		.loc 1 101 0
+ 2417 01b4 000050E3 		cmp	r0, #0
+  88:../tp.c       **** 		for( i=0; i<8; i++ )
+ 2418              		.loc 1 88 0
+ 2419 01b8 248084E5 		str	r8, [r4, #36]
+ 2420 01bc 6C619FE5 		ldr	r6, .L34+12
+  96:../tp.c       **** 		Pt[8] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4]+Pt[5]+Pt[6]+Pt[7])/8;
+ 2421              		.loc 1 96 0
+ 2422 01c0 207084E5 		str	r7, [r4, #32]
+ 101:../tp.c       **** 		if(calibrar==0){
+ 2423              		.loc 1 101 0
+ 2424 01c4 58819FE5 		ldr	r8, .L34
+ 2425 01c8 2400001A 		bne	.L9
+ 2426              	.LBB7:
+ 102:../tp.c       **** 			if(tmp < Xmin){		//si estan fuera de los maximos, asignamos el maximo
+ 2427              		.loc 1 102 0
+ 2428 01cc 283086E2 		add	r3, r6, #40
+ 2429 01d0 280093E8 		ldmia	r3, {r3, r5}	@ phole ldm
+ 2430 01d4 050053E1 		cmp	r3, r5
+ 2431 01d8 1D00003A 		bcc	.L32
+ 104:../tp.c       **** 			}else if(tmp > Xmax){
+ 2432              		.loc 1 104 0
+ 2433 01dc 301096E5 		ldr	r1, [r6, #48]
+ 2434 01e0 010053E1 		cmp	r3, r1
+ 2435 01e4 3600009A 		bls	.L12
+ 2436 01e8 011065E0 		rsb	r1, r5, r1
+ 2437 01ec 01C181E0 		add	ip, r1, r1, asl #2
+ 2438 01f0 0C03A0E1 		mov	r0, ip, asl #6
+ 2439              	.L11:
+ 112:../tp.c       **** 			tmp = 320*(tmp - Xmin)/(Xmax - Xmin);   	// calculamos coordenadas en pixeles
+ 2440              		.loc 1 112 0
+ 2441 01f4 FEFFFFEB 		bl	__aeabi_uidiv
+ 113:../tp.c       **** 			Pt[8] = 240*(Pt[8] - Xmin)/(Ymax - Ymin);
+ 2442              		.loc 1 113 0
+ 2443 01f8 073065E0 		rsb	r3, r5, r7
+ 2444 01fc 03C263E0 		rsb	ip, r3, r3, asl #4
+ 112:../tp.c       **** 			tmp = 320*(tmp - Xmin)/(Xmax - Xmin);   	// calculamos coordenadas en pixeles
+ 2445              		.loc 1 112 0
+ 2446 0200 0060A0E1 		mov	r6, r0
+ 113:../tp.c       **** 			Pt[8] = 240*(Pt[8] - Xmin)/(Ymax - Ymin);
+ 2447              		.loc 1 113 0
+ 2448 0204 383084E2 		add	r3, r4, #56
+ 2449 0208 0A0013E8 		ldmda	r3, {r1, r3}
+ 2450 020c 011043E0 		sub	r1, r3, r1
+ 2451 0210 0C02A0E1 		mov	r0, ip, asl #4
+ 112:../tp.c       **** 			tmp = 320*(tmp - Xmin)/(Xmax - Xmin);   	// calculamos coordenadas en pixeles
+ 2452              		.loc 1 112 0
+ 2453 0214 286084E5 		str	r6, [r4, #40]
+ 113:../tp.c       **** 			Pt[8] = 240*(Pt[8] - Xmin)/(Ymax - Ymin);
+ 2454              		.loc 1 113 0
+ 2455 0218 FEFFFFEB 		bl	__aeabi_uidiv
+ 2456 021c 00C0A0E1 		mov	ip, r0
+ 116:../tp.c       **** 			auxData |= ( (Pt[8] & (0x00000fff))<<12 );	// auxData=00YYYXXX
+ 2457              		.loc 1 116 0
+ 2458 0220 000AA0E1 		mov	r0, r0, asl #20
+ 2459 0224 2024A0E1 		mov	r2, r0, lsr #8
+ 115:../tp.c       **** 			uint32_t auxData = tmp & (0x00000fff);		// añadimos las coordenadas a la info del evento
+ 2460              		.loc 1 115 0
+ 2461 0228 061AA0E1 		mov	r1, r6, asl #20
+ 2462              	.LVL0:
+ 117:../tp.c       **** 			push_debug(ev_tactil,auxData);				// guardamos evento
+ 2463              		.loc 1 117 0
+ 2464 022c 0400A0E3 		mov	r0, #4
+ 2465 0230 211A82E1 		orr	r1, r2, r1, lsr #20
+ 2466              	.LVL1:
+ 113:../tp.c       **** 			Pt[8] = 240*(Pt[8] - Xmin)/(Ymax - Ymin);
+ 2467              		.loc 1 113 0
+ 2468 0234 20C084E5 		str	ip, [r4, #32]
+ 117:../tp.c       **** 			push_debug(ev_tactil,auxData);				// guardamos evento
+ 2469              		.loc 1 117 0
+ 2470 0238 FEFFFFEB 		bl	push_debug
+ 2471              	.L15:
+ 2472              	.LBE7:
+ 125:../tp.c       **** 		rPDATE = 0xb8;                  // should be enabled
+ 2473              		.loc 1 125 0
+ 2474 023c E4C09FE5 		ldr	ip, .L34+4
+ 2475 0240 B8E0A0E3 		mov	lr, #184
+ 126:../tp.c       **** 		DelayTime(3000);                // delay to set up the next channel
+ 2476              		.loc 1 126 0
+ 2477 0244 E8009FE5 		ldr	r0, .L34+16
+ 125:../tp.c       **** 		rPDATE = 0xb8;                  // should be enabled
+ 2478              		.loc 1 125 0
+ 2479 0248 2CE08CE5 		str	lr, [ip, #44]
+ 126:../tp.c       **** 		DelayTime(3000);                // delay to set up the next channel
+ 2480              		.loc 1 126 0
+ 2481 024c FEFFFFEB 		bl	DelayTime
+ 2482 0250 74FFFFEA 		b	.L21
+ 2483              	.L32:
+ 2484              	.LBB8:
+ 102:../tp.c       **** 			if(tmp < Xmin){		//si estan fuera de los maximos, asignamos el maximo
+ 2485              		.loc 1 102 0
+ 2486 0254 302096E5 		ldr	r2, [r6, #48]
+ 2487 0258 021065E0 		rsb	r1, r5, r2
+ 2488 025c E4FFFFEA 		b	.L11
+ 2489              	.L9:
+ 2490              	.LBE8:
+ 121:../tp.c       **** 			push_debug(ev_tactil,0);	//si calibra, evento con coordenadas 0,0
+ 2491              		.loc 1 121 0
+ 2492 0260 0010A0E3 		mov	r1, #0
+ 2493 0264 0400A0E3 		mov	r0, #4
+ 2494 0268 FEFFFFEB 		bl	push_debug
+ 2495              	.LBB9:
+ 2496              	.LBB11:
+  28:../tp.c       ****     if(primerClick == 1){
+ 2497              		.loc 1 28 0
+ 2498 026c 081098E5 		ldr	r1, [r8, #8]
+ 2499 0270 010051E3 		cmp	r1, #1
+ 2500              	.LBE11:
+ 2501              	.LBE9:
+ 122:../tp.c       **** 			touchpad_calibrar(tmp,Pt[8]);
+ 2502              		.loc 1 122 0
+ 2503 0274 283096E5 		ldr	r3, [r6, #40]
+ 2504 0278 202096E5 		ldr	r2, [r6, #32]
+ 2505              	.LVL2:
+ 2506              	.LBB13:
+ 2507              	.LBB10:
+  28:../tp.c       ****     if(primerClick == 1){
+ 2508              		.loc 1 28 0
+ 2509 027c 2100000A 		beq	.L33
+  35:../tp.c       **** 		if(tx < Xmin){			// En las siguientes, comprobamos que es mejor maximo/minimo
+ 2510              		.loc 1 35 0
+ 2511 0280 2C0096E5 		ldr	r0, [r6, #44]
+ 2512 0284 000053E1 		cmp	r3, r0
+  36:../tp.c       **** 			Xmin=tx;
+ 2513              		.loc 1 36 0
+ 2514 0288 2C308635 		strcc	r3, [r6, #44]
+  35:../tp.c       **** 		if(tx < Xmin){			// En las siguientes, comprobamos que es mejor maximo/minimo
+ 2515              		.loc 1 35 0
+ 2516 028c 0200003A 		bcc	.L19
+  37:../tp.c       **** 		}else if(tx > Xmax){
+ 2517              		.loc 1 37 0
+ 2518 0290 30C096E5 		ldr	ip, [r6, #48]
+ 2519 0294 0C0053E1 		cmp	r3, ip
+  38:../tp.c       **** 			Xmax=tx;
+ 2520              		.loc 1 38 0
+ 2521 0298 30308685 		strhi	r3, [r6, #48]
+ 2522              	.L19:
+  40:../tp.c       **** 		if(ty > Ymax){
+ 2523              		.loc 1 40 0
+ 2524 029c 383094E5 		ldr	r3, [r4, #56]
+ 2525 02a0 030052E1 		cmp	r2, r3
+ 2526 02a4 84309FE5 		ldr	r3, .L34+12
+  41:../tp.c       **** 			Ymax=ty;
+ 2527              		.loc 1 41 0
+ 2528 02a8 38208385 		strhi	r2, [r3, #56]
+  40:../tp.c       **** 		if(ty > Ymax){
+ 2529              		.loc 1 40 0
+ 2530 02ac 0000008A 		bhi	.L17
+  43:../tp.c       **** 			Ymin=ty;
+ 2531              		.loc 1 43 0
+ 2532 02b0 34208335 		strcc	r2, [r3, #52]
+ 2533              	.L17:
+  46:../tp.c       ****     calibrar--;
+ 2534              		.loc 1 46 0
+ 2535 02b4 041095E5 		ldr	r1, [r5, #4]
+ 2536 02b8 012041E2 		sub	r2, r1, #1
+ 2537 02bc 042085E5 		str	r2, [r5, #4]
+ 2538 02c0 DDFFFFEA 		b	.L15
+ 2539              	.LVL3:
+ 2540              	.L12:
+ 2541              	.LBE10:
+ 2542              	.LBE13:
+ 2543              	.LBB14:
+ 106:../tp.c       **** 			}else if(Pt[8] < Ymin){
+ 2544              		.loc 1 106 0
+ 2545 02c4 342096E5 		ldr	r2, [r6, #52]
+ 2546 02c8 020057E1 		cmp	r7, r2
+ 2547 02cc 0700003A 		bcc	.L14
+ 108:../tp.c       **** 			}else if(Pt[8] > Ymax){
+ 2548              		.loc 1 108 0
+ 2549 02d0 382096E5 		ldr	r2, [r6, #56]
+ 2550 02d4 020057E1 		cmp	r7, r2
+ 2551 02d8 0400008A 		bhi	.L14
+ 2552 02dc 033065E0 		rsb	r3, r5, r3
+ 2553 02e0 050DA0E3 		mov	r0, #320
+ 2554 02e4 930000E0 		mul	r0, r3, r0
+ 2555 02e8 011065E0 		rsb	r1, r5, r1
+ 2556 02ec C0FFFFEA 		b	.L11
+ 2557              	.L14:
+ 2558 02f0 037065E0 		rsb	r7, r5, r3
+ 2559 02f4 050DA0E3 		mov	r0, #320
+ 2560 02f8 970000E0 		mul	r0, r7, r0
+ 2561 02fc 011065E0 		rsb	r1, r5, r1
+ 2562 0300 0270A0E1 		mov	r7, r2
+ 2563 0304 BAFFFFEA 		b	.L11
+ 2564              	.LVL4:
+ 2565              	.L33:
+ 2566              	.LBE14:
+ 2567              	.LBB15:
+ 2568              	.LBB12:
+  29:../tp.c       ****     	primerClick=0;
+ 2569              		.loc 1 29 0
+ 2570 0308 00E0A0E3 		mov	lr, #0
+ 2571 030c 08E088E5 		str	lr, [r8, #8]
+  30:../tp.c       ****     	Xmax = tx;				// En la primera pulsación asignamos sin comparar
+ 2572              		.loc 1 30 0
+ 2573 0310 303086E5 		str	r3, [r6, #48]
+  31:../tp.c       ****     	Xmin = tx;
+ 2574              		.loc 1 31 0
+ 2575 0314 2C3086E5 		str	r3, [r6, #44]
+  32:../tp.c       ****     	Ymax = ty;
+ 2576              		.loc 1 32 0
+ 2577 0318 382086E5 		str	r2, [r6, #56]
+  33:../tp.c       ****     	Ymin = ty;
+ 2578              		.loc 1 33 0
+ 2579 031c 342086E5 		str	r2, [r6, #52]
+ 2580 0320 E3FFFFEA 		b	.L17
+ 2581              	.L35:
+ 2582              		.align	2
+ 2583              	.L34:
+ 2584 0324 00000000 		.word	.LANCHOR0
+ 2585 0328 0000D201 		.word	30539776
+ 2586 032c FCFFFFFF 		.word	.LANCHOR1-4
+ 2587 0330 00000000 		.word	.LANCHOR1
+ 2588 0334 B80B0000 		.word	3000
+ 2589              	.LBE12:
+ 2590              	.LBE15:
+ 2591              	.LBE16:
+ 2592              		.cfi_endproc
+ 2593              	.LFE1:
+ 2595              		.align	2
+ 2596              		.global	touchpad_calibrar
+ 2598              	touchpad_calibrar:
+ 2599              	.LFB0:
+  27:../tp.c       **** void touchpad_calibrar(ULONG tx, ULONG ty){
+ 2600              		.loc 1 27 0
+ 2601              		.cfi_startproc
+ 2602              		@ Function supports interworking.
+ 2603              		@ args = 0, pretend = 0, frame = 0
+ 2604              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2605              		@ link register save eliminated.
+ 2606              	.LVL5:
+  28:../tp.c       ****     if(primerClick == 1){
+ 2607              		.loc 1 28 0
+ 2608 0338 78309FE5 		ldr	r3, .L43
+ 2609 033c 082093E5 		ldr	r2, [r3, #8]
+ 2610 0340 010052E3 		cmp	r2, #1
+ 2611 0344 1100000A 		beq	.L42
+  35:../tp.c       **** 		if(tx < Xmin){			// En las siguientes, comprobamos que es mejor maximo/minimo
+ 2612              		.loc 1 35 0
+ 2613 0348 6C209FE5 		ldr	r2, .L43+4
+ 2614 034c 2CC092E5 		ldr	ip, [r2, #44]
+ 2615 0350 0C0050E1 		cmp	r0, ip
+  36:../tp.c       **** 			Xmin=tx;
+ 2616              		.loc 1 36 0
+ 2617 0354 2C008235 		strcc	r0, [r2, #44]
+  35:../tp.c       **** 		if(tx < Xmin){			// En las siguientes, comprobamos que es mejor maximo/minimo
+ 2618              		.loc 1 35 0
+ 2619 0358 0200003A 		bcc	.L40
+  37:../tp.c       **** 		}else if(tx > Xmax){
+ 2620              		.loc 1 37 0
+ 2621 035c 30C092E5 		ldr	ip, [r2, #48]
+ 2622 0360 0C0050E1 		cmp	r0, ip
+  38:../tp.c       **** 			Xmax=tx;
+ 2623              		.loc 1 38 0
+ 2624 0364 30008285 		strhi	r0, [r2, #48]
+ 2625              	.L40:
+  40:../tp.c       **** 		if(ty > Ymax){
+ 2626              		.loc 1 40 0
+ 2627 0368 380092E5 		ldr	r0, [r2, #56]
+ 2628              	.LVL6:
+ 2629 036c 48209FE5 		ldr	r2, .L43+4
+ 2630 0370 000051E1 		cmp	r1, r0
+  41:../tp.c       **** 			Ymax=ty;
+ 2631              		.loc 1 41 0
+ 2632 0374 38108285 		strhi	r1, [r2, #56]
+  40:../tp.c       **** 		if(ty > Ymax){
+ 2633              		.loc 1 40 0
+ 2634 0378 0000008A 		bhi	.L38
+  43:../tp.c       **** 			Ymin=ty;
+ 2635              		.loc 1 43 0
+ 2636 037c 34108235 		strcc	r1, [r2, #52]
+ 2637              	.L38:
+  46:../tp.c       ****     calibrar--;
+ 2638              		.loc 1 46 0
+ 2639 0380 042093E5 		ldr	r2, [r3, #4]
+ 2640 0384 011042E2 		sub	r1, r2, #1
+ 2641              	.LVL7:
+ 2642 0388 041083E5 		str	r1, [r3, #4]
+  47:../tp.c       **** }
+ 2643              		.loc 1 47 0
+ 2644 038c 1EFF2FE1 		bx	lr
+ 2645              	.LVL8:
+ 2646              	.L42:
+  30:../tp.c       ****     	Xmax = tx;				// En la primera pulsación asignamos sin comparar
+ 2647              		.loc 1 30 0
+ 2648 0390 24209FE5 		ldr	r2, .L43+4
+  32:../tp.c       ****     	Ymax = ty;
+ 2649              		.loc 1 32 0
+ 2650 0394 381082E5 		str	r1, [r2, #56]
+  33:../tp.c       ****     	Ymin = ty;
+ 2651              		.loc 1 33 0
+ 2652 0398 341082E5 		str	r1, [r2, #52]
+  30:../tp.c       ****     	Xmax = tx;				// En la primera pulsación asignamos sin comparar
+ 2653              		.loc 1 30 0
+ 2654 039c 300082E5 		str	r0, [r2, #48]
+  31:../tp.c       ****     	Xmin = tx;
+ 2655              		.loc 1 31 0
+ 2656 03a0 2C0082E5 		str	r0, [r2, #44]
+  46:../tp.c       ****     calibrar--;
+ 2657              		.loc 1 46 0
+ 2658 03a4 042093E5 		ldr	r2, [r3, #4]
+  29:../tp.c       ****     	primerClick=0;
+ 2659              		.loc 1 29 0
+ 2660 03a8 00C0A0E3 		mov	ip, #0
+  46:../tp.c       ****     calibrar--;
+ 2661              		.loc 1 46 0
+ 2662 03ac 011042E2 		sub	r1, r2, #1
+ 2663              	.LVL9:
+  29:../tp.c       ****     	primerClick=0;
+ 2664              		.loc 1 29 0
+ 2665 03b0 021083E9 		stmib	r3, {r1, ip}	@ phole stm
+  47:../tp.c       **** }
+ 2666              		.loc 1 47 0
+ 2667 03b4 1EFF2FE1 		bx	lr
+ 2668              	.L44:
+ 2669              		.align	2
+ 2670              	.L43:
+ 2671 03b8 00000000 		.word	.LANCHOR0
+ 2672 03bc 00000000 		.word	.LANCHOR1
+ 2673              		.cfi_endproc
+ 2674              	.LFE0:
+ 2676              		.align	2
+ 2677              		.global	touchpad_init
+ 2679              	touchpad_init:
+ 2680              	.LFB2:
+ 132:../tp.c       **** 
+ 133:../tp.c       **** /*********************************************************************************************
+ 134:../tp.c       **** * Inicialización de la pantalla táctil
+ 135:../tp.c       **** *********************************************************************************************/
+ 136:../tp.c       **** void touchpad_init()
+ 137:../tp.c       **** {
+ 2681              		.loc 1 137 0
+ 2682              		.cfi_startproc
+ 2683              		@ Function supports interworking.
+ 2684              		@ args = 0, pretend = 0, frame = 0
+ 2685              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2686 03c0 0DC0A0E1 		mov	ip, sp
+ 2687              	.LCFI2:
+ 2688              		.cfi_def_cfa_register 12
+ 2689 03c4 18D82DE9 		stmfd	sp!, {r3, r4, fp, ip, lr, pc}
+ 138:../tp.c       ****     rI_ISPC |= BIT_EINT2;           	// clear pending_bit
+ 2690              		.loc 1 138 0
+ 2691 03c8 1E46A0E3 		mov	r4, #31457280
+ 2692              		.cfi_offset 14, -8
+ 2693              		.cfi_offset 13, -12
+ 2694              		.cfi_offset 11, -16
+ 2695              		.cfi_offset 4, -20
+ 2696              		.cfi_offset 3, -24
+ 2697 03cc 240094E5 		ldr	r0, [r4, #36]
+ 137:../tp.c       **** {
+ 2698              		.loc 1 137 0
+ 2699 03d0 04B04CE2 		sub	fp, ip, #4
+ 2700              	.LCFI3:
+ 2701              		.cfi_def_cfa 11, 4
+ 2702              		.loc 1 138 0
+ 2703 03d4 02C580E3 		orr	ip, r0, #8388608
+ 2704 03d8 24C084E5 		str	ip, [r4, #36]
+ 139:../tp.c       ****     pISR_EINT2=(unsigned)touchpad_ISR;	// set interrupt handler
+ 140:../tp.c       **** 
+ 141:../tp.c       ****     rPCONG  |= 0x0030;		// Establece la funcion de los pines (EINT2)
+ 2705              		.loc 1 141 0
+ 2706 03dc 7CC09FE5 		ldr	ip, .L46
+ 2707 03e0 40209CE5 		ldr	r2, [ip, #64]
+ 2708 03e4 301082E3 		orr	r1, r2, #48
+ 2709 03e8 40108CE5 		str	r1, [ip, #64]
+ 142:../tp.c       ****     rPUPG   |= 0x04;		// Deshabilita el "pull up" de los pines (EINT2)
+ 2710              		.loc 1 142 0
+ 2711 03ec 48309CE5 		ldr	r3, [ip, #72]
+ 2712 03f0 04E083E3 		orr	lr, r3, #4
+ 2713 03f4 48E08CE5 		str	lr, [ip, #72]
+ 143:../tp.c       ****     rEXTINT |= 0x00000200;	// Lineas de int. como de flanco de bajada (EINT2)
+ 2714              		.loc 1 143 0
+ 2715 03f8 50009CE5 		ldr	r0, [ip, #80]
+ 139:../tp.c       ****     pISR_EINT2=(unsigned)touchpad_ISR;	// set interrupt handler
+ 2716              		.loc 1 139 0
+ 2717 03fc 60309FE5 		ldr	r3, .L46+4
+ 2718 0400 60109FE5 		ldr	r1, .L46+8
+ 2719              		.loc 1 143 0
+ 2720 0404 022C80E3 		orr	r2, r0, #512
+ 144:../tp.c       **** 	
+ 145:../tp.c       **** 
+ 146:../tp.c       **** 	// TSPX(GPE4_Q4(-)) TSPY(GPE5_Q3(-)) TSMY(GPE6_Q2(-)) TSMX(GPE7_Q1(+)) 
+ 147:../tp.c       **** 	//          1               1                0                 1
+ 148:../tp.c       **** 
+ 149:../tp.c       ****     rPDATE = 0xb8;                  // should be enabled
+ 2721              		.loc 1 149 0
+ 2722 0408 B8E0A0E3 		mov	lr, #184
+ 143:../tp.c       ****     rEXTINT |= 0x00000200;	// Lineas de int. como de flanco de bajada (EINT2)
+ 2723              		.loc 1 143 0
+ 2724 040c 50208CE5 		str	r2, [ip, #80]
+ 150:../tp.c       ****     DelayTime(100); 
+ 2725              		.loc 1 150 0
+ 2726 0410 6400A0E3 		mov	r0, #100
+ 139:../tp.c       ****     pISR_EINT2=(unsigned)touchpad_ISR;	// set interrupt handler
+ 2727              		.loc 1 139 0
+ 2728 0414 833001E5 		str	r3, [r1, #-131]
+ 149:../tp.c       ****     rPDATE = 0xb8;                  // should be enabled
+ 2729              		.loc 1 149 0
+ 2730 0418 2CE08CE5 		str	lr, [ip, #44]
+ 2731              		.loc 1 150 0
+ 2732 041c FEFFFFEB 		bl	DelayTime
+ 151:../tp.c       **** 
+ 152:../tp.c       ****     rCLKCON |= 0x1000;				// enable A/D clock
+ 2733              		.loc 1 152 0
+ 2734 0420 7617A0E3 		mov	r1, #30932992
+ 2735 0424 042091E5 		ldr	r2, [r1, #4]
+ 153:../tp.c       ****     rADCPSR = 0x13;					// A/D prescaler = 19+1
+ 2736              		.loc 1 153 0
+ 2737 0428 7537A0E3 		mov	r3, #30670848
+ 152:../tp.c       ****     rCLKCON |= 0x1000;				// enable A/D clock
+ 2738              		.loc 1 152 0
+ 2739 042c 010A82E3 		orr	r0, r2, #4096
+ 2740              		.loc 1 153 0
+ 2741 0430 13C0A0E3 		mov	ip, #19
+ 152:../tp.c       ****     rCLKCON |= 0x1000;				// enable A/D clock
+ 2742              		.loc 1 152 0
+ 2743 0434 040081E5 		str	r0, [r1, #4]
+ 2744              		.loc 1 153 0
+ 2745 0438 04C083E5 		str	ip, [r3, #4]
+ 154:../tp.c       **** 
+ 155:../tp.c       ****     //Xmax = 750;    Xmin = 200;	// calibramos al inicio
+ 156:../tp.c       ****     //Ymax = 620;    Ymin = 120;
+ 157:../tp.c       **** 
+ 158:../tp.c       ****     rI_ISPC |= BIT_EINT2;           // clear pending_bit
+ 2746              		.loc 1 158 0
+ 2747 043c 242094E5 		ldr	r2, [r4, #36]
+ 2748 0440 021582E3 		orr	r1, r2, #8388608
+ 2749 0444 241084E5 		str	r1, [r4, #36]
+ 159:../tp.c       ****     rINTMSK &= ~(BIT_EINT2);		// habilitamos interrupciones
+ 2750              		.loc 1 159 0
+ 2751 0448 0C0094E5 		ldr	r0, [r4, #12]
+ 2752 044c 0235C0E3 		bic	r3, r0, #8388608
+ 2753 0450 0C3084E5 		str	r3, [r4, #12]
+ 160:../tp.c       **** 
+ 161:../tp.c       **** }
+ 2754              		.loc 1 161 0
+ 2755 0454 14D04BE2 		sub	sp, fp, #20
+ 2756 0458 18689DE8 		ldmfd	sp, {r3, r4, fp, sp, lr}
+ 2757 045c 1EFF2FE1 		bx	lr
+ 2758              	.L47:
+ 2759              		.align	2
+ 2760              	.L46:
+ 2761 0460 0000D201 		.word	30539776
+ 2762 0464 00000000 		.word	touchpad_ISR
+ 2763 0468 FFFF7F0C 		.word	209715199
+ 2764              		.cfi_endproc
+ 2765              	.LFE2:
+ 2767              		.align	2
+ 2768              		.global	touchpad_setCalibrar
+ 2770              	touchpad_setCalibrar:
+ 2771              	.LFB3:
+ 162:../tp.c       **** 
+ 163:../tp.c       **** /*********************************************************************************************
+ 164:../tp.c       **** * Activa el calibrado en las siguientes Ncal pulsaciones
+ 165:../tp.c       **** *********************************************************************************************/
+ 166:../tp.c       **** void touchpad_setCalibrar(int Ncal){
+ 2772              		.loc 1 166 0
+ 2773              		.cfi_startproc
+ 2774              		@ Function supports interworking.
+ 2775              		@ args = 0, pretend = 0, frame = 0
+ 2776              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2777              		@ link register save eliminated.
+ 2778              	.LVL10:
+ 167:../tp.c       **** 	calibrar=Ncal;				// numero de pulsaciones utilizadas para calibrado.
+ 2779              		.loc 1 167 0
+ 2780 046c 08309FE5 		ldr	r3, .L49
+ 168:../tp.c       **** 	primerClick=1;
+ 2781              		.loc 1 168 0
+ 2782 0470 0120A0E3 		mov	r2, #1
+ 167:../tp.c       **** 	calibrar=Ncal;				// numero de pulsaciones utilizadas para calibrado.
+ 2783              		.loc 1 167 0
+ 2784 0474 050083E9 		stmib	r3, {r0, r2}	@ phole stm
+ 169:../tp.c       **** }
+ 2785              		.loc 1 169 0
+ 2786 0478 1EFF2FE1 		bx	lr
+ 2787              	.L50:
+ 2788              		.align	2
+ 2789              	.L49:
+ 2790 047c 00000000 		.word	.LANCHOR0
+ 2791              		.cfi_endproc
+ 2792              	.LFE3:
+ 2794              		.align	2
+ 2795              		.global	touchpad_reactivar
+ 2797              	touchpad_reactivar:
+ 2798              	.LFB4:
+ 170:../tp.c       **** 
+ 171:../tp.c       **** /*********************************************************************************************
+ 172:../tp.c       **** * Reactiva las interrupciones de la pantalla tactil
+ 173:../tp.c       **** *********************************************************************************************/
+ 174:../tp.c       **** void touchpad_reactivar(){
+ 2799              		.loc 1 174 0
+ 2800              		.cfi_startproc
+ 2801              		@ Function supports interworking.
+ 2802              		@ args = 0, pretend = 0, frame = 0
+ 2803              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2804              		@ link register save eliminated.
+ 175:../tp.c       **** 	rI_ISPC   |= BIT_EINT2;		// borra el bit pendiente en INTPND.
+ 2805              		.loc 1 175 0
+ 2806 0480 1E36A0E3 		mov	r3, #31457280
+ 2807 0484 24C093E5 		ldr	ip, [r3, #36]
+ 2808 0488 02158CE3 		orr	r1, ip, #8388608
+ 2809 048c 241083E5 		str	r1, [r3, #36]
+ 176:../tp.c       **** 	rINTMSK &= ~(BIT_EINT2);	// activar interrupciones.
+ 2810              		.loc 1 176 0
+ 2811 0490 0C0093E5 		ldr	r0, [r3, #12]
+ 2812 0494 0225C0E3 		bic	r2, r0, #8388608
+ 2813 0498 0C2083E5 		str	r2, [r3, #12]
+ 177:../tp.c       **** }
+ 2814              		.loc 1 177 0
+ 2815 049c 1EFF2FE1 		bx	lr
+ 2816              		.cfi_endproc
+ 2817              	.LFE4:
+ 2819              		.align	2
+ 2820              		.global	touchpad_estado
+ 2822              	touchpad_estado:
+ 2823              	.LFB5:
+ 178:../tp.c       **** 
+ 179:../tp.c       **** /*********************************************************************************************
+ 180:../tp.c       **** * Devuelve 1 si el touchpad esta pulsado
+ 181:../tp.c       **** *********************************************************************************************/
+ 182:../tp.c       **** int touchpad_estado(){
+ 2824              		.loc 1 182 0
+ 2825              		.cfi_startproc
+ 2826              		@ Function supports interworking.
+ 2827              		@ args = 0, pretend = 0, frame = 0
+ 2828              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2829              		@ link register save eliminated.
+ 183:../tp.c       **** 	int data=rPDATG;			// BIT 2 a 1 si touchpad pulsado.
+ 2830              		.loc 1 183 0
+ 2831 04a0 10009FE5 		ldr	r0, .L53
+ 2832 04a4 443090E5 		ldr	r3, [r0, #68]
+ 2833              	.LVL11:
+ 184:../tp.c       **** 	if( (data & 0x04) == 0 ){	// comprobamos BIT 2.
+ 185:../tp.c       **** 		return 1;
+ 2834              		.loc 1 185 0
+ 2835 04a8 040013E3 		tst	r3, #4
+ 186:../tp.c       **** 	}else{
+ 187:../tp.c       **** 		return 0;
+ 188:../tp.c       **** 	}
+ 189:../tp.c       **** }
+ 2836              		.loc 1 189 0
+ 2837 04ac 0000A013 		movne	r0, #0
+ 2838 04b0 0100A003 		moveq	r0, #1
+ 2839 04b4 1EFF2FE1 		bx	lr
+ 2840              	.L54:
+ 2841              		.align	2
+ 2842              	.L53:
+ 2843 04b8 0000D201 		.word	30539776
+ 2844              		.cfi_endproc
+ 2845              	.LFE5:
+ 2847              		.align	2
+ 2848              		.global	touchpad_close
+ 2850              	touchpad_close:
+ 2851              	.LFB6:
+ 190:../tp.c       **** 
+ 191:../tp.c       **** /*********************************************************************************************
+ 192:../tp.c       **** * Desactiva la pantalla tactil
+ 193:../tp.c       **** *********************************************************************************************/
+ 194:../tp.c       **** void touchpad_close(){
+ 2852              		.loc 1 194 0
+ 2853              		.cfi_startproc
+ 2854              		@ Function supports interworking.
+ 2855              		@ args = 0, pretend = 0, frame = 0
+ 2856              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2857              		@ link register save eliminated.
+ 195:../tp.c       **** 	rINTMSK |= BIT_EINT2;
+ 2858              		.loc 1 195 0
+ 2859 04bc 1E16A0E3 		mov	r1, #31457280
+ 2860 04c0 0CC091E5 		ldr	ip, [r1, #12]
+ 196:../tp.c       **** 	pISR_EINT2 = (int)NULL;
+ 2861              		.loc 1 196 0
+ 2862 04c4 10309FE5 		ldr	r3, .L56
+ 195:../tp.c       **** 	rINTMSK |= BIT_EINT2;
+ 2863              		.loc 1 195 0
+ 2864 04c8 02058CE3 		orr	r0, ip, #8388608
+ 2865              		.loc 1 196 0
+ 2866 04cc 0020A0E3 		mov	r2, #0
+ 195:../tp.c       **** 	rINTMSK |= BIT_EINT2;
+ 2867              		.loc 1 195 0
+ 2868 04d0 0C0081E5 		str	r0, [r1, #12]
+ 2869              		.loc 1 196 0
+ 2870 04d4 832003E5 		str	r2, [r3, #-131]
+ 197:../tp.c       **** }
+ 2871              		.loc 1 197 0
+ 2872 04d8 1EFF2FE1 		bx	lr
+ 2873              	.L57:
+ 2874              		.align	2
+ 2875              	.L56:
+ 2876 04dc FFFF7F0C 		.word	209715199
+ 2877              		.cfi_endproc
+ 2878              	.LFE6:
+ 2880              		.data
+ 2881              		.align	2
+ 2882              		.set	.LANCHOR0,. + 0
+ 2885              	primeraInterrupcion:
+ 2886 0000 01000000 		.word	1
+ 2889              	calibrar:
+ 2890 0004 04000000 		.word	4
+ 2893              	primerClick:
+ 2894 0008 01000000 		.word	1
+ 2895              		.bss
+ 2896              		.align	2
+ 2897              		.set	.LANCHOR1,. + 0
+ 2900              	Pt.4020:
+ 2901 0000 00000000 		.space	36
+ 2901      00000000 
+ 2901      00000000 
+ 2901      00000000 
+ 2901      00000000 
+ 2904              	i.4018:
+ 2905 0024 00000000 		.space	4
+ 2908              	tmp.4019:
+ 2909 0028 00000000 		.space	4
+ 2912              	Xmin:
+ 2913 002c 00000000 		.space	4
+ 2916              	Xmax:
+ 2917 0030 00000000 		.space	4
+ 2920              	Ymin:
+ 2921 0034 00000000 		.space	4
+ 2924              	Ymax:
+ 2925 0038 00000000 		.space	4
+ 2926              		.text
+ 2927              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 tp.c
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2220   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2223   .text:00000000 touchpad_ISR
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2584   .text:00000324 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2595   .text:00000338 $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2598   .text:00000338 touchpad_calibrar
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2671   .text:000003b8 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2676   .text:000003c0 $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2679   .text:000003c0 touchpad_init
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2761   .text:00000460 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2767   .text:0000046c $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2770   .text:0000046c touchpad_setCalibrar
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2790   .text:0000047c $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2794   .text:00000480 $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2797   .text:00000480 touchpad_reactivar
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2822   .text:000004a0 touchpad_estado
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2843   .text:000004b8 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2847   .text:000004bc $a
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2850   .text:000004bc touchpad_close
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2876   .text:000004dc $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2881   .data:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2885   .data:00000000 primeraInterrupcion
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2889   .data:00000004 calibrar
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2893   .data:00000008 primerClick
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2896   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2900   .bss:00000000 Pt.4020
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2904   .bss:00000024 i.4018
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2908   .bss:00000028 tmp.4019
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2912   .bss:0000002c Xmin
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2916   .bss:00000030 Xmax
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2920   .bss:00000034 Ymin
+C:\Users\sergi\AppData\Local\Temp\ccd6c3g5.s:2924   .bss:00000038 Ymax
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_uidiv
+DelayTime
+push_debug

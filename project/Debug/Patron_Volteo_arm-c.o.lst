@@ -1,0 +1,91 @@
+   1              	# 1 "../Patron_Volteo_arm-c.asm"
+   1              	/*********************************************************************************************
+   0              	
+   0              	
+   0              	
+   2              	* Fichero:	Patron_volteo_arm-arm.asm
+   3              	* Autor1:	Sergio García Esteban	755844
+   4              	* Autor2:	Irene Fumanal Lacoma	758325
+   5              	* Descrip:	Funcion Patron_volteo optimizada en ensamblador manteniendo llamada a ficha_valida.
+   6              	* Version:	Cheto
+   7              	*********************************************************************************************/
+   8              	
+   9              	.global patron_volteo_arm_c
+  10              	
+  11              	patron_volteo_arm_c:
+  12              	
+  13 0000 0DC0A0E1 			mov r12, sp //prologo
+  14 0004 F0DF2DE9 			push {r4-r10,r11, r12, lr, pc}
+  15 0008 04B04CE2 			sub r11, r12, #4
+  16 000c 18D04DE2 			sub sp, sp, #24
+  17 0010 34000BE5 			str r0, [r11, #-52]
+  18 0014 38100BE5 			str r1, [r11, #-56]
+  19 0018 39204BE5 			strb r2, [r11, #-57]
+  20 001c 3A304BE5 			strb r3, [r11, #-58]
+  21              			
+  22 0020 0160A0E1 			mov r6,r1
+  23 0024 0440DBE5 			ldrb r4, [r11, #4] //FA=FA+SF
+  24 0028 041082E0 			add r1,r2,r4
+  25 002c 011CC1E3 			bic r1,r1,#256//convertir a char
+  26 0030 0850DBE5 			ldrb r5, [r11, #8] //CA=CA+SC
+  27 0034 052083E0 			add r2,r3,r5
+  28 0038 012CC2E3 			bic r2,r2,#256
+  29              			
+  30 003c 0180A0E1 			mov r8,r1 //casilla = ficha_valida(tablero, FA, CA, &posicion_valida);
+  31 0040 0290A0E1 			mov r9,r2
+  32 0044 30304BE2 			sub r3,r11,#48//fp-48=&posicion_valida
+  33 0048 0070A0E1 			mov r7,r0
+  34 004c FEFFFFEB 			bl ficha_valida//llamada a c
+  35              			
+  36 0050 0CA09BE5 			ldr r10, [r11, #12]//r10=color (parametro de entrada patron_volteo por pila)
+  37 0054 0B0000EA 			b cond //while ((posicion_valida == 1) && (casilla != color))
+  38              			
+  39 0058 041088E0 	while_:	add r1,r8,r4 //FA=FA+SF
+  40 005c 011CC1E3 			bic r1,r1,#256
+  41 0060 052089E0 			add r2,r9,r5 //CA=CA+SC
+  42 0064 012CC2E3 			bic r2,r2,#256
+  43 0068 000096E5 			ldr r0,[r6] //*longitud = *longitud + 1;
+  44 006c 010080E2 			add r0,r0,#1
+  45 0070 000086E5 			str r0,[r6]
+  46              			
+  47 0074 0180A0E1 			mov r8,r1 //casilla = ficha_valida(tablero, FA, CA, &posicion_valida);
+  48 0078 0290A0E1 			mov r9,r2
+  49 007c 30304BE2 			sub r3,r11,#48//fp-48=&posicion_valida
+  50 0080 0700A0E1 			mov r0,r7
+  51 0084 FEFFFFEB 			bl ficha_valida //llamada a c
+  52              			
+  53              			//while ((posicion_valida == 1) && (casilla != color))
+  54 0088 30301BE5 	cond:	ldr r3, [r11, #-48] //posicion_valida
+  55 008c 010053E3 			cmp r3,#1
+  56 0090 0100001A 			bne if_
+  57 0094 0A0050E1 			cmp r0,r10//r0=casilla(salida de ficha_valida())
+  58 0098 EEFFFF1A 			bne while_
+  59              			
+  60 009c 010053E3 	if_:	cmp r3,#1 //if ((posicion_valida == 1) && (casilla == color) && (*longitud >0))
+  61 00a0 0600001A 			bne else_
+  62 00a4 0A0050E1 			cmp r0,r10
+  63 00a8 0400001A 			bne else_
+  64 00ac 006096E5 			ldr r6,[r6]
+  65 00b0 000056E3 			cmp r6,#0
+  66 00b4 010000DA 			ble else_
+  67              			
+  68 00b8 0100A0E3 			mov r0,#1 //return PATRON_ENCONTRADO;
+  69 00bc 000000EA 			b fin
+  70              			
+  71 00c0 0000A0E3 	else_:	mov r0,#0 //return NO_HAY_PATRON;
+  72              			
+  73 00c4 28D04BE2 	fin:	sub sp, r11, #40//epilogo
+  74 00c8 F06F9DE8 			ldm sp, {r4-r10,r11, sp, lr}
+  75 00cc 1EFF2FE1 			bx lr
+DEFINED SYMBOLS
+../Patron_Volteo_arm-c.asm:11     .text:00000000 patron_volteo_arm_c
+../Patron_Volteo_arm-c.asm:13     .text:00000000 $a
+../Patron_Volteo_arm-c.asm:54     .text:00000088 cond
+../Patron_Volteo_arm-c.asm:39     .text:00000058 while_
+../Patron_Volteo_arm-c.asm:60     .text:0000009c if_
+../Patron_Volteo_arm-c.asm:71     .text:000000c0 else_
+../Patron_Volteo_arm-c.asm:73     .text:000000c4 fin
+                   .debug_aranges:0000000c $d
+
+UNDEFINED SYMBOLS
+ficha_valida

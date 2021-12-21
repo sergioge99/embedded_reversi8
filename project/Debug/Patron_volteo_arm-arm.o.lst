@@ -1,0 +1,104 @@
+   1              	# 1 "../Patron_volteo_arm-arm.asm"
+   1              	/*********************************************************************************************
+   0              	
+   0              	
+   0              	
+   2              	* Fichero:	Patron_volteo_arm-arm.asm
+   3              	* Autor1:	Sergio García Esteban	755844
+   4              	* Autor2:	Irene Fumanal Lacoma	758325
+   5              	* Descrip:	Funcion Patron_volteo optimizada en ensamblador.
+   6              	* Version:	Cheto
+   7              	*********************************************************************************************/
+   8              	
+   9              	.global patron_volteo_arm_arm
+  10              	
+  11              	/****************************************
+  12              	* r0 = parametro 0 (r0) = @tablero	
+  13              	* r1 = parametro 1 (r1) = @longitud
+  14              	* r2 = parametro 2 (r2) = FA
+  15              	* r3 = parametro 3 (r3) = CA
+  16              	* r4 = posicion_valida
+  17              	* r5 = parametro 4 (fp+4) = SF 
+  18              	* r6 = parametro 5 (fp+8) = SC
+  19              	* r7 = casilla 
+  20              	* r8 = parametro 6 (fp+12) = color
+  21              	* r9 = tablero[FA][CA]
+  22              	* r10 = FA*8 || longitud
+  23              	****************************************/
+  24              	
+  25              	patron_volteo_arm_arm:
+  26              	
+  27 0000 0DC0A0E1 			mov r12, sp //prologo
+  28 0004 F0DF2DE9 			push {r4-r10,r11, r12, lr, pc}
+  29 0008 04B04CE2 			sub r11, r12, #4
+  30              			
+  31 000c 0450DBE5 			ldrb r5, [r11, #4] //FA=FA+SF
+  32 0010 052082E0 			add r2,r2,r5
+  33 0014 012CC2E3 			bic r2,r2,#256
+  34 0018 0860DBE5 			ldrb r6, [r11, #8] //CA=CA+SC
+  35 001c 063083E0 			add r3,r3,r6
+  36 0020 013CC3E3 			bic r3,r3,#256
+  37 0024 0C809BE5 			ldr r8, [r11, #12]
+  38              	
+  39              			//ficha_valida
+  40 0028 0040A0E3 			mov r4,#0 //pos_v=0
+  41 002c 070052E3 			cmp r2,#7 //0<=FA<DIM
+  42 0030 0600008A 			bhi fv1_f
+  43 0034 070053E3 			cmp r3,#7 //0<=CA<DIM
+  44 0038 0400008A 			bhi fv1_f
+  45 003c 82A1A0E1 			lsl r10,r2,#3
+  46 0040 0A9080E0 			add r9,r0,r10
+  47 0044 0370D9E7 			ldrb r7,[r9,r3]
+  48 0048 000057E3 			cmp r7,#0 //tablero[FA][CA]!=0=casilla
+  49 004c 0140A013 			movne r4,#1 //pos_v=1
+  50              			
+  51 0050 100000EA 	fv1_f:	b cond //while ((posicion_valida == 1) && (casilla != color))
+  52              			
+  53 0054 052082E0 	while_:	add r2,r2,r5 //FA=FA+SF
+  54 0058 012CC2E3 			bic r2,r2,#256
+  55 005c 063083E0 			add r3,r3,r6 //CA=CA+SC
+  56 0060 013CC3E3 			bic r3,r3,#256
+  57 0064 00A091E5 			ldr r10,[r1] //*longitud = *longitud + 1;
+  58 0068 01A08AE2 			add r10,r10,#1
+  59 006c 00A081E5 			str r10,[r1]
+  60              			
+  61              			//ficha_valida
+  62 0070 0040A0E3 			mov r4,#0 //pos_v=0
+  63 0074 070052E3 			cmp r2,#7 //0<=FA<DIM
+  64 0078 0600008A 			bhi cond
+  65 007c 070053E3 			cmp r3,#7 //0<=CA<DIM
+  66 0080 0400008A 			bhi cond
+  67 0084 82A1A0E1 			lsl r10,r2,#3
+  68 0088 0A9080E0 			add r9,r0,r10
+  69 008c 0370D9E7 			ldrb r7,[r9,r3]
+  70 0090 000057E3 			cmp r7,#0 //tablero[FA][CA]!=0=casilla
+  71 0094 0140A013 			movne r4,#1 //pos_v=1
+  72              			
+  73 0098 010054E3 	cond:	cmp r4,#1 //while ((posicion_valida == 1) && (casilla != color))
+  74 009c 0100001A 			bne if_
+  75 00a0 080057E1 			cmp r7,r8
+  76 00a4 EAFFFF1A 			bne while_
+  77              			
+  78 00a8 0000A0E3 	if_:	mov r0,#0 //return NO_HAY_PATRON;
+  79 00ac 010054E3 			cmp r4,#1 //if ((posicion_valida == 1) && (casilla == color) && (*longitud >0))
+  80 00b0 0400001A 			bne fin
+  81 00b4 080057E1 			cmp r7,r8
+  82 00b8 0200001A 			bne fin
+  83 00bc 001091E5 			ldr r1,[r1]
+  84 00c0 000051E3 			cmp r1,#0
+  85 00c4 0100A0C3 			movgt r0,#1 //return PATRON_ENCONTRADO;
+  86              			
+  87 00c8 28D04BE2 	fin:	sub sp, r11, #40 //epilogo
+  88 00cc F06F9DE8 			ldm sp, {r4-r10,r11, sp, lr}
+  89 00d0 1EFF2FE1 			bx lr
+DEFINED SYMBOLS
+../Patron_volteo_arm-arm.asm:25     .text:00000000 patron_volteo_arm_arm
+../Patron_volteo_arm-arm.asm:27     .text:00000000 $a
+../Patron_volteo_arm-arm.asm:51     .text:00000050 fv1_f
+../Patron_volteo_arm-arm.asm:73     .text:00000098 cond
+../Patron_volteo_arm-arm.asm:53     .text:00000054 while_
+../Patron_volteo_arm-arm.asm:78     .text:000000a8 if_
+../Patron_volteo_arm-arm.asm:87     .text:000000c8 fin
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

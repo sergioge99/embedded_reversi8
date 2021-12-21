@@ -1,0 +1,246 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"itoa.c"
+  21              	.Ltext0:
+  22              		.file 1 "../itoa.c"
+ 1572              		.align	2
+ 1573              		.global	reverse
+ 1575              	reverse:
+ 1576              	.LFB0:
+   1:../itoa.c     **** /*********************************************************************************************
+   2:../itoa.c     **** * Fichero:	itoa.c
+   3:../itoa.c     **** * Autor:
+   4:../itoa.c     **** * Descrip: Funcion itoa
+   5:../itoa.c     **** * Version:
+   6:../itoa.c     **** *********************************************************************************************/
+   7:../itoa.c     **** 
+   8:../itoa.c     **** /*--- ficheros de cabecera ---*/
+   9:../itoa.c     **** #include "itoa.h"
+  10:../itoa.c     **** #include <string.h>
+  11:../itoa.c     **** 
+  12:../itoa.c     **** /*--- codigo de las funciones ---*/
+  13:../itoa.c     **** 
+  14:../itoa.c     **** /*********************************************************************************************
+  15:../itoa.c     **** * Funcion auxiliar que da la vuelta un string
+  16:../itoa.c     **** *********************************************************************************************/
+  17:../itoa.c     ****  void reverse(char s[])
+  18:../itoa.c     ****  {
+ 1577              		.loc 1 18 0
+ 1578              		.cfi_startproc
+ 1579              		@ Function supports interworking.
+ 1580              		@ args = 0, pretend = 0, frame = 0
+ 1581              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1582              	.LVL0:
+ 1583 0000 0DC0A0E1 		mov	ip, sp
+ 1584              	.LCFI0:
+ 1585              		.cfi_def_cfa_register 12
+ 1586 0004 18D82DE9 		stmfd	sp!, {r3, r4, fp, ip, lr, pc}
+ 1587 0008 04B04CE2 		sub	fp, ip, #4
+ 1588              		.cfi_offset 14, -8
+ 1589              		.cfi_offset 13, -12
+ 1590              		.cfi_offset 11, -16
+ 1591              		.cfi_offset 4, -20
+ 1592              		.cfi_offset 3, -24
+ 1593              	.LCFI1:
+ 1594              		.cfi_def_cfa 11, 4
+ 1595              		.loc 1 18 0
+ 1596 000c 0040A0E1 		mov	r4, r0
+  19:../itoa.c     ****      int i, j;
+  20:../itoa.c     ****      char c;
+  21:../itoa.c     **** 
+  22:../itoa.c     ****      for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+ 1597              		.loc 1 22 0
+ 1598 0010 FEFFFFEB 		bl	strlen
+ 1599              	.LVL1:
+ 1600 0014 010040E2 		sub	r0, r0, #1
+ 1601              	.LVL2:
+ 1602 0018 000050E3 		cmp	r0, #0
+ 1603 001c 080000DA 		ble	.L1
+ 1604              		.loc 1 22 0 is_stmt 0 discriminator 2
+ 1605 0020 0030A0E3 		mov	r3, #0
+ 1606              	.LVL3:
+ 1607              	.L3:
+  23:../itoa.c     ****          c = s[i];
+ 1608              		.loc 1 23 0 is_stmt 1 discriminator 2
+ 1609 0024 0320D4E7 		ldrb	r2, [r4, r3]	@ zero_extendqisi2
+ 1610              	.LVL4:
+  24:../itoa.c     ****          s[i] = s[j];
+ 1611              		.loc 1 24 0 discriminator 2
+ 1612 0028 0010D4E7 		ldrb	r1, [r4, r0]	@ zero_extendqisi2
+ 1613 002c 0310C4E7 		strb	r1, [r4, r3]
+  25:../itoa.c     ****          s[j] = c;
+ 1614              		.loc 1 25 0 discriminator 2
+ 1615 0030 0020C4E7 		strb	r2, [r4, r0]
+  22:../itoa.c     ****      for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+ 1616              		.loc 1 22 0 discriminator 2
+ 1617 0034 013083E2 		add	r3, r3, #1
+ 1618              	.LVL5:
+ 1619 0038 010040E2 		sub	r0, r0, #1
+ 1620              	.LVL6:
+ 1621 003c 000053E1 		cmp	r3, r0
+ 1622 0040 F7FFFFBA 		blt	.L3
+ 1623              	.LVL7:
+ 1624              	.L1:
+  26:../itoa.c     ****      }
+  27:../itoa.c     ****  }
+ 1625              		.loc 1 27 0
+ 1626 0044 14D04BE2 		sub	sp, fp, #20
+ 1627 0048 18689DE8 		ldmfd	sp, {r3, r4, fp, sp, lr}
+ 1628 004c 1EFF2FE1 		bx	lr
+ 1629              		.cfi_endproc
+ 1630              	.LFE0:
+ 1632              		.align	2
+ 1633              		.global	itoa
+ 1635              	itoa:
+ 1636              	.LFB1:
+  28:../itoa.c     ****  /*********************************************************************************************
+  29:../itoa.c     ****  * Funcion que convierte un entero a cadena de carácteres
+  30:../itoa.c     ****  *********************************************************************************************/
+  31:../itoa.c     **** void itoa(int n, char s[])
+  32:../itoa.c     **** {
+ 1637              		.loc 1 32 0
+ 1638              		.cfi_startproc
+ 1639              		@ Function supports interworking.
+ 1640              		@ args = 0, pretend = 0, frame = 0
+ 1641              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1642              	.LVL8:
+ 1643 0050 0DC0A0E1 		mov	ip, sp
+ 1644              	.LCFI2:
+ 1645              		.cfi_def_cfa_register 12
+  33:../itoa.c     ****     int i, sign;
+  34:../itoa.c     **** 
+  35:../itoa.c     ****     if ((sign = n) < 0)  /* record sign */
+  36:../itoa.c     ****         n = -n;          /* make n positive */
+  37:../itoa.c     ****     i = 0;
+  38:../itoa.c     ****     do {       /* generate digits in reverse order */
+  39:../itoa.c     ****         s[i++] = n % 10 + '0';   /* get next digit */
+ 1646              		.loc 1 39 0
+ 1647 0054 94309FE5 		ldr	r3, .L13
+  32:../itoa.c     **** {
+ 1648              		.loc 1 32 0
+ 1649 0058 30D82DE9 		stmfd	sp!, {r4, r5, fp, ip, lr, pc}
+ 1650 005c 04B04CE2 		sub	fp, ip, #4
+ 1651              		.cfi_offset 14, -8
+ 1652              		.cfi_offset 13, -12
+ 1653              		.cfi_offset 11, -16
+ 1654              		.cfi_offset 5, -20
+ 1655              		.cfi_offset 4, -24
+ 1656              	.LCFI3:
+ 1657              		.cfi_def_cfa 11, 4
+  32:../itoa.c     **** {
+ 1658              		.loc 1 32 0
+ 1659 0060 0140A0E1 		mov	r4, r1
+ 1660 0064 00C0A0E3 		mov	ip, #0
+ 1661              	.LBB4:
+ 1662              	.LBB5:
+  22:../itoa.c     ****      for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+ 1663              		.loc 1 22 0
+ 1664 0068 C01F20E0 		eor	r1, r0, r0, asr #31
+ 1665 006c C01F41E0 		sub	r1, r1, r0, asr #31
+ 1666              	.LVL9:
+ 1667              	.L7:
+ 1668              	.LBE5:
+ 1669              	.LBE4:
+ 1670              		.loc 1 39 0 discriminator 1
+ 1671 0070 9321CEE0 		smull	r2, lr, r3, r1
+ 1672 0074 C12FA0E1 		mov	r2, r1, asr #31
+ 1673 0078 4E2162E0 		rsb	r2, r2, lr, asr #2
+ 1674 007c 025182E0 		add	r5, r2, r2, asl #2
+ 1675 0080 851041E0 		sub	r1, r1, r5, asl #1
+ 1676              	.LVL10:
+ 1677 0084 30E081E2 		add	lr, r1, #48
+  40:../itoa.c     ****     } while ((n /= 10) > 0);     /* delete it */
+ 1678              		.loc 1 40 0 discriminator 1
+ 1679 0088 001052E2 		subs	r1, r2, #0
+  39:../itoa.c     ****         s[i++] = n % 10 + '0';   /* get next digit */
+ 1680              		.loc 1 39 0 discriminator 1
+ 1681 008c 0CE0C4E7 		strb	lr, [r4, ip]
+ 1682 0090 01C08CE2 		add	ip, ip, #1
+ 1683              	.LVL11:
+ 1684              		.loc 1 40 0 discriminator 1
+ 1685 0094 F5FFFFCA 		bgt	.L7
+  41:../itoa.c     ****     if (sign < 0)
+ 1686              		.loc 1 41 0
+ 1687 0098 000050E3 		cmp	r0, #0
+  42:../itoa.c     ****         s[i++] = '-';
+ 1688              		.loc 1 42 0
+ 1689 009c 2D30A0B3 		movlt	r3, #45
+ 1690 00a0 0C30C4B7 		strltb	r3, [r4, ip]
+  43:../itoa.c     ****     s[i] = '\0';
+ 1691              		.loc 1 43 0
+ 1692 00a4 0050A0E3 		mov	r5, #0
+  42:../itoa.c     ****         s[i++] = '-';
+ 1693              		.loc 1 42 0
+ 1694 00a8 01C08CB2 		addlt	ip, ip, #1
+ 1695              	.LVL12:
+ 1696              		.loc 1 43 0
+ 1697 00ac 0C50C4E7 		strb	r5, [r4, ip]
+ 1698              	.LVL13:
+ 1699              	.LBB7:
+ 1700              	.LBB6:
+  22:../itoa.c     ****      for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+ 1701              		.loc 1 22 0
+ 1702 00b0 0400A0E1 		mov	r0, r4
+ 1703              	.LVL14:
+ 1704 00b4 FEFFFFEB 		bl	strlen
+ 1705              	.LVL15:
+ 1706 00b8 010040E2 		sub	r0, r0, #1
+ 1707              	.LVL16:
+ 1708 00bc 050050E1 		cmp	r0, r5
+ 1709 00c0 070000DA 		ble	.L6
+ 1710              	.LVL17:
+ 1711              	.L10:
+  23:../itoa.c     ****          c = s[i];
+ 1712              		.loc 1 23 0
+ 1713 00c4 0530D4E7 		ldrb	r3, [r4, r5]	@ zero_extendqisi2
+ 1714              	.LVL18:
+  24:../itoa.c     ****          s[i] = s[j];
+ 1715              		.loc 1 24 0
+ 1716 00c8 00C0D4E7 		ldrb	ip, [r4, r0]	@ zero_extendqisi2
+ 1717 00cc 05C0C4E7 		strb	ip, [r4, r5]
+  25:../itoa.c     ****          s[j] = c;
+ 1718              		.loc 1 25 0
+ 1719 00d0 0030C4E7 		strb	r3, [r4, r0]
+  22:../itoa.c     ****      for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+ 1720              		.loc 1 22 0
+ 1721 00d4 015085E2 		add	r5, r5, #1
+ 1722              	.LVL19:
+ 1723 00d8 010040E2 		sub	r0, r0, #1
+ 1724              	.LVL20:
+ 1725 00dc 000055E1 		cmp	r5, r0
+ 1726 00e0 F7FFFFBA 		blt	.L10
+ 1727              	.LVL21:
+ 1728              	.L6:
+ 1729              	.LBE6:
+ 1730              	.LBE7:
+  44:../itoa.c     ****     reverse(s);
+  45:../itoa.c     **** }
+ 1731              		.loc 1 45 0
+ 1732 00e4 14D04BE2 		sub	sp, fp, #20
+ 1733 00e8 30689DE8 		ldmfd	sp, {r4, r5, fp, sp, lr}
+ 1734 00ec 1EFF2FE1 		bx	lr
+ 1735              	.L14:
+ 1736              		.align	2
+ 1737              	.L13:
+ 1738 00f0 67666666 		.word	1717986919
+ 1739              		.cfi_endproc
+ 1740              	.LFE1:
+ 1742              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 itoa.c
+C:\Users\sergi\AppData\Local\Temp\ccbk4q4H.s:1572   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccbk4q4H.s:1575   .text:00000000 reverse
+C:\Users\sergi\AppData\Local\Temp\ccbk4q4H.s:1635   .text:00000050 itoa
+C:\Users\sergi\AppData\Local\Temp\ccbk4q4H.s:1738   .text:000000f0 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+strlen

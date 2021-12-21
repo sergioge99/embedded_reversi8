@@ -1,0 +1,4305 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"Bmp.c"
+  21              	.Ltext0:
+  22              		.file 1 "../Bmp.c"
+ 1211              		.align	2
+ 1212              		.global	BitmapView
+ 1214              	BitmapView:
+ 1215              	.LFB0:
+   1:../Bmp.c      **** /*********************************************************************************************
+   2:../Bmp.c      **** * Fichero:	Bmp.c
+   3:../Bmp.c      **** * Autor:	
+   4:../Bmp.c      **** * Descrip:	Funciones de control y visualizacion del LCD
+   5:../Bmp.c      **** * Version:	
+   6:../Bmp.c      **** *********************************************************************************************/
+   7:../Bmp.c      **** 
+   8:../Bmp.c      **** /*--- Archivos cabecera ---*/
+   9:../Bmp.c      **** #include "bmp.h"
+  10:../Bmp.c      **** #include "def.h"
+  11:../Bmp.c      **** #include "lcd.h"
+  12:../Bmp.c      **** 
+  13:../Bmp.c      **** /*--- Valores y constantes ---*/
+  14:../Bmp.c      **** // Cursor de ratón
+  15:../Bmp.c      **** const INT8U ucMouseMap[] = {
+  16:../Bmp.c      **** BLACK,        TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, T
+  17:../Bmp.c      **** BLACK,        BLACK,        TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, T
+  18:../Bmp.c      **** BLACK,        WHITE,        BLACK,        TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, T
+  19:../Bmp.c      **** BLACK,        WHITE,        WHITE,        BLACK,        TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, T
+  20:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        BLACK,        TRANSPARENCY, TRANSPARENCY, T
+  21:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        BLACK,        TRANSPARENCY, T
+  22:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        BLACK,        T
+  23:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        B
+  24:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        W
+  25:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        W
+  26:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        W
+  27:../Bmp.c      **** BLACK,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        WHITE,        B
+  28:../Bmp.c      **** BLACK,        WHITE,        WHITE,        BLACK,        WHITE,        WHITE,        WHITE,        B
+  29:../Bmp.c      **** BLACK,        WHITE,        BLACK,        TRANSPARENCY, BLACK,        WHITE,        WHITE,        W
+  30:../Bmp.c      **** BLACK,        BLACK,        TRANSPARENCY, TRANSPARENCY, BLACK,        WHITE,        WHITE,        W
+  31:../Bmp.c      **** BLACK,        TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, BLACK,        WHITE,        W
+  32:../Bmp.c      **** TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, BLACK,        WHITE,        W
+  33:../Bmp.c      **** TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, BLACK,        W
+  34:../Bmp.c      **** TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, BLACK,        W
+  35:../Bmp.c      **** TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, TRANSPARENCY, B
+  36:../Bmp.c      **** };
+  37:../Bmp.c      **** 
+  38:../Bmp.c      **** // Ficha negra
+  39:../Bmp.c      **** const INT8U fichaNegra[] = {
+  40:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  41:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  42:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  43:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	B
+  44:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,
+  45:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BL
+  46:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,	
+  47:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLA
+  48:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLA
+  49:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  50:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  51:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  52:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  53:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  54:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,		
+  55:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLA
+  56:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLACK,			BLA
+  57:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BLACK,			BLACK,	
+  58:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,			BLACK,			BL
+  59:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			BLACK,
+  60:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	B
+  61:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  62:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  63:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  64:../Bmp.c      **** };
+  65:../Bmp.c      **** 
+  66:../Bmp.c      **** // Ficha gris
+  67:../Bmp.c      **** const INT8U fichaGris[] = {
+  68:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  69:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  70:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  71:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	N
+  72:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICE
+  73:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRA
+  74:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,	
+  75:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NI
+  76:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NI
+  77:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEG
+  78:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		TRANSPARENCY,	TRANSPARENCY,	TRANSPAREN
+  79:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		TRANSPARENCY,	TRANSPARENCY,	TRANSPAREN
+  80:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		TRANSPARENCY,	TRANSPARENCY,	TRANSPAREN
+  81:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		TRANSPARENCY,	TRANSPARENCY,	TRANSPAREN
+  82:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEG
+  83:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NI
+  84:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,		NI
+  85:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRAY,		NICEGRAY,	
+  86:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICEGRAY,		NICEGRA
+  87:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	NICEGRAY,		NICE
+  88:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	N
+  89:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  90:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  91:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  92:../Bmp.c      **** };
+  93:../Bmp.c      **** 
+  94:../Bmp.c      **** // Ficha blanca
+  95:../Bmp.c      **** const INT8U fichaBlanca[] = {
+  96:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  97:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  98:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+  99:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	B
+ 100:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSP
+ 101:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSP
+ 102:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 103:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 104:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+ 105:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 106:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 107:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 108:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 109:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 110:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 111:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+ 112:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 113:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSPARENCY,	TRANSP
+ 114:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSPARENCY,	TRANSP
+ 115:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	BLACK,			TRANSP
+ 116:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	B
+ 117:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+ 118:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+ 119:../Bmp.c      **** TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	TRANSPARENCY,	T
+ 120:../Bmp.c      **** };
+ 121:../Bmp.c      **** 
+ 122:../Bmp.c      **** // Declaración de los bitmap
+ 123:../Bmp.c      **** STRU_BITMAP Stru_Bitmap_gbMouse = {0x10, 4, 12, 20, TRANSPARENCY, (INT8U *)ucMouseMap};
+ 124:../Bmp.c      **** STRU_BITMAP Stru_Bitmap_fichaNegra = {0x10, 4, 24, 24, TRANSPARENCY, (INT8U *)fichaNegra};
+ 125:../Bmp.c      **** STRU_BITMAP Stru_Bitmap_fichaGris = {0x10, 4, 24, 24, TRANSPARENCY, (INT8U *)fichaGris};
+ 126:../Bmp.c      **** STRU_BITMAP Stru_Bitmap_fichaBlanca = {0x10, 4, 24, 24, TRANSPARENCY, (INT8U *)fichaBlanca};
+ 127:../Bmp.c      **** 
+ 128:../Bmp.c      **** 
+ 129:../Bmp.c      **** 
+ 130:../Bmp.c      **** /*--- Variables del cursor ---*/
+ 131:../Bmp.c      **** INT16U ulMouseX;
+ 132:../Bmp.c      **** INT16U ulMouseY;
+ 133:../Bmp.c      **** INT8U ucCursorBackUp[20][12/2];
+ 134:../Bmp.c      **** 
+ 135:../Bmp.c      **** /*--- Funciones del cursor ---*/
+ 136:../Bmp.c      **** /*********************************************************************************************
+ 137:../Bmp.c      **** * name:		BitmapView()
+ 138:../Bmp.c      **** * func:		display bitmap
+ 139:../Bmp.c      **** * para:		x,y -- pot's X-Y coordinate 
+ 140:../Bmp.c      **** *			Stru_Bitmap -- bitmap struct
+ 141:../Bmp.c      **** * ret:		none
+ 142:../Bmp.c      **** * modify:
+ 143:../Bmp.c      **** * comment:		
+ 144:../Bmp.c      **** *********************************************************************************************/
+ 145:../Bmp.c      **** void BitmapView (INT16U x, INT16U y, STRU_BITMAP Stru_Bitmap)
+ 146:../Bmp.c      **** {
+ 1216              		.loc 1 146 0
+ 1217              		.cfi_startproc
+ 1218              		@ Function supports interworking.
+ 1219              		@ args = 16, pretend = 8, frame = 32
+ 1220              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1221              		@ link register save eliminated.
+ 1222              	.LVL0:
+ 1223 0000 08D04DE2 		sub	sp, sp, #8
+ 1224              	.LCFI0:
+ 1225              		.cfi_def_cfa_offset 8
+ 1226 0004 F0072DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 1227              	.LCFI1:
+ 1228              		.cfi_def_cfa_offset 36
+ 1229 0008 24D04DE2 		sub	sp, sp, #36
+ 1230              	.LCFI2:
+ 1231              		.cfi_def_cfa_offset 72
+ 1232              		.loc 1 146 0
+ 1233 000c 40C08DE2 		add	ip, sp, #64
+ 1234 0010 0C008CE8 		stmia	ip, {r2, r3}
+ 147:../Bmp.c      **** 	INT32U i, j;
+ 148:../Bmp.c      **** 	INT8U ucColor;
+ 149:../Bmp.c      **** 	
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1235              		.loc 1 150 0
+ 1236 0014 B424DDE1 		ldrh	r2, [sp, #68]
+ 1237 0018 B234DDE1 		ldrh	r3, [sp, #66]
+ 1238 001c 000052E3 		cmp	r2, #0
+ 1239 0020 1C208DE5 		str	r2, [sp, #28]
+ 146:../Bmp.c      **** {
+ 1240              		.loc 1 146 0
+ 1241 0024 04008DE5 		str	r0, [sp, #4]
+ 1242              		.loc 1 150 0
+ 1243 0028 14308DE5 		str	r3, [sp, #20]
+ 1244              	.LVL1:
+ 1245 002c A000000A 		beq	.L1
+ 1246              		.cfi_offset 10, -12
+ 1247              		.cfi_offset 9, -16
+ 1248              		.cfi_offset 8, -20
+ 1249              		.cfi_offset 7, -24
+ 1250              		.cfi_offset 6, -28
+ 1251              		.cfi_offset 5, -32
+ 1252              		.cfi_offset 4, -36
+ 1253 0030 4C509DE5 		ldr	r5, [sp, #76]
+ 1254 0034 017181E0 		add	r7, r1, r1, asl #2
+ 1255 0038 0080A0E3 		mov	r8, #0
+ 151:../Bmp.c      **** 	{
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 153:../Bmp.c      **** 		{
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 155:../Bmp.c      **** 			{
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 1256              		.loc 1 156 0
+ 1257 003c 0010E0E1 		mvn	r1, r0
+ 1258              	.LVL2:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1259              		.loc 1 150 0
+ 1260 0040 0743A0E1 		mov	r4, r7, asl #6
+ 1261 0044 0C508DE5 		str	r5, [sp, #12]
+ 1262 0048 08808DE5 		str	r8, [sp, #8]
+ 1263              		.loc 1 156 0
+ 1264 004c 18108DE5 		str	r1, [sp, #24]
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1265              		.loc 1 150 0
+ 1266 0050 10408DE5 		str	r4, [sp, #16]
+ 145:../Bmp.c      **** void BitmapView (INT16U x, INT16U y, STRU_BITMAP Stru_Bitmap)
+ 1267              		.loc 1 145 0
+ 1268 0054 007083E0 		add	r7, r3, r0
+ 1269              		.loc 1 156 0
+ 1270 0058 0F42A0E3 		mov	r4, #-268435456
+ 1271              	.LVL3:
+ 1272              	.L3:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1273              		.loc 1 152 0 discriminator 1
+ 1274 005c 14809DE5 		ldr	r8, [sp, #20]
+ 1275 0060 000058E3 		cmp	r8, #0
+ 1276 0064 8500000A 		beq	.L6
+ 1277              		.loc 1 156 0
+ 1278 0068 0C108DE2 		add	r1, sp, #12
+ 1279 006c 220091E8 		ldmia	r1, {r1, r5}	@ phole ldm
+ 1280 0070 A580A0E1 		mov	r8, r5, lsr #1
+ 1281 0074 04509DE5 		ldr	r5, [sp, #4]
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1282              		.loc 1 154 0
+ 1283 0078 0130D1E4 		ldrb	r3, [r1], #1	@ zero_extendqisi2
+ 1284 007c 0500E0E1 		mvn	r0, r5
+ 1285              		.loc 1 156 0
+ 1286 0080 C32688E2 		add	r2, r8, #204472320
+ 1287 0084 07C080E0 		add	ip, r0, r7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1288              		.loc 1 154 0
+ 1289 0088 FF0053E3 		cmp	r3, #255
+ 1290              		.loc 1 156 0
+ 1291 008c 962C82E2 		add	r2, r2, #38400
+ 1292 0090 03000CE2 		and	r0, ip, #3
+ 1293 0094 18509D05 		ldreq	r5, [sp, #24]
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1294              		.loc 1 154 0
+ 1295 0098 0A00000A 		beq	.L8
+ 1296              		.loc 1 156 0
+ 1297 009c A5C1A0E1 		mov	ip, r5, lsr #3
+ 1298 00a0 0C6192E7 		ldr	r6, [r2, ip, asl #2]
+ 1299 00a4 075005E2 		and	r5, r5, #7
+ 1300 00a8 0581A0E1 		mov	r8, r5, asl #2
+ 1301 00ac 3458C6E1 		bic	r5, r6, r4, lsr r8
+ 1302 00b0 18809DE5 		ldr	r8, [sp, #24]
+ 1303 00b4 076008E2 		and	r6, r8, #7
+ 1304 00b8 0661A0E1 		mov	r6, r6, asl #2
+ 1305 00bc 133685E1 		orr	r3, r5, r3, asl r6
+ 1306 00c0 0C3182E7 		str	r3, [r2, ip, asl #2]
+ 1307 00c4 0850A0E1 		mov	r5, r8
+ 1308              	.L8:
+ 1309              	.LVL4:
+ 1310 00c8 04309DE5 		ldr	r3, [sp, #4]
+ 1311 00cc 013083E2 		add	r3, r3, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1312              		.loc 1 152 0
+ 1313 00d0 070053E1 		cmp	r3, r7
+ 1314              		.loc 1 156 0
+ 1315 00d4 01C045E2 		sub	ip, r5, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1316              		.loc 1 152 0
+ 1317 00d8 6800000A 		beq	.L6
+ 1318 00dc 000050E3 		cmp	r0, #0
+ 1319 00e0 2F00000A 		beq	.L5
+ 1320 00e4 010050E3 		cmp	r0, #1
+ 1321 00e8 1D00000A 		beq	.L26
+ 1322 00ec 020050E3 		cmp	r0, #2
+ 1323 00f0 0D00000A 		beq	.L27
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1324              		.loc 1 154 0
+ 1325 00f4 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 1326 00f8 FF0050E3 		cmp	r0, #255
+ 1327 00fc 0800000A 		beq	.L10
+ 1328              		.loc 1 156 0
+ 1329 0100 A351A0E1 		mov	r5, r3, lsr #3
+ 1330 0104 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 1331 0108 076003E2 		and	r6, r3, #7
+ 1332 010c 0661A0E1 		mov	r6, r6, asl #2
+ 1333 0110 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 1334 0114 07800CE2 		and	r8, ip, #7
+ 1335 0118 0881A0E1 		mov	r8, r8, asl #2
+ 1336 011c 100886E1 		orr	r0, r6, r0, asl r8
+ 1337 0120 050182E7 		str	r0, [r2, r5, asl #2]
+ 1338              	.L10:
+ 1339 0124 013083E2 		add	r3, r3, #1
+ 1340 0128 01C04CE2 		sub	ip, ip, #1
+ 1341              	.L27:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1342              		.loc 1 154 0
+ 1343 012c 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 1344 0130 FF0050E3 		cmp	r0, #255
+ 1345 0134 0800000A 		beq	.L13
+ 1346              		.loc 1 156 0
+ 1347 0138 A351A0E1 		mov	r5, r3, lsr #3
+ 1348 013c 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 1349 0140 076003E2 		and	r6, r3, #7
+ 1350 0144 0661A0E1 		mov	r6, r6, asl #2
+ 1351 0148 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 1352 014c 07800CE2 		and	r8, ip, #7
+ 1353 0150 0881A0E1 		mov	r8, r8, asl #2
+ 1354 0154 100886E1 		orr	r0, r6, r0, asl r8
+ 1355 0158 050182E7 		str	r0, [r2, r5, asl #2]
+ 1356              	.L13:
+ 1357 015c 013083E2 		add	r3, r3, #1
+ 1358 0160 01C04CE2 		sub	ip, ip, #1
+ 1359              	.L26:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1360              		.loc 1 154 0
+ 1361 0164 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 1362 0168 FF0050E3 		cmp	r0, #255
+ 1363 016c 0800000A 		beq	.L16
+ 1364              		.loc 1 156 0
+ 1365 0170 A351A0E1 		mov	r5, r3, lsr #3
+ 1366 0174 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 1367 0178 076003E2 		and	r6, r3, #7
+ 1368 017c 0661A0E1 		mov	r6, r6, asl #2
+ 1369 0180 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 1370 0184 07800CE2 		and	r8, ip, #7
+ 1371 0188 0881A0E1 		mov	r8, r8, asl #2
+ 1372 018c 100886E1 		orr	r0, r6, r0, asl r8
+ 1373 0190 050182E7 		str	r0, [r2, r5, asl #2]
+ 1374              	.L16:
+ 1375 0194 013083E2 		add	r3, r3, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1376              		.loc 1 152 0
+ 1377 0198 070053E1 		cmp	r3, r7
+ 1378              		.loc 1 156 0
+ 1379 019c 01C04CE2 		sub	ip, ip, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1380              		.loc 1 152 0
+ 1381 01a0 3600000A 		beq	.L6
+ 1382              	.L5:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1383              		.loc 1 154 0
+ 1384 01a4 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 1385              	.LVL5:
+ 1386              		.loc 1 156 0
+ 1387 01a8 A391A0E1 		mov	r9, r3, lsr #3
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1388              		.loc 1 154 0
+ 1389 01ac FF0050E3 		cmp	r0, #255
+ 1390              		.loc 1 156 0
+ 1391 01b0 09A19217 		ldrne	sl, [r2, r9, asl #2]
+ 1392 01b4 078003E2 		and	r8, r3, #7
+ 1393 01b8 0881A0E1 		mov	r8, r8, asl #2
+ 1394 01bc 3488CA11 		bicne	r8, sl, r4, lsr r8
+ 1395 01c0 07600CE2 		and	r6, ip, #7
+ 1396 01c4 0651A0E1 		mov	r5, r6, asl #2
+ 1397 01c8 10858811 		orrne	r8, r8, r0, asl r5
+ 1398 01cc 010083E2 		add	r0, r3, #1
+ 1399              	.LVL6:
+ 1400 01d0 09818217 		strne	r8, [r2, r9, asl #2]
+ 1401 01d4 073000E2 		and	r3, r0, #7
+ 1402 01d8 0381A0E1 		mov	r8, r3, asl #2
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1403              		.loc 1 154 0
+ 1404 01dc 0030D1E5 		ldrb	r3, [r1, #0]	@ zero_extendqisi2
+ 1405              		.loc 1 156 0
+ 1406 01e0 01C04CE2 		sub	ip, ip, #1
+ 1407 01e4 07600CE2 		and	r6, ip, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1408              		.loc 1 154 0
+ 1409 01e8 FF0053E3 		cmp	r3, #255
+ 1410              		.loc 1 156 0
+ 1411 01ec A051A0E1 		mov	r5, r0, lsr #3
+ 1412 01f0 0661A0E1 		mov	r6, r6, asl #2
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1413              		.loc 1 154 0
+ 1414              		.loc 1 156 0
+ 1415 01f4 05A19217 		ldrne	sl, [r2, r5, asl #2]
+ 1416 01f8 3488CA11 		bicne	r8, sl, r4, lsr r8
+ 1417 01fc 13968811 		orrne	r9, r8, r3, asl r6
+ 1418 0200 05918217 		strne	r9, [r2, r5, asl #2]
+ 1419              	.L19:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1420              		.loc 1 154 0
+ 1421 0204 0150D1E5 		ldrb	r5, [r1, #1]	@ zero_extendqisi2
+ 1422              		.loc 1 156 0
+ 1423 0208 019080E2 		add	r9, r0, #1
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1424              		.loc 1 154 0
+ 1425 020c FF0055E3 		cmp	r5, #255
+ 1426              		.loc 1 156 0
+ 1427 0210 A961A0E1 		mov	r6, r9, lsr #3
+ 1428 0214 06A19217 		ldrne	sl, [r2, r6, asl #2]
+ 1429 0218 078009E2 		and	r8, r9, #7
+ 1430 021c 0881A0E1 		mov	r8, r8, asl #2
+ 1431 0220 3488CA11 		bicne	r8, sl, r4, lsr r8
+ 1432 0224 01904CE2 		sub	r9, ip, #1
+ 1433 0228 079009E2 		and	r9, r9, #7
+ 1434 022c 0991A0E1 		mov	r9, r9, asl #2
+ 1435 0230 15898811 		orrne	r8, r8, r5, asl r9
+ 1436 0234 06818217 		strne	r8, [r2, r6, asl #2]
+ 1437 0238 025080E2 		add	r5, r0, #2
+ 1438 023c A561A0E1 		mov	r6, r5, lsr #3
+ 1439 0240 033080E2 		add	r3, r0, #3
+ 1440 0244 070005E2 		and	r0, r5, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1441              		.loc 1 154 0
+ 1442 0248 0250D1E5 		ldrb	r5, [r1, #2]	@ zero_extendqisi2
+ 1443 024c FF0055E3 		cmp	r5, #255
+ 1444              		.loc 1 156 0
+ 1445 0250 06A19217 		ldrne	sl, [r2, r6, asl #2]
+ 1446 0254 0001A0E1 		mov	r0, r0, asl #2
+ 1447 0258 3400CA11 		bicne	r0, sl, r4, lsr r0
+ 1448 025c 02804CE2 		sub	r8, ip, #2
+ 1449 0260 078008E2 		and	r8, r8, #7
+ 1450 0264 0881A0E1 		mov	r8, r8, asl #2
+ 1451 0268 15088011 		orrne	r0, r0, r5, asl r8
+ 1452 026c 06018217 		strne	r0, [r2, r6, asl #2]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1453              		.loc 1 152 0
+ 1454 0270 070053E1 		cmp	r3, r7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 1455              		.loc 1 154 0
+ 1456 0274 031081E2 		add	r1, r1, #3
+ 1457              		.loc 1 156 0
+ 1458 0278 03C04CE2 		sub	ip, ip, #3
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 1459              		.loc 1 152 0
+ 1460 027c C8FFFF1A 		bne	.L5
+ 1461              	.L6:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1462              		.loc 1 150 0
+ 1463 0280 08509DE5 		ldr	r5, [sp, #8]
+ 1464 0284 0C109DE5 		ldr	r1, [sp, #12]
+ 1465 0288 013085E2 		add	r3, r5, #1
+ 1466 028c 10209DE5 		ldr	r2, [sp, #16]
+ 1467 0290 1C009DE5 		ldr	r0, [sp, #28]
+ 1468 0294 14509DE5 		ldr	r5, [sp, #20]
+ 1469 0298 058D82E2 		add	r8, r2, #320
+ 1470 029c 05C081E0 		add	ip, r1, r5
+ 1471 02a0 030050E1 		cmp	r0, r3
+ 1472 02a4 08308DE5 		str	r3, [sp, #8]
+ 1473              	.LVL7:
+ 1474 02a8 0CC08DE5 		str	ip, [sp, #12]
+ 1475 02ac 10808DE5 		str	r8, [sp, #16]
+ 1476 02b0 69FFFF8A 		bhi	.L3
+ 1477              	.LVL8:
+ 1478              	.L1:
+ 157:../Bmp.c      **** 			}
+ 158:../Bmp.c      **** 		}
+ 159:../Bmp.c      **** 	}
+ 160:../Bmp.c      **** }
+ 1479              		.loc 1 160 0
+ 1480 02b4 24D08DE2 		add	sp, sp, #36
+ 1481 02b8 F007BDE8 		ldmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 1482 02bc 08D08DE2 		add	sp, sp, #8
+ 1483 02c0 1EFF2FE1 		bx	lr
+ 1484              		.cfi_endproc
+ 1485              	.LFE0:
+ 1487              		.align	2
+ 1488              		.global	BitmapPush
+ 1490              	BitmapPush:
+ 1491              	.LFB1:
+ 161:../Bmp.c      **** 
+ 162:../Bmp.c      **** /*********************************************************************************************
+ 163:../Bmp.c      **** * name:		BitmapPush()
+ 164:../Bmp.c      **** * func:		push bitmap data into LCD active buffer
+ 165:../Bmp.c      **** * para:		x,y -- pot's X-Y coordinate 
+ 166:../Bmp.c      **** *			Stru_Bitmap -- bitmap struct
+ 167:../Bmp.c      **** * ret:		none
+ 168:../Bmp.c      **** * modify:
+ 169:../Bmp.c      **** * comment:		
+ 170:../Bmp.c      **** *********************************************************************************************/
+ 171:../Bmp.c      **** void BitmapPush (INT16U x, INT16U y, STRU_BITMAP Stru_Bitmap)
+ 172:../Bmp.c      **** {
+ 1492              		.loc 1 172 0
+ 1493              		.cfi_startproc
+ 1494              		@ Function supports interworking.
+ 1495              		@ args = 16, pretend = 8, frame = 16
+ 1496              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1497              		@ link register save eliminated.
+ 1498              	.LVL9:
+ 1499 02c4 08D04DE2 		sub	sp, sp, #8
+ 1500              	.LCFI3:
+ 1501              		.cfi_def_cfa_offset 8
+ 1502 02c8 F0072DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 1503              	.LCFI4:
+ 1504              		.cfi_def_cfa_offset 36
+ 1505 02cc 14D04DE2 		sub	sp, sp, #20
+ 1506              	.LCFI5:
+ 1507              		.cfi_def_cfa_offset 56
+ 1508              		.loc 1 172 0
+ 1509 02d0 30C08DE2 		add	ip, sp, #48
+ 1510 02d4 0C008CE8 		stmia	ip, {r2, r3}
+ 173:../Bmp.c      **** 	INT32U i, j;
+ 174:../Bmp.c      **** 
+ 175:../Bmp.c      **** 	ulMouseX = x; 
+ 176:../Bmp.c      **** 	ulMouseY = y;
+ 177:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1511              		.loc 1 177 0
+ 1512 02d8 B453DDE1 		ldrh	r5, [sp, #52]
+ 1513              		.cfi_offset 10, -12
+ 1514              		.cfi_offset 9, -16
+ 1515              		.cfi_offset 8, -20
+ 1516              		.cfi_offset 7, -24
+ 1517              		.cfi_offset 6, -28
+ 1518              		.cfi_offset 5, -32
+ 1519              		.cfi_offset 4, -36
+ 175:../Bmp.c      **** 	ulMouseX = x; 
+ 1520              		.loc 1 175 0
+ 1521 02dc C4229FE5 		ldr	r2, .L59
+ 176:../Bmp.c      **** 	ulMouseY = y;
+ 1522              		.loc 1 176 0
+ 1523 02e0 C4329FE5 		ldr	r3, .L59+4
+ 1524              		.loc 1 177 0
+ 1525 02e4 000055E3 		cmp	r5, #0
+ 1526 02e8 0C508DE5 		str	r5, [sp, #12]
+ 172:../Bmp.c      **** {
+ 1527              		.loc 1 172 0
+ 1528 02ec 00008DE5 		str	r0, [sp, #0]
+ 1529              		.loc 1 177 0
+ 1530 02f0 B253DDE1 		ldrh	r5, [sp, #50]
+ 175:../Bmp.c      **** 	ulMouseX = x; 
+ 1531              		.loc 1 175 0
+ 1532 02f4 B000C2E1 		strh	r0, [r2, #0]	@ movhi
+ 176:../Bmp.c      **** 	ulMouseY = y;
+ 1533              		.loc 1 176 0
+ 1534 02f8 B010C3E1 		strh	r1, [r3, #0]	@ movhi
+ 1535              	.LVL10:
+ 1536              		.loc 1 177 0
+ 1537 02fc 8700000A 		beq	.L33
+ 1538 0300 010181E0 		add	r0, r1, r1, asl #2
+ 1539              	.LVL11:
+ 1540 0304 0013A0E1 		mov	r1, r0, asl #6
+ 1541              	.LVL12:
+ 1542 0308 04108DE5 		str	r1, [sp, #4]
+ 1543 030c 9CC29FE5 		ldr	ip, .L59+8
+ 1544 0310 0090A0E3 		mov	r9, #0
+ 1545              	.LVL13:
+ 1546              	.L35:
+ 178:../Bmp.c      **** 	{
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1547              		.loc 1 179 0 discriminator 1
+ 1548 0314 000055E3 		cmp	r5, #0
+ 1549 0318 7900000A 		beq	.L39
+ 1550              		.loc 1 179 0 is_stmt 0
+ 1551 031c 04809DE5 		ldr	r8, [sp, #4]
+ 180:../Bmp.c      **** 		{
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1552              		.loc 1 181 0 is_stmt 1
+ 1553 0320 00A09DE5 		ldr	sl, [sp, #0]
+ 1554 0324 014045E2 		sub	r4, r5, #1
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1555              		.loc 1 179 0
+ 1556 0328 A860A0E1 		mov	r6, r8, lsr #1
+ 1557 032c A410A0E1 		mov	r1, r4, lsr #1
+ 182:../Bmp.c      **** 			{
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 186:../Bmp.c      **** 			}
+ 187:../Bmp.c      **** 			else
+ 188:../Bmp.c      **** 			{
+ 189:../Bmp.c      **** 				ucCursorBackUp[i][j/2] = (*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 *
+ 1558              		.loc 1 189 0
+ 1559 0330 893089E0 		add	r3, r9, r9, asl #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1560              		.loc 1 184 0
+ 1561 0334 C30686E2 		add	r0, r6, #204472320
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1562              		.loc 1 181 0
+ 1563 0338 01001AE3 		tst	sl, #1
+ 1564              		.loc 1 189 0
+ 1565 033c 8340A0E1 		mov	r4, r3, asl #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1566              		.loc 1 184 0
+ 1567 0340 030080E2 		add	r0, r0, #3
+ 1568 0344 011001E2 		and	r1, r1, #1
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1569              		.loc 1 181 0
+ 1570 0348 7800000A 		beq	.L41
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1571              		.loc 1 184 0
+ 1572 034c 00809DE5 		ldr	r8, [sp, #0]
+ 1573 0350 00A09DE5 		ldr	sl, [sp, #0]
+ 1574 0354 012088E2 		add	r2, r8, #1
+ 1575 0358 07800AE2 		and	r8, sl, #7
+ 1576 035c AAA1A0E1 		mov	sl, sl, lsr #3
+ 1577 0360 08A08DE5 		str	sl, [sp, #8]
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1578              		.loc 1 185 0
+ 1579 0364 077002E2 		and	r7, r2, #7
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1580              		.loc 1 184 0
+ 1581 0368 A8A0A0E1 		mov	sl, r8, lsr #1
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1582              		.loc 1 185 0
+ 1583 036c A221A0E1 		mov	r2, r2, lsr #3
+ 1584 0370 028180E0 		add	r8, r0, r2, asl #2
+ 1585 0374 A770A0E1 		mov	r7, r7, lsr #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1586              		.loc 1 184 0
+ 1587 0378 00206AE2 		rsb	r2, sl, #0
+ 1588 037c 08A09DE5 		ldr	sl, [sp, #8]
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1589              		.loc 1 185 0
+ 1590 0380 007067E2 		rsb	r7, r7, #0
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1591              		.loc 1 183 0
+ 1592 0384 0780D8E7 		ldrb	r8, [r8, r7]	@ zero_extendqisi2
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1593              		.loc 1 184 0
+ 1594 0388 0A7180E0 		add	r7, r0, sl, asl #2
+ 1595 038c 0220D7E7 		ldrb	r2, [r7, r2]	@ zero_extendqisi2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1596              		.loc 1 183 0
+ 1597 0390 2882A0E1 		mov	r8, r8, lsr #4
+ 1598 0394 028288E0 		add	r8, r8, r2, asl #4
+ 1599 0398 8380CCE7 		strb	r8, [ip, r3, asl #1]
+ 1600              	.L51:
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1601              		.loc 1 179 0
+ 1602 039c 0220A0E3 		mov	r2, #2
+ 1603              	.LVL14:
+ 1604 03a0 00309DE5 		ldr	r3, [sp, #0]
+ 1605 03a4 050052E1 		cmp	r2, r5
+ 1606 03a8 023083E0 		add	r3, r3, r2
+ 1607 03ac 5400002A 		bcs	.L39
+ 1608 03b0 000051E3 		cmp	r1, #0
+ 1609 03b4 3800000A 		beq	.L38
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1610              		.loc 1 181 0
+ 1611 03b8 010013E3 		tst	r3, #1
+ 1612 03bc 6400001A 		bne	.L52
+ 1613              		.loc 1 189 0
+ 1614 03c0 A371A0E1 		mov	r7, r3, lsr #3
+ 1615 03c4 071003E2 		and	r1, r3, #7
+ 1616 03c8 077186E0 		add	r7, r6, r7, asl #2
+ 1617 03cc A17047E0 		sub	r7, r7, r1, lsr #1
+ 1618 03d0 C31687E2 		add	r1, r7, #204472320
+ 1619 03d4 0370D1E5 		ldrb	r7, [r1, #3]	@ zero_extendqisi2
+ 1620 03d8 011084E2 		add	r1, r4, #1
+ 1621 03dc 0170CCE7 		strb	r7, [ip, r1]
+ 1622              	.L53:
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1623              		.loc 1 179 0
+ 1624 03e0 022082E2 		add	r2, r2, #2
+ 1625              	.LVL15:
+ 1626 03e4 050052E1 		cmp	r2, r5
+ 1627 03e8 023083E2 		add	r3, r3, #2
+ 1628 03ec 2A00003A 		bcc	.L38
+ 1629 03f0 430000EA 		b	.L39
+ 1630              	.L57:
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1631              		.loc 1 184 0
+ 1632 03f4 01A083E2 		add	sl, r3, #1
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1633              		.loc 1 185 0
+ 1634 03f8 07100AE2 		and	r1, sl, #7
+ 1635 03fc A180A0E1 		mov	r8, r1, lsr #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1636              		.loc 1 184 0
+ 1637 0400 077003E2 		and	r7, r3, #7
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1638              		.loc 1 185 0
+ 1639 0404 AAA1A0E1 		mov	sl, sl, lsr #3
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1640              		.loc 1 184 0
+ 1641 0408 A311A0E1 		mov	r1, r3, lsr #3
+ 1642 040c A770A0E1 		mov	r7, r7, lsr #1
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1643              		.loc 1 185 0
+ 1644 0410 008068E2 		rsb	r8, r8, #0
+ 1645 0414 0AA180E0 		add	sl, r0, sl, asl #2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1646              		.loc 1 183 0
+ 1647 0418 0880DAE7 		ldrb	r8, [sl, r8]	@ zero_extendqisi2
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1648              		.loc 1 184 0
+ 1649 041c 011180E0 		add	r1, r0, r1, asl #2
+ 1650 0420 007067E2 		rsb	r7, r7, #0
+ 1651 0424 0770D1E7 		ldrb	r7, [r1, r7]	@ zero_extendqisi2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1652              		.loc 1 183 0
+ 1653 0428 2882A0E1 		mov	r8, r8, lsr #4
+ 1654 042c A21084E0 		add	r1, r4, r2, lsr #1
+ 1655 0430 078288E0 		add	r8, r8, r7, asl #4
+ 1656 0434 0180CCE7 		strb	r8, [ip, r1]
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1657              		.loc 1 179 0
+ 1658 0438 021083E2 		add	r1, r3, #2
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1659              		.loc 1 181 0
+ 1660 043c 010011E3 		tst	r1, #1
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1661              		.loc 1 179 0
+ 1662 0440 022082E2 		add	r2, r2, #2
+ 1663              	.LVL16:
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1664              		.loc 1 181 0
+ 1665 0444 2200000A 		beq	.L46
+ 1666              	.L58:
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1667              		.loc 1 184 0
+ 1668 0448 033083E2 		add	r3, r3, #3
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1669              		.loc 1 185 0
+ 1670 044c 077003E2 		and	r7, r3, #7
+ 1671 0450 A7A0A0E1 		mov	sl, r7, lsr #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1672              		.loc 1 184 0
+ 1673 0454 078001E2 		and	r8, r1, #7
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1674              		.loc 1 185 0
+ 1675 0458 A331A0E1 		mov	r3, r3, lsr #3
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1676              		.loc 1 184 0
+ 1677 045c A171A0E1 		mov	r7, r1, lsr #3
+ 1678 0460 A880A0E1 		mov	r8, r8, lsr #1
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1679              		.loc 1 185 0
+ 1680 0464 00A06AE2 		rsb	sl, sl, #0
+ 1681 0468 033180E0 		add	r3, r0, r3, asl #2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1682              		.loc 1 183 0
+ 1683 046c 0A30D3E7 		ldrb	r3, [r3, sl]	@ zero_extendqisi2
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1684              		.loc 1 184 0
+ 1685 0470 008068E2 		rsb	r8, r8, #0
+ 1686 0474 077180E0 		add	r7, r0, r7, asl #2
+ 1687 0478 0870D7E7 		ldrb	r7, [r7, r8]	@ zero_extendqisi2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1688              		.loc 1 183 0
+ 1689 047c 2382A0E1 		mov	r8, r3, lsr #4
+ 1690 0480 A23084E0 		add	r3, r4, r2, lsr #1
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1691              		.loc 1 179 0
+ 1692 0484 022082E2 		add	r2, r2, #2
+ 1693              	.LVL17:
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1694              		.loc 1 183 0
+ 1695 0488 077288E0 		add	r7, r8, r7, asl #4
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1696              		.loc 1 179 0
+ 1697 048c 050052E1 		cmp	r2, r5
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1698              		.loc 1 183 0
+ 1699 0490 0370CCE7 		strb	r7, [ip, r3]
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1700              		.loc 1 179 0
+ 1701 0494 023081E2 		add	r3, r1, #2
+ 1702 0498 1900002A 		bcs	.L39
+ 1703              	.L38:
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1704              		.loc 1 181 0
+ 1705 049c 010013E3 		tst	r3, #1
+ 1706 04a0 D3FFFF1A 		bne	.L57
+ 1707              		.loc 1 189 0
+ 1708 04a4 A371A0E1 		mov	r7, r3, lsr #3
+ 1709 04a8 071003E2 		and	r1, r3, #7
+ 1710 04ac 077186E0 		add	r7, r6, r7, asl #2
+ 1711 04b0 A17047E0 		sub	r7, r7, r1, lsr #1
+ 1712 04b4 C31687E2 		add	r1, r7, #204472320
+ 1713 04b8 0370D1E5 		ldrb	r7, [r1, #3]	@ zero_extendqisi2
+ 1714 04bc A21084E0 		add	r1, r4, r2, lsr #1
+ 1715 04c0 0170CCE7 		strb	r7, [ip, r1]
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1716              		.loc 1 179 0
+ 1717 04c4 021083E2 		add	r1, r3, #2
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1718              		.loc 1 181 0
+ 1719 04c8 010011E3 		tst	r1, #1
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1720              		.loc 1 179 0
+ 1721 04cc 022082E2 		add	r2, r2, #2
+ 1722              	.LVL18:
+ 181:../Bmp.c      **** 			if ((x + j)%2)
+ 1723              		.loc 1 181 0
+ 1724 04d0 DCFFFF1A 		bne	.L58
+ 1725              	.L46:
+ 1726              		.loc 1 189 0
+ 1727 04d4 A171A0E1 		mov	r7, r1, lsr #3
+ 1728 04d8 073001E2 		and	r3, r1, #7
+ 1729 04dc 077186E0 		add	r7, r6, r7, asl #2
+ 1730 04e0 A37047E0 		sub	r7, r7, r3, lsr #1
+ 1731 04e4 C33687E2 		add	r3, r7, #204472320
+ 1732 04e8 0370D3E5 		ldrb	r7, [r3, #3]	@ zero_extendqisi2
+ 1733 04ec A23084E0 		add	r3, r4, r2, lsr #1
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1734              		.loc 1 179 0
+ 1735 04f0 022082E2 		add	r2, r2, #2
+ 1736              	.LVL19:
+ 1737 04f4 050052E1 		cmp	r2, r5
+ 1738              		.loc 1 189 0
+ 1739 04f8 0370CCE7 		strb	r7, [ip, r3]
+ 179:../Bmp.c      **** 		for (j = 0; j < Stru_Bitmap.usWidth; j+=2)
+ 1740              		.loc 1 179 0
+ 1741 04fc 023081E2 		add	r3, r1, #2
+ 1742 0500 E5FFFF3A 		bcc	.L38
+ 1743              	.LVL20:
+ 1744              	.L39:
+ 177:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1745              		.loc 1 177 0
+ 1746 0504 04309DE5 		ldr	r3, [sp, #4]
+ 1747 0508 0C209DE5 		ldr	r2, [sp, #12]
+ 1748 050c 019089E2 		add	r9, r9, #1
+ 1749              	.LVL21:
+ 1750 0510 057D83E2 		add	r7, r3, #320
+ 1751 0514 090052E1 		cmp	r2, r9
+ 1752 0518 04708DE5 		str	r7, [sp, #4]
+ 1753 051c 7CFFFF8A 		bhi	.L35
+ 1754              	.LVL22:
+ 1755              	.L33:
+ 190:../Bmp.c      **** 			}
+ 191:../Bmp.c      **** 		}
+ 192:../Bmp.c      **** 	}
+ 193:../Bmp.c      **** }
+ 1756              		.loc 1 193 0
+ 1757 0520 14D08DE2 		add	sp, sp, #20
+ 1758 0524 F007BDE8 		ldmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 1759 0528 08D08DE2 		add	sp, sp, #8
+ 1760 052c 1EFF2FE1 		bx	lr
+ 1761              	.LVL23:
+ 1762              	.L41:
+ 189:../Bmp.c      **** 				ucCursorBackUp[i][j/2] = (*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 *
+ 1763              		.loc 1 189 0
+ 1764 0530 AA71A0E1 		mov	r7, sl, lsr #3
+ 1765 0534 077186E0 		add	r7, r6, r7, asl #2
+ 1766 0538 07200AE2 		and	r2, sl, #7
+ 1767 053c A22047E0 		sub	r2, r7, r2, lsr #1
+ 1768 0540 C37682E2 		add	r7, r2, #204472320
+ 1769 0544 032087E2 		add	r2, r7, #3
+ 1770 0548 0070D2E5 		ldrb	r7, [r2, #0]	@ zero_extendqisi2
+ 1771 054c 8370CCE7 		strb	r7, [ip, r3, asl #1]
+ 1772 0550 91FFFFEA 		b	.L51
+ 1773              	.LVL24:
+ 1774              	.L52:
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1775              		.loc 1 184 0
+ 1776 0554 00809DE5 		ldr	r8, [sp, #0]
+ 1777 0558 A3A1A0E1 		mov	sl, r3, lsr #3
+ 1778 055c 031088E2 		add	r1, r8, #3
+ 1779 0560 078003E2 		and	r8, r3, #7
+ 1780 0564 08A08DE5 		str	sl, [sp, #8]
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1781              		.loc 1 185 0
+ 1782 0568 077001E2 		and	r7, r1, #7
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1783              		.loc 1 184 0
+ 1784 056c A8A0A0E1 		mov	sl, r8, lsr #1
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1785              		.loc 1 185 0
+ 1786 0570 A111A0E1 		mov	r1, r1, lsr #3
+ 1787 0574 018180E0 		add	r8, r0, r1, asl #2
+ 1788 0578 A770A0E1 		mov	r7, r7, lsr #1
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1789              		.loc 1 184 0
+ 1790 057c 00106AE2 		rsb	r1, sl, #0
+ 1791 0580 08A09DE5 		ldr	sl, [sp, #8]
+ 185:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j+1) / 8 * 4  + 3 - ((x + j+1)%
+ 1792              		.loc 1 185 0
+ 1793 0584 007067E2 		rsb	r7, r7, #0
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1794              		.loc 1 183 0
+ 1795 0588 0780D8E7 		ldrb	r8, [r8, r7]	@ zero_extendqisi2
+ 184:../Bmp.c      **** 				(((*(INT8U*)(LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4  + 3 - ((x + j)%8) /
+ 1796              		.loc 1 184 0
+ 1797 058c 0A7180E0 		add	r7, r0, sl, asl #2
+ 1798 0590 0170D7E7 		ldrb	r7, [r7, r1]	@ zero_extendqisi2
+ 183:../Bmp.c      **** 				ucCursorBackUp[i][j/2] =
+ 1799              		.loc 1 183 0
+ 1800 0594 2882A0E1 		mov	r8, r8, lsr #4
+ 1801 0598 011084E2 		add	r1, r4, #1
+ 1802 059c 078288E0 		add	r8, r8, r7, asl #4
+ 1803 05a0 0180CCE7 		strb	r8, [ip, r1]
+ 1804 05a4 8DFFFFEA 		b	.L53
+ 1805              	.L60:
+ 1806              		.align	2
+ 1807              	.L59:
+ 1808 05a8 00000000 		.word	ulMouseX
+ 1809 05ac 00000000 		.word	ulMouseY
+ 1810 05b0 00000000 		.word	ucCursorBackUp
+ 1811              		.cfi_endproc
+ 1812              	.LFE1:
+ 1814              		.align	2
+ 1815              		.global	BitmapPop
+ 1817              	BitmapPop:
+ 1818              	.LFB2:
+ 194:../Bmp.c      **** 
+ 195:../Bmp.c      **** /*********************************************************************************************
+ 196:../Bmp.c      **** * name:		BitmapPop()
+ 197:../Bmp.c      **** * func:		pop bitmap data into LCD active buffer
+ 198:../Bmp.c      **** * para:		x,y -- pot's X-Y coordinate 
+ 199:../Bmp.c      **** *			Stru_Bitmap -- bitmap struct
+ 200:../Bmp.c      **** * ret:		none
+ 201:../Bmp.c      **** * modify:
+ 202:../Bmp.c      **** * comment:		
+ 203:../Bmp.c      **** *********************************************************************************************/
+ 204:../Bmp.c      **** void BitmapPop(INT16U x, INT16U y, STRU_BITMAP Stru_Bitmap)
+ 205:../Bmp.c      **** {
+ 1819              		.loc 1 205 0
+ 1820              		.cfi_startproc
+ 1821              		@ Function supports interworking.
+ 1822              		@ args = 16, pretend = 8, frame = 24
+ 1823              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1824              		@ link register save eliminated.
+ 1825              	.LVL25:
+ 1826 05b4 08D04DE2 		sub	sp, sp, #8
+ 1827              	.LCFI6:
+ 1828              		.cfi_def_cfa_offset 8
+ 1829 05b8 F0072DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 1830              	.LCFI7:
+ 1831              		.cfi_def_cfa_offset 36
+ 1832 05bc 1CD04DE2 		sub	sp, sp, #28
+ 1833              	.LCFI8:
+ 1834              		.cfi_def_cfa_offset 64
+ 1835              		.loc 1 205 0
+ 1836 05c0 38C08DE2 		add	ip, sp, #56
+ 1837 05c4 0C008CE8 		stmia	ip, {r2, r3}
+ 206:../Bmp.c      **** 	INT32U i, j;
+ 207:../Bmp.c      **** 	INT32U ulAddr, ulAddr1;
+ 208:../Bmp.c      **** 
+ 209:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 1838              		.loc 1 209 0
+ 1839 05c8 BC23DDE1 		ldrh	r2, [sp, #60]
+ 1840 05cc 000052E3 		cmp	r2, #0
+ 1841 05d0 14208DE5 		str	r2, [sp, #20]
+ 205:../Bmp.c      **** {
+ 1842              		.loc 1 205 0
+ 1843 05d4 0C008DE5 		str	r0, [sp, #12]
+ 1844              		.loc 1 209 0
+ 1845 05d8 BA63DDE1 		ldrh	r6, [sp, #58]
+ 1846              		.cfi_offset 10, -12
+ 1847              		.cfi_offset 9, -16
+ 1848              		.cfi_offset 8, -20
+ 1849              		.cfi_offset 7, -24
+ 1850              		.cfi_offset 6, -28
+ 1851              		.cfi_offset 5, -32
+ 1852              		.cfi_offset 4, -36
+ 1853              	.LVL26:
+ 1854 05dc 8D00000A 		beq	.L61
+ 1855 05e0 010181E0 		add	r0, r1, r1, asl #2
+ 1856              	.LVL27:
+ 1857 05e4 0013A0E1 		mov	r1, r0, asl #6
+ 1858              	.LVL28:
+ 1859 05e8 0030A0E3 		mov	r3, #0
+ 1860 05ec 10108DE5 		str	r1, [sp, #16]
+ 1861 05f0 08308DE5 		str	r3, [sp, #8]
+ 1862 05f4 A4029FE5 		ldr	r0, .L87
+ 1863              	.LVL29:
+ 1864              	.L63:
+ 210:../Bmp.c      **** 	{
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1865              		.loc 1 211 0 discriminator 1
+ 1866 05f8 000056E3 		cmp	r6, #0
+ 1867 05fc 7C00000A 		beq	.L67
+ 1868              		.loc 1 211 0 is_stmt 0
+ 1869 0600 10409DE5 		ldr	r4, [sp, #16]
+ 212:../Bmp.c      **** 		{
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1870              		.loc 1 213 0 is_stmt 1
+ 1871 0604 0C509DE5 		ldr	r5, [sp, #12]
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1872              		.loc 1 211 0
+ 1873 0608 A4C0A0E1 		mov	ip, r4, lsr #1
+ 1874              		.loc 1 213 0
+ 1875 060c 08308DE2 		add	r3, sp, #8
+ 1876 0610 880093E8 		ldmia	r3, {r3, r7}	@ phole ldm
+ 1877 0614 072005E2 		and	r2, r5, #7
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1878              		.loc 1 211 0
+ 1879 0618 C3168CE2 		add	r1, ip, #204472320
+ 1880 061c 019046E2 		sub	r9, r6, #1
+ 1881 0620 A940A0E1 		mov	r4, r9, lsr #1
+ 1882 0624 031081E2 		add	r1, r1, #3
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 216:../Bmp.c      **** 			{
+ 217:../Bmp.c      **** 				
+ 218:../Bmp.c      **** 				(*(INT8U*)ulAddr) &= 0xf0;
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 220:../Bmp.c      **** 				(*(INT8U*)ulAddr1) &= 0x0f;
+ 221:../Bmp.c      **** 				(*(INT8U*)ulAddr1) |= ((ucCursorBackUp[i][j/2] << 4) & 0xf0);
+ 222:../Bmp.c      **** 			}
+ 223:../Bmp.c      **** 			else
+ 224:../Bmp.c      **** 			{
+ 225:../Bmp.c      **** 				(*(INT8U*)ulAddr) = ucCursorBackUp[i][j/2];
+ 1883              		.loc 1 225 0
+ 1884 0628 833083E0 		add	r3, r3, r3, asl #1
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1885              		.loc 1 213 0
+ 1886 062c A7C1A0E1 		mov	ip, r7, lsr #3
+ 1887 0630 A290A0E1 		mov	r9, r2, lsr #1
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1888              		.loc 1 215 0
+ 1889 0634 010017E3 		tst	r7, #1
+ 1890              		.loc 1 225 0
+ 1891 0638 8350A0E1 		mov	r5, r3, asl #1
+ 1892 063c 014004E2 		and	r4, r4, #1
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1893              		.loc 1 213 0
+ 1894 0640 0CC181E0 		add	ip, r1, ip, asl #2
+ 1895 0644 002069E2 		rsb	r2, r9, #0
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1896              		.loc 1 215 0
+ 1897 0648 7A00000A 		beq	.L69
+ 218:../Bmp.c      **** 				(*(INT8U*)ulAddr) &= 0xf0;
+ 1898              		.loc 1 218 0
+ 1899 064c 0270DCE7 		ldrb	r7, [ip, r2]	@ zero_extendqisi2
+ 1900 0650 F08007E2 		and	r8, r7, #240
+ 1901 0654 0280CCE7 		strb	r8, [ip, r2]
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1902              		.loc 1 215 0
+ 1903 0658 0C909DE5 		ldr	r9, [sp, #12]
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 1904              		.loc 1 219 0
+ 1905 065c 83A0D0E7 		ldrb	sl, [r0, r3, asl #1]	@ zero_extendqisi2
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1906              		.loc 1 215 0
+ 1907 0660 017089E2 		add	r7, r9, #1
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 1908              		.loc 1 214 0
+ 1909 0664 079007E2 		and	r9, r7, #7
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 1910              		.loc 1 219 0
+ 1911 0668 2A8288E1 		orr	r8, r8, sl, lsr #4
+ 1912 066c 0280CCE7 		strb	r8, [ip, r2]
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 1913              		.loc 1 214 0
+ 1914 0670 A9A0A0E1 		mov	sl, r9, lsr #1
+ 1915 0674 A721A0E1 		mov	r2, r7, lsr #3
+ 1916 0678 029181E0 		add	r9, r1, r2, asl #2
+ 1917 067c 00A06AE2 		rsb	sl, sl, #0
+ 220:../Bmp.c      **** 				(*(INT8U*)ulAddr1) &= 0x0f;
+ 1918              		.loc 1 220 0
+ 1919 0680 0A70D9E7 		ldrb	r7, [r9, sl]	@ zero_extendqisi2
+ 1920 0684 0FC007E2 		and	ip, r7, #15
+ 1921 0688 0AC0C9E7 		strb	ip, [r9, sl]
+ 221:../Bmp.c      **** 				(*(INT8U*)ulAddr1) |= ((ucCursorBackUp[i][j/2] << 4) & 0xf0);
+ 1922              		.loc 1 221 0
+ 1923 068c 8330D0E7 		ldrb	r3, [r0, r3, asl #1]	@ zero_extendqisi2
+ 1924 0690 03228CE1 		orr	r2, ip, r3, asl #4
+ 1925 0694 0A20C9E7 		strb	r2, [r9, sl]
+ 1926              	.L79:
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1927              		.loc 1 211 0
+ 1928 0698 0220A0E3 		mov	r2, #2
+ 1929              	.LVL30:
+ 1930 069c 0C309DE5 		ldr	r3, [sp, #12]
+ 1931 06a0 060052E1 		cmp	r2, r6
+ 1932 06a4 023083E0 		add	r3, r3, r2
+ 1933 06a8 5100002A 		bcs	.L67
+ 1934 06ac 000054E3 		cmp	r4, #0
+ 1935 06b0 0D00000A 		beq	.L84
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1936              		.loc 1 213 0
+ 1937 06b4 079003E2 		and	r9, r3, #7
+ 1938 06b8 A341A0E1 		mov	r4, r3, lsr #3
+ 1939 06bc A9C0A0E1 		mov	ip, r9, lsr #1
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1940              		.loc 1 215 0
+ 1941 06c0 010013E3 		tst	r3, #1
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1942              		.loc 1 213 0
+ 1943 06c4 044181E0 		add	r4, r1, r4, asl #2
+ 1944 06c8 00C06CE2 		rsb	ip, ip, #0
+ 1945              	.LVL31:
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1946              		.loc 1 215 0
+ 1947 06cc 5C00001A 		bne	.L80
+ 1948              		.loc 1 225 0
+ 1949 06d0 019085E2 		add	r9, r5, #1
+ 1950 06d4 0970D0E7 		ldrb	r7, [r0, r9]	@ zero_extendqisi2
+ 1951 06d8 0C70C4E7 		strb	r7, [r4, ip]
+ 1952              	.L81:
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1953              		.loc 1 211 0
+ 1954 06dc 022082E2 		add	r2, r2, #2
+ 1955              	.LVL32:
+ 1956 06e0 060052E1 		cmp	r2, r6
+ 1957 06e4 023083E2 		add	r3, r3, #2
+ 1958 06e8 4100002A 		bcs	.L67
+ 1959              	.L84:
+ 1960 06ec 04608DE5 		str	r6, [sp, #4]
+ 1961 06f0 330000EA 		b	.L66
+ 1962              	.L86:
+ 218:../Bmp.c      **** 				(*(INT8U*)ulAddr) &= 0xf0;
+ 1963              		.loc 1 218 0
+ 1964 06f4 0C60D4E7 		ldrb	r6, [r4, ip]	@ zero_extendqisi2
+ 1965 06f8 F08006E2 		and	r8, r6, #240
+ 1966 06fc 0C80C4E7 		strb	r8, [r4, ip]
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 1967              		.loc 1 219 0
+ 1968 0700 A26085E0 		add	r6, r5, r2, lsr #1
+ 1969 0704 0690D0E7 		ldrb	r9, [r0, r6]	@ zero_extendqisi2
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1970              		.loc 1 215 0
+ 1971 0708 017083E2 		add	r7, r3, #1
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 1972              		.loc 1 219 0
+ 1973 070c 298288E1 		orr	r8, r8, r9, lsr #4
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 1974              		.loc 1 214 0
+ 1975 0710 07A007E2 		and	sl, r7, #7
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 1976              		.loc 1 219 0
+ 1977 0714 0C80C4E7 		strb	r8, [r4, ip]
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 1978              		.loc 1 214 0
+ 1979 0718 A791A0E1 		mov	r9, r7, lsr #3
+ 1980 071c AAA0A0E1 		mov	sl, sl, lsr #1
+ 1981 0720 099181E0 		add	r9, r1, r9, asl #2
+ 1982 0724 00A06AE2 		rsb	sl, sl, #0
+ 220:../Bmp.c      **** 				(*(INT8U*)ulAddr1) &= 0x0f;
+ 1983              		.loc 1 220 0
+ 1984 0728 0A40D9E7 		ldrb	r4, [r9, sl]	@ zero_extendqisi2
+ 1985 072c 0F7004E2 		and	r7, r4, #15
+ 1986 0730 0A70C9E7 		strb	r7, [r9, sl]
+ 221:../Bmp.c      **** 				(*(INT8U*)ulAddr1) |= ((ucCursorBackUp[i][j/2] << 4) & 0xf0);
+ 1987              		.loc 1 221 0
+ 1988 0734 0660D0E7 		ldrb	r6, [r0, r6]	@ zero_extendqisi2
+ 1989 0738 06C287E1 		orr	ip, r7, r6, asl #4
+ 1990 073c 0AC0C9E7 		strb	ip, [r9, sl]
+ 1991              	.L65:
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 1992              		.loc 1 211 0
+ 1993 0740 02C083E2 		add	ip, r3, #2
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 1994              		.loc 1 213 0
+ 1995 0744 07700CE2 		and	r7, ip, #7
+ 1996 0748 AC61A0E1 		mov	r6, ip, lsr #3
+ 1997 074c A740A0E1 		mov	r4, r7, lsr #1
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 1998              		.loc 1 215 0
+ 1999 0750 01001CE3 		tst	ip, #1
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 2000              		.loc 1 211 0
+ 2001 0754 022082E2 		add	r2, r2, #2
+ 2002              	.LVL33:
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 2003              		.loc 1 213 0
+ 2004 0758 066181E0 		add	r6, r1, r6, asl #2
+ 2005 075c 004064E2 		rsb	r4, r4, #0
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2006              		.loc 1 215 0
+ 2007 0760 3000000A 		beq	.L74
+ 218:../Bmp.c      **** 				(*(INT8U*)ulAddr) &= 0xf0;
+ 2008              		.loc 1 218 0
+ 2009 0764 04A0D6E7 		ldrb	sl, [r6, r4]	@ zero_extendqisi2
+ 2010 0768 F0800AE2 		and	r8, sl, #240
+ 2011 076c 0480C6E7 		strb	r8, [r6, r4]
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2012              		.loc 1 219 0
+ 2013 0770 A27085E0 		add	r7, r5, r2, lsr #1
+ 2014 0774 07A0D0E7 		ldrb	sl, [r0, r7]	@ zero_extendqisi2
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2015              		.loc 1 215 0
+ 2016 0778 033083E2 		add	r3, r3, #3
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 2017              		.loc 1 214 0
+ 2018 077c 079003E2 		and	r9, r3, #7
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2019              		.loc 1 219 0
+ 2020 0780 2A8288E1 		orr	r8, r8, sl, lsr #4
+ 2021 0784 0480C6E7 		strb	r8, [r6, r4]
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 2022              		.loc 1 214 0
+ 2023 0788 A331A0E1 		mov	r3, r3, lsr #3
+ 2024 078c A990A0E1 		mov	r9, r9, lsr #1
+ 2025 0790 033181E0 		add	r3, r1, r3, asl #2
+ 2026 0794 009069E2 		rsb	r9, r9, #0
+ 220:../Bmp.c      **** 				(*(INT8U*)ulAddr1) &= 0x0f;
+ 2027              		.loc 1 220 0
+ 2028 0798 0940D3E7 		ldrb	r4, [r3, r9]	@ zero_extendqisi2
+ 2029 079c 0F4004E2 		and	r4, r4, #15
+ 2030 07a0 0940C3E7 		strb	r4, [r3, r9]
+ 221:../Bmp.c      **** 				(*(INT8U*)ulAddr1) |= ((ucCursorBackUp[i][j/2] << 4) & 0xf0);
+ 2031              		.loc 1 221 0
+ 2032 07a4 0760D0E7 		ldrb	r6, [r0, r7]	@ zero_extendqisi2
+ 2033 07a8 064284E1 		orr	r4, r4, r6, asl #4
+ 2034 07ac 0940C3E7 		strb	r4, [r3, r9]
+ 2035              	.L82:
+ 211:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j+=2)
+ 2036              		.loc 1 211 0
+ 2037 07b0 04609DE5 		ldr	r6, [sp, #4]
+ 2038 07b4 022082E2 		add	r2, r2, #2
+ 2039              	.LVL34:
+ 2040 07b8 060052E1 		cmp	r2, r6
+ 2041 07bc 02308CE2 		add	r3, ip, #2
+ 2042 07c0 0A00002A 		bcs	.L85
+ 2043              	.L66:
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 2044              		.loc 1 213 0
+ 2045 07c4 077003E2 		and	r7, r3, #7
+ 2046 07c8 A341A0E1 		mov	r4, r3, lsr #3
+ 2047 07cc A760A0E1 		mov	r6, r7, lsr #1
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2048              		.loc 1 215 0
+ 2049 07d0 010013E3 		tst	r3, #1
+ 213:../Bmp.c      **** 			ulAddr = LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j) / 8 * 4 + 3 - ((x + j)%8) / 2;
+ 2050              		.loc 1 213 0
+ 2051 07d4 044181E0 		add	r4, r1, r4, asl #2
+ 2052 07d8 00C066E2 		rsb	ip, r6, #0
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2053              		.loc 1 215 0
+ 2054 07dc C4FFFF1A 		bne	.L86
+ 2055              		.loc 1 225 0
+ 2056 07e0 A29085E0 		add	r9, r5, r2, lsr #1
+ 2057 07e4 0970D0E7 		ldrb	r7, [r0, r9]	@ zero_extendqisi2
+ 2058 07e8 0C70C4E7 		strb	r7, [r4, ip]
+ 2059 07ec D3FFFFEA 		b	.L65
+ 2060              	.L85:
+ 2061 07f0 04609DE5 		ldr	r6, [sp, #4]
+ 2062              	.LVL35:
+ 2063              	.L67:
+ 209:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2064              		.loc 1 209 0
+ 2065 07f4 08509DE5 		ldr	r5, [sp, #8]
+ 2066 07f8 10208DE2 		add	r2, sp, #16
+ 2067 07fc 840092E8 		ldmia	r2, {r2, r7}	@ phole ldm
+ 2068 0800 015085E2 		add	r5, r5, #1
+ 2069 0804 059D82E2 		add	r9, r2, #320
+ 2070 0808 050057E1 		cmp	r7, r5
+ 2071 080c 08508DE5 		str	r5, [sp, #8]
+ 2072              	.LVL36:
+ 2073 0810 10908DE5 		str	r9, [sp, #16]
+ 2074 0814 77FFFF8A 		bhi	.L63
+ 2075              	.LVL37:
+ 2076              	.L61:
+ 226:../Bmp.c      **** 			}
+ 227:../Bmp.c      **** 			
+ 228:../Bmp.c      **** 		}
+ 229:../Bmp.c      **** 	}
+ 230:../Bmp.c      **** }
+ 2077              		.loc 1 230 0
+ 2078 0818 1CD08DE2 		add	sp, sp, #28
+ 2079 081c F007BDE8 		ldmfd	sp!, {r4, r5, r6, r7, r8, r9, sl}
+ 2080 0820 08D08DE2 		add	sp, sp, #8
+ 2081 0824 1EFF2FE1 		bx	lr
+ 2082              	.L74:
+ 225:../Bmp.c      **** 				(*(INT8U*)ulAddr) = ucCursorBackUp[i][j/2];
+ 2083              		.loc 1 225 0
+ 2084 0828 A27085E0 		add	r7, r5, r2, lsr #1
+ 2085 082c 0730D0E7 		ldrb	r3, [r0, r7]	@ zero_extendqisi2
+ 2086 0830 0430C6E7 		strb	r3, [r6, r4]
+ 2087 0834 DDFFFFEA 		b	.L82
+ 2088              	.LVL38:
+ 2089              	.L69:
+ 2090 0838 8370D0E7 		ldrb	r7, [r0, r3, asl #1]	@ zero_extendqisi2
+ 2091 083c 0270CCE7 		strb	r7, [ip, r2]
+ 2092 0840 94FFFFEA 		b	.L79
+ 2093              	.LVL39:
+ 2094              	.L80:
+ 218:../Bmp.c      **** 				(*(INT8U*)ulAddr) &= 0xf0;
+ 2095              		.loc 1 218 0
+ 2096 0844 0CA0D4E7 		ldrb	sl, [r4, ip]	@ zero_extendqisi2
+ 2097 0848 F0800AE2 		and	r8, sl, #240
+ 2098 084c 0C80C4E7 		strb	r8, [r4, ip]
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2099              		.loc 1 219 0
+ 2100 0850 01A085E2 		add	sl, r5, #1
+ 2101 0854 0A90D0E7 		ldrb	r9, [r0, sl]	@ zero_extendqisi2
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2102              		.loc 1 215 0
+ 2103 0858 0C709DE5 		ldr	r7, [sp, #12]
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2104              		.loc 1 219 0
+ 2105 085c 04908DE5 		str	r9, [sp, #4]
+ 2106 0860 04909DE5 		ldr	r9, [sp, #4]
+ 215:../Bmp.c      **** 			if ((x + j)%2)
+ 2107              		.loc 1 215 0
+ 2108 0864 037087E2 		add	r7, r7, #3
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2109              		.loc 1 219 0
+ 2110 0868 298288E1 		orr	r8, r8, r9, lsr #4
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 2111              		.loc 1 214 0
+ 2112 086c 079007E2 		and	r9, r7, #7
+ 219:../Bmp.c      **** 				(*(INT8U*)ulAddr) |= ((ucCursorBackUp[i][j/2] >> 4) & 0x0f);
+ 2113              		.loc 1 219 0
+ 2114 0870 0C80C4E7 		strb	r8, [r4, ip]
+ 214:../Bmp.c      **** 			ulAddr1 =LCD_ACTIVE_BUFFER + (y + i) * SCR_XSIZE / 2 + (x + j + 1) / 8 * 4 + 3 - ((x + j + 1)%8)
+ 2115              		.loc 1 214 0
+ 2116 0874 A741A0E1 		mov	r4, r7, lsr #3
+ 2117 0878 A970A0E1 		mov	r7, r9, lsr #1
+ 2118 087c 00C067E2 		rsb	ip, r7, #0
+ 2119 0880 044181E0 		add	r4, r1, r4, asl #2
+ 220:../Bmp.c      **** 				(*(INT8U*)ulAddr1) &= 0x0f;
+ 2120              		.loc 1 220 0
+ 2121 0884 0C80D4E7 		ldrb	r8, [r4, ip]	@ zero_extendqisi2
+ 2122 0888 0F9008E2 		and	r9, r8, #15
+ 2123 088c 0C90C4E7 		strb	r9, [r4, ip]
+ 221:../Bmp.c      **** 				(*(INT8U*)ulAddr1) |= ((ucCursorBackUp[i][j/2] << 4) & 0xf0);
+ 2124              		.loc 1 221 0
+ 2125 0890 0A80D0E7 		ldrb	r8, [r0, sl]	@ zero_extendqisi2
+ 2126 0894 087289E1 		orr	r7, r9, r8, asl #4
+ 2127 0898 0C70C4E7 		strb	r7, [r4, ip]
+ 2128 089c 8EFFFFEA 		b	.L81
+ 2129              	.L88:
+ 2130              		.align	2
+ 2131              	.L87:
+ 2132 08a0 00000000 		.word	ucCursorBackUp
+ 2133              		.cfi_endproc
+ 2134              	.LFE2:
+ 2136              		.align	2
+ 2137              		.global	CursorInit
+ 2139              	CursorInit:
+ 2140              	.LFB3:
+ 231:../Bmp.c      **** 
+ 232:../Bmp.c      **** /*********************************************************************************************
+ 233:../Bmp.c      **** * name:		CursorInit()
+ 234:../Bmp.c      **** * func:		cursor init
+ 235:../Bmp.c      **** * para:		none
+ 236:../Bmp.c      **** * ret:		none
+ 237:../Bmp.c      **** * modify:
+ 238:../Bmp.c      **** * comment:		
+ 239:../Bmp.c      **** *********************************************************************************************/
+ 240:../Bmp.c      **** void CursorInit(void)
+ 241:../Bmp.c      **** {
+ 2141              		.loc 1 241 0
+ 2142              		.cfi_startproc
+ 2143              		@ Function supports interworking.
+ 2144              		@ args = 0, pretend = 0, frame = 16
+ 2145              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2146 08a4 0DC0A0E1 		mov	ip, sp
+ 2147              	.LCFI9:
+ 2148              		.cfi_def_cfa_register 12
+ 2149 08a8 F0DF2DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, ip, lr, pc}
+ 2150              	.LBB8:
+ 2151              	.LBB11:
+ 2152              	.LBB14:
+ 242:../Bmp.c      **** 	ulMouseX = 0;
+ 243:../Bmp.c      **** 	ulMouseY = 0;
+ 244:../Bmp.c      **** 	CursorView(ulMouseX, ulMouseY);
+ 245:../Bmp.c      **** }
+ 246:../Bmp.c      **** 
+ 247:../Bmp.c      **** /*********************************************************************************************
+ 248:../Bmp.c      **** * name:		CursorPush()
+ 249:../Bmp.c      **** * func:		cursor push
+ 250:../Bmp.c      **** * para:		none
+ 251:../Bmp.c      **** * ret:		none
+ 252:../Bmp.c      **** * modify:
+ 253:../Bmp.c      **** * comment:		
+ 254:../Bmp.c      **** *********************************************************************************************/
+ 255:../Bmp.c      **** void CursorPush(INT16U x, INT16U y)
+ 256:../Bmp.c      **** {
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2153              		.loc 1 257 0
+ 2154 08ac 68529FE5 		ldr	r5, .L120
+ 2155              		.cfi_offset 14, -8
+ 2156              		.cfi_offset 13, -12
+ 2157              		.cfi_offset 11, -16
+ 2158              		.cfi_offset 10, -20
+ 2159              		.cfi_offset 9, -24
+ 2160              		.cfi_offset 8, -28
+ 2161              		.cfi_offset 7, -32
+ 2162              		.cfi_offset 6, -36
+ 2163              		.cfi_offset 5, -40
+ 2164              		.cfi_offset 4, -44
+ 2165              	.LBE14:
+ 2166              	.LBE11:
+ 2167              	.LBE8:
+ 241:../Bmp.c      **** {
+ 2168              		.loc 1 241 0
+ 2169 08b0 04B04CE2 		sub	fp, ip, #4
+ 2170              	.LCFI10:
+ 2171              		.cfi_def_cfa 11, 4
+ 2172 08b4 1CD04DE2 		sub	sp, sp, #28
+ 2173              	.LBB25:
+ 2174              	.LBB10:
+ 2175              	.LBB15:
+ 2176              		.loc 1 257 0
+ 2177 08b8 083085E2 		add	r3, r5, #8
+ 2178 08bc 030093E8 		ldmia	r3, {r0, r1}
+ 2179 08c0 0D20A0E1 		mov	r2, sp
+ 2180 08c4 030082E8 		stmia	r2, {r0, r1}
+ 2181              	.LBE15:
+ 2182              	.LBE10:
+ 2183              	.LBE25:
+ 242:../Bmp.c      **** 	ulMouseX = 0;
+ 2184              		.loc 1 242 0
+ 2185 08c8 50429FE5 		ldr	r4, .L120+4
+ 243:../Bmp.c      **** 	ulMouseY = 0;
+ 2186              		.loc 1 243 0
+ 2187 08cc 50C29FE5 		ldr	ip, .L120+8
+ 2188              	.LBB26:
+ 2189              	.LBB18:
+ 2190              	.LBB13:
+ 2191              		.loc 1 257 0
+ 2192 08d0 0000A0E3 		mov	r0, #0
+ 2193              	.LBE13:
+ 2194              	.LBE18:
+ 2195              	.LBE26:
+ 242:../Bmp.c      **** 	ulMouseX = 0;
+ 2196              		.loc 1 242 0
+ 2197 08d4 00E0A0E3 		mov	lr, #0	@ movhi
+ 2198              	.LBB27:
+ 2199              	.LBB9:
+ 2200              	.LBB16:
+ 2201              		.loc 1 257 0
+ 2202 08d8 0C0095E8 		ldmia	r5, {r2, r3}
+ 2203 08dc 0010A0E1 		mov	r1, r0
+ 2204              	.LBE16:
+ 2205              	.LBE9:
+ 2206              	.LBE27:
+ 242:../Bmp.c      **** 	ulMouseX = 0;
+ 2207              		.loc 1 242 0
+ 2208 08e0 B0E0C4E1 		strh	lr, [r4, #0]	@ movhi
+ 243:../Bmp.c      **** 	ulMouseY = 0;
+ 2209              		.loc 1 243 0
+ 2210 08e4 B0E0CCE1 		strh	lr, [ip, #0]	@ movhi
+ 2211              	.LVL40:
+ 2212              	.LBB28:
+ 2213              	.LBB19:
+ 2214              	.LBB12:
+ 2215              		.loc 1 257 0
+ 2216 08e8 FEFFFFEB 		bl	BitmapPush
+ 2217              	.LVL41:
+ 2218              	.LBE12:
+ 2219              	.LBE19:
+ 2220              	.LBB20:
+ 2221              	.LBB21:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2222              		.loc 1 150 0
+ 2223 08ec B400D5E1 		ldrh	r0, [r5, #4]
+ 2224 08f0 000050E3 		cmp	r0, #0
+ 2225 08f4 38000BE5 		str	r0, [fp, #-56]
+ 2226              	.LBE21:
+ 2227              	.LBE20:
+ 2228              	.LBB23:
+ 2229              	.LBB17:
+ 2230              		.loc 1 257 0
+ 2231 08f8 B240D5E1 		ldrh	r4, [r5, #2]
+ 2232 08fc 0C3095E5 		ldr	r3, [r5, #12]
+ 2233              	.LVL42:
+ 2234              	.LBE17:
+ 2235              	.LBE23:
+ 2236              	.LBB24:
+ 2237              	.LBB22:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2238              		.loc 1 150 0
+ 2239 0900 8200000A 		beq	.L89
+ 2240 0904 0010A0E3 		mov	r1, #0
+ 2241 0908 30100BE5 		str	r1, [fp, #-48]
+ 2242 090c 34300BE5 		str	r3, [fp, #-52]
+ 2243 0910 0190A0E1 		mov	r9, r1
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2244              		.loc 1 156 0
+ 2245 0914 0FC2A0E3 		mov	ip, #-268435456
+ 2246              	.LVL43:
+ 2247              	.L91:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2248              		.loc 1 152 0
+ 2249 0918 000054E3 		cmp	r4, #0
+ 2250 091c 7100000A 		beq	.L94
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2251              		.loc 1 154 0
+ 2252 0920 34104BE2 		sub	r1, fp, #52
+ 2253 0924 060091E8 		ldmia	r1, {r1, r2}	@ phole ldm
+ 2254 0928 0130D1E4 		ldrb	r3, [r1], #1	@ zero_extendqisi2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2255              		.loc 1 156 0
+ 2256 092c A200A0E1 		mov	r0, r2, lsr #1
+ 2257 0930 C32680E2 		add	r2, r0, #204472320
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2258              		.loc 1 154 0
+ 2259 0934 FF0053E3 		cmp	r3, #255
+ 2260 0938 010044E2 		sub	r0, r4, #1
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2261              		.loc 1 156 0
+ 2262 093c 962C82E2 		add	r2, r2, #38400
+ 2263 0940 030000E2 		and	r0, r0, #3
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2264              		.loc 1 154 0
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2265              		.loc 1 156 0
+ 2266 0944 00509215 		ldrne	r5, [r2, #0]
+ 2267 0948 0F52C513 		bicne	r5, r5, #-268435456
+ 2268 094c 033E8511 		orrne	r3, r5, r3, asl #28
+ 2269 0950 00308215 		strne	r3, [r2, #0]
+ 2270              	.L96:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2271              		.loc 1 152 0
+ 2272 0954 0130A0E3 		mov	r3, #1
+ 2273              	.LVL44:
+ 2274 0958 040053E1 		cmp	r3, r4
+ 2275 095c 6100002A 		bcs	.L94
+ 2276 0960 000050E3 		cmp	r0, #0
+ 2277 0964 2800000A 		beq	.L93
+ 2278 0968 030050E1 		cmp	r0, r3
+ 2279 096c 1600000A 		beq	.L114
+ 2280 0970 020050E3 		cmp	r0, #2
+ 2281 0974 0600000A 		beq	.L115
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2282              		.loc 1 154 0
+ 2283 0978 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2284 097c FF0050E3 		cmp	r0, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2285              		.loc 1 156 0
+ 2286 0980 00509215 		ldrne	r5, [r2, #0]
+ 2287 0984 0F54C513 		bicne	r5, r5, #251658240
+ 2288 0988 000C8511 		orrne	r0, r5, r0, asl #24
+ 2289 098c 00008215 		strne	r0, [r2, #0]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2290              		.loc 1 152 0
+ 2291 0990 013083E2 		add	r3, r3, #1
+ 2292              	.LVL45:
+ 2293              	.L115:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2294              		.loc 1 154 0
+ 2295 0994 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2296 0998 FF0050E3 		cmp	r0, #255
+ 2297 099c 0900000A 		beq	.L101
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2298              		.loc 1 156 0
+ 2299 09a0 A351A0E1 		mov	r5, r3, lsr #3
+ 2300 09a4 057192E7 		ldr	r7, [r2, r5, asl #2]
+ 2301 09a8 076003E2 		and	r6, r3, #7
+ 2302 09ac 0661A0E1 		mov	r6, r6, asl #2
+ 2303 09b0 3C66C7E1 		bic	r6, r7, ip, lsr r6
+ 2304 09b4 0370E0E1 		mvn	r7, r3
+ 2305 09b8 077007E2 		and	r7, r7, #7
+ 2306 09bc 0771A0E1 		mov	r7, r7, asl #2
+ 2307 09c0 100786E1 		orr	r0, r6, r0, asl r7
+ 2308 09c4 050182E7 		str	r0, [r2, r5, asl #2]
+ 2309              	.L101:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2310              		.loc 1 152 0
+ 2311 09c8 013083E2 		add	r3, r3, #1
+ 2312              	.LVL46:
+ 2313              	.L114:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2314              		.loc 1 154 0
+ 2315 09cc 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2316 09d0 FF0050E3 		cmp	r0, #255
+ 2317 09d4 0900000A 		beq	.L104
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2318              		.loc 1 156 0
+ 2319 09d8 A351A0E1 		mov	r5, r3, lsr #3
+ 2320 09dc 057192E7 		ldr	r7, [r2, r5, asl #2]
+ 2321 09e0 076003E2 		and	r6, r3, #7
+ 2322 09e4 0661A0E1 		mov	r6, r6, asl #2
+ 2323 09e8 3C66C7E1 		bic	r6, r7, ip, lsr r6
+ 2324 09ec 0370E0E1 		mvn	r7, r3
+ 2325 09f0 077007E2 		and	r7, r7, #7
+ 2326 09f4 0771A0E1 		mov	r7, r7, asl #2
+ 2327 09f8 100786E1 		orr	r0, r6, r0, asl r7
+ 2328 09fc 050182E7 		str	r0, [r2, r5, asl #2]
+ 2329              	.L104:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2330              		.loc 1 152 0
+ 2331 0a00 013083E2 		add	r3, r3, #1
+ 2332              	.LVL47:
+ 2333 0a04 040053E1 		cmp	r3, r4
+ 2334 0a08 3600002A 		bcs	.L94
+ 2335              	.L93:
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2336              		.loc 1 156 0
+ 2337 0a0c 0300E0E1 		mvn	r0, r3
+ 2338 0a10 076000E2 		and	r6, r0, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2339              		.loc 1 154 0
+ 2340 0a14 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2341              	.LVL48:
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2342              		.loc 1 156 0
+ 2343 0a18 A351A0E1 		mov	r5, r3, lsr #3
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2344              		.loc 1 154 0
+ 2345 0a1c FF0050E3 		cmp	r0, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2346              		.loc 1 156 0
+ 2347 0a20 05819217 		ldrne	r8, [r2, r5, asl #2]
+ 2348 0a24 077003E2 		and	r7, r3, #7
+ 2349 0a28 0771A0E1 		mov	r7, r7, asl #2
+ 2350 0a2c 3C77C811 		bicne	r7, r8, ip, lsr r7
+ 2351 0a30 0661A0E1 		mov	r6, r6, asl #2
+ 2352 0a34 10768711 		orrne	r7, r7, r0, asl r6
+ 2353 0a38 05718217 		strne	r7, [r2, r5, asl #2]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2354              		.loc 1 152 0
+ 2355 0a3c 010083E2 		add	r0, r3, #1
+ 2356              	.LVL49:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2357              		.loc 1 154 0
+ 2358 0a40 0030D1E5 		ldrb	r3, [r1, #0]	@ zero_extendqisi2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2359              		.loc 1 156 0
+ 2360 0a44 0080E0E1 		mvn	r8, r0
+ 2361 0a48 077000E2 		and	r7, r0, #7
+ 2362 0a4c 076008E2 		and	r6, r8, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2363              		.loc 1 154 0
+ 2364 0a50 FF0053E3 		cmp	r3, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2365              		.loc 1 156 0
+ 2366 0a54 A051A0E1 		mov	r5, r0, lsr #3
+ 2367 0a58 0771A0E1 		mov	r7, r7, asl #2
+ 2368 0a5c 0661A0E1 		mov	r6, r6, asl #2
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2369              		.loc 1 154 0
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2370              		.loc 1 156 0
+ 2371 0a60 05819217 		ldrne	r8, [r2, r5, asl #2]
+ 2372 0a64 3C77C811 		bicne	r7, r8, ip, lsr r7
+ 2373 0a68 13868711 		orrne	r8, r7, r3, asl r6
+ 2374 0a6c 05818217 		strne	r8, [r2, r5, asl #2]
+ 2375              	.L107:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2376              		.loc 1 154 0
+ 2377 0a70 0150D1E5 		ldrb	r5, [r1, #1]	@ zero_extendqisi2
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2378              		.loc 1 152 0
+ 2379 0a74 017080E2 		add	r7, r0, #1
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2380              		.loc 1 154 0
+ 2381 0a78 FF0055E3 		cmp	r5, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2382              		.loc 1 156 0
+ 2383 0a7c A761A0E1 		mov	r6, r7, lsr #3
+ 2384 0a80 06A19217 		ldrne	sl, [r2, r6, asl #2]
+ 2385 0a84 078007E2 		and	r8, r7, #7
+ 2386 0a88 0881A0E1 		mov	r8, r8, asl #2
+ 2387 0a8c 3C88CA11 		bicne	r8, sl, ip, lsr r8
+ 2388 0a90 0770E0E1 		mvn	r7, r7
+ 2389 0a94 077007E2 		and	r7, r7, #7
+ 2390 0a98 0771A0E1 		mov	r7, r7, asl #2
+ 2391 0a9c 15878811 		orrne	r8, r8, r5, asl r7
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2392              		.loc 1 152 0
+ 2393 0aa0 033080E2 		add	r3, r0, #3
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2394              		.loc 1 156 0
+ 2395 0aa4 06818217 		strne	r8, [r2, r6, asl #2]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2396              		.loc 1 152 0
+ 2397 0aa8 020080E2 		add	r0, r0, #2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2398              		.loc 1 156 0
+ 2399 0aac 0050E0E1 		mvn	r5, r0
+ 2400 0ab0 A061A0E1 		mov	r6, r0, lsr #3
+ 2401 0ab4 077000E2 		and	r7, r0, #7
+ 2402 0ab8 070005E2 		and	r0, r5, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2403              		.loc 1 154 0
+ 2404 0abc 0250D1E5 		ldrb	r5, [r1, #2]	@ zero_extendqisi2
+ 2405 0ac0 FF0055E3 		cmp	r5, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2406              		.loc 1 156 0
+ 2407 0ac4 06819217 		ldrne	r8, [r2, r6, asl #2]
+ 2408 0ac8 0771A0E1 		mov	r7, r7, asl #2
+ 2409 0acc 3C77C811 		bicne	r7, r8, ip, lsr r7
+ 2410 0ad0 0001A0E1 		mov	r0, r0, asl #2
+ 2411 0ad4 15708711 		orrne	r7, r7, r5, asl r0
+ 2412 0ad8 06718217 		strne	r7, [r2, r6, asl #2]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2413              		.loc 1 152 0
+ 2414 0adc 040053E1 		cmp	r3, r4
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2415              		.loc 1 154 0
+ 2416 0ae0 031081E2 		add	r1, r1, #3
+ 2417              	.LVL50:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2418              		.loc 1 152 0
+ 2419 0ae4 C8FFFF3A 		bcc	.L93
+ 2420              	.LVL51:
+ 2421              	.L94:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2422              		.loc 1 150 0
+ 2423 0ae8 38201BE5 		ldr	r2, [fp, #-56]
+ 2424 0aec 34004BE2 		sub	r0, fp, #52
+ 2425 0af0 090090E8 		ldmia	r0, {r0, r3}	@ phole ldm
+ 2426 0af4 019089E2 		add	r9, r9, #1
+ 2427              	.LVL52:
+ 2428 0af8 090052E1 		cmp	r2, r9
+ 2429 0afc 041080E0 		add	r1, r0, r4
+ 2430 0b00 052D83E2 		add	r2, r3, #320
+ 2431 0b04 34100BE5 		str	r1, [fp, #-52]
+ 2432 0b08 30200BE5 		str	r2, [fp, #-48]
+ 2433 0b0c 81FFFF8A 		bhi	.L91
+ 2434              	.LVL53:
+ 2435              	.L89:
+ 2436              	.LBE22:
+ 2437              	.LBE24:
+ 2438              	.LBE28:
+ 245:../Bmp.c      **** }
+ 2439              		.loc 1 245 0
+ 2440 0b10 28D04BE2 		sub	sp, fp, #40
+ 2441 0b14 F06F9DE8 		ldmfd	sp, {r4, r5, r6, r7, r8, r9, sl, fp, sp, lr}
+ 2442 0b18 1EFF2FE1 		bx	lr
+ 2443              	.L121:
+ 2444              		.align	2
+ 2445              	.L120:
+ 2446 0b1c 00000000 		.word	.LANCHOR0
+ 2447 0b20 00000000 		.word	ulMouseX
+ 2448 0b24 00000000 		.word	ulMouseY
+ 2449              		.cfi_endproc
+ 2450              	.LFE3:
+ 2452              		.align	2
+ 2453              		.global	CursorPush
+ 2455              	CursorPush:
+ 2456              	.LFB4:
+ 256:../Bmp.c      **** {
+ 2457              		.loc 1 256 0
+ 2458              		.cfi_startproc
+ 2459              		@ Function supports interworking.
+ 2460              		@ args = 0, pretend = 0, frame = 0
+ 2461              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2462              	.LVL54:
+ 2463 0b28 0DC0A0E1 		mov	ip, sp
+ 2464              	.LCFI11:
+ 2465              		.cfi_def_cfa_register 12
+ 2466 0b2c 10D82DE9 		stmfd	sp!, {r4, fp, ip, lr, pc}
+ 2467              		.loc 1 257 0
+ 2468 0b30 38309FE5 		ldr	r3, .L123
+ 256:../Bmp.c      **** {
+ 2469              		.loc 1 256 0
+ 2470 0b34 04B04CE2 		sub	fp, ip, #4
+ 2471              		.cfi_offset 14, -8
+ 2472              		.cfi_offset 13, -12
+ 2473              		.cfi_offset 11, -16
+ 2474              		.cfi_offset 4, -20
+ 2475              	.LCFI12:
+ 2476              		.cfi_def_cfa 11, 4
+ 2477 0b38 0CD04DE2 		sub	sp, sp, #12
+ 2478              		.loc 1 257 0
+ 2479 0b3c 082083E2 		add	r2, r3, #8
+ 256:../Bmp.c      **** {
+ 2480              		.loc 1 256 0
+ 2481 0b40 00E0A0E1 		mov	lr, r0
+ 2482 0b44 01C0A0E1 		mov	ip, r1
+ 2483              		.loc 1 257 0
+ 2484 0b48 030092E8 		ldmia	r2, {r0, r1}
+ 2485              	.LVL55:
+ 2486 0b4c 0D40A0E1 		mov	r4, sp
+ 2487 0b50 0C0093E8 		ldmia	r3, {r2, r3}
+ 2488 0b54 030084E8 		stmia	r4, {r0, r1}
+ 2489 0b58 0E00A0E1 		mov	r0, lr
+ 2490 0b5c 0C10A0E1 		mov	r1, ip
+ 2491 0b60 FEFFFFEB 		bl	BitmapPush
+ 258:../Bmp.c      **** }
+ 2492              		.loc 1 258 0
+ 2493 0b64 10D04BE2 		sub	sp, fp, #16
+ 2494 0b68 10689DE8 		ldmfd	sp, {r4, fp, sp, lr}
+ 2495 0b6c 1EFF2FE1 		bx	lr
+ 2496              	.L124:
+ 2497              		.align	2
+ 2498              	.L123:
+ 2499 0b70 00000000 		.word	.LANCHOR0
+ 2500              		.cfi_endproc
+ 2501              	.LFE4:
+ 2503              		.align	2
+ 2504              		.global	CursorPop
+ 2506              	CursorPop:
+ 2507              	.LFB5:
+ 259:../Bmp.c      **** 
+ 260:../Bmp.c      **** /*********************************************************************************************
+ 261:../Bmp.c      **** * name:		CursorPop()
+ 262:../Bmp.c      **** * func:		cursor pop
+ 263:../Bmp.c      **** * para:		none
+ 264:../Bmp.c      **** * ret:		none
+ 265:../Bmp.c      **** * modify:
+ 266:../Bmp.c      **** * comment:		
+ 267:../Bmp.c      **** *********************************************************************************************/
+ 268:../Bmp.c      **** void CursorPop()
+ 269:../Bmp.c      **** {
+ 2508              		.loc 1 269 0
+ 2509              		.cfi_startproc
+ 2510              		@ Function supports interworking.
+ 2511              		@ args = 0, pretend = 0, frame = 0
+ 2512              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2513 0b74 0DC0A0E1 		mov	ip, sp
+ 2514              	.LCFI13:
+ 2515              		.cfi_def_cfa_register 12
+ 2516 0b78 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 270:../Bmp.c      **** 	BitmapPop(ulMouseX, ulMouseY, Stru_Bitmap_gbMouse);
+ 2517              		.loc 1 270 0
+ 2518 0b7c 40309FE5 		ldr	r3, .L126
+ 269:../Bmp.c      **** {
+ 2519              		.loc 1 269 0
+ 2520 0b80 04B04CE2 		sub	fp, ip, #4
+ 2521              		.cfi_offset 14, -8
+ 2522              		.cfi_offset 13, -12
+ 2523              		.cfi_offset 11, -16
+ 2524              	.LCFI14:
+ 2525              		.cfi_def_cfa 11, 4
+ 2526 0b84 08D04DE2 		sub	sp, sp, #8
+ 2527              		.loc 1 270 0
+ 2528 0b88 080083E2 		add	r0, r3, #8
+ 2529 0b8c 030090E8 		ldmia	r0, {r0, r1}
+ 2530 0b90 30E09FE5 		ldr	lr, .L126+4
+ 2531 0b94 30C09FE5 		ldr	ip, .L126+8
+ 2532 0b98 0D20A0E1 		mov	r2, sp
+ 2533 0b9c B0E0DEE1 		ldrh	lr, [lr, #0]
+ 2534 0ba0 B0C0DCE1 		ldrh	ip, [ip, #0]
+ 2535 0ba4 030082E8 		stmia	r2, {r0, r1}
+ 2536 0ba8 0E00A0E1 		mov	r0, lr
+ 2537 0bac 0C0093E8 		ldmia	r3, {r2, r3}
+ 2538 0bb0 0C10A0E1 		mov	r1, ip
+ 2539 0bb4 FEFFFFEB 		bl	BitmapPop
+ 271:../Bmp.c      **** }
+ 2540              		.loc 1 271 0
+ 2541 0bb8 0CD04BE2 		sub	sp, fp, #12
+ 2542 0bbc 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2543 0bc0 1EFF2FE1 		bx	lr
+ 2544              	.L127:
+ 2545              		.align	2
+ 2546              	.L126:
+ 2547 0bc4 00000000 		.word	.LANCHOR0
+ 2548 0bc8 00000000 		.word	ulMouseX
+ 2549 0bcc 00000000 		.word	ulMouseY
+ 2550              		.cfi_endproc
+ 2551              	.LFE5:
+ 2553              		.align	2
+ 2554              		.global	CursorView
+ 2556              	CursorView:
+ 2557              	.LFB6:
+ 272:../Bmp.c      **** 
+ 273:../Bmp.c      **** /*********************************************************************************************
+ 274:../Bmp.c      **** * name:		CursorView()
+ 275:../Bmp.c      **** * func:		cursor display
+ 276:../Bmp.c      **** * para:		none
+ 277:../Bmp.c      **** * ret:		none
+ 278:../Bmp.c      **** * modify:
+ 279:../Bmp.c      **** * comment:		
+ 280:../Bmp.c      **** *********************************************************************************************/
+ 281:../Bmp.c      **** void CursorView(INT16U x, INT16U y)
+ 282:../Bmp.c      **** {
+ 2558              		.loc 1 282 0
+ 2559              		.cfi_startproc
+ 2560              		@ Function supports interworking.
+ 2561              		@ args = 0, pretend = 0, frame = 32
+ 2562              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2563              	.LVL56:
+ 2564 0bd0 0DC0A0E1 		mov	ip, sp
+ 2565              	.LCFI15:
+ 2566              		.cfi_def_cfa_register 12
+ 2567 0bd4 F0DF2DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, sl, fp, ip, lr, pc}
+ 2568              	.LBB33:
+ 2569              	.LBB36:
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2570              		.loc 1 257 0
+ 2571 0bd8 E0429FE5 		ldr	r4, .L159
+ 2572              		.cfi_offset 14, -8
+ 2573              		.cfi_offset 13, -12
+ 2574              		.cfi_offset 11, -16
+ 2575              		.cfi_offset 10, -20
+ 2576              		.cfi_offset 9, -24
+ 2577              		.cfi_offset 8, -28
+ 2578              		.cfi_offset 7, -32
+ 2579              		.cfi_offset 6, -36
+ 2580              		.cfi_offset 5, -40
+ 2581              		.cfi_offset 4, -44
+ 2582              	.LBE36:
+ 2583              	.LBE33:
+ 2584              		.loc 1 282 0
+ 2585 0bdc 04B04CE2 		sub	fp, ip, #4
+ 2586              	.LCFI16:
+ 2587              		.cfi_def_cfa 11, 4
+ 2588 0be0 2CD04DE2 		sub	sp, sp, #44
+ 2589              	.LBB39:
+ 2590              	.LBB35:
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2591              		.loc 1 257 0
+ 2592 0be4 083084E2 		add	r3, r4, #8
+ 2593              	.LBE35:
+ 2594              	.LBE39:
+ 2595              		.loc 1 282 0
+ 2596 0be8 30000BE5 		str	r0, [fp, #-48]
+ 2597              	.LVL57:
+ 2598 0bec 0150A0E1 		mov	r5, r1
+ 2599              	.LVL58:
+ 2600              	.LBB40:
+ 2601              	.LBB37:
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2602              		.loc 1 257 0
+ 2603 0bf0 030093E8 		ldmia	r3, {r0, r1}
+ 2604              	.LVL59:
+ 2605 0bf4 0D80A0E1 		mov	r8, sp
+ 2606 0bf8 0C0094E8 		ldmia	r4, {r2, r3}
+ 2607 0bfc 030088E8 		stmia	r8, {r0, r1}
+ 2608 0c00 0510A0E1 		mov	r1, r5
+ 2609 0c04 30001BE5 		ldr	r0, [fp, #-48]
+ 2610 0c08 FEFFFFEB 		bl	BitmapPush
+ 2611              	.LVL60:
+ 2612              	.LBE37:
+ 2613              	.LBE40:
+ 2614              	.LBB41:
+ 2615              	.LBB44:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2616              		.loc 1 150 0
+ 2617 0c0c B4C0D4E1 		ldrh	ip, [r4, #4]
+ 2618              	.LBE44:
+ 2619              	.LBE41:
+ 2620              	.LBB47:
+ 2621              	.LBB34:
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2622              		.loc 1 257 0
+ 2623 0c10 B200D4E1 		ldrh	r0, [r4, #2]
+ 2624              	.LBE34:
+ 2625              	.LBE47:
+ 2626              	.LBB48:
+ 2627              	.LBB43:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2628              		.loc 1 150 0
+ 2629 0c14 00005CE3 		cmp	ip, #0
+ 2630 0c18 48C00BE5 		str	ip, [fp, #-72]
+ 2631              	.LBE43:
+ 2632              	.LBE48:
+ 2633              	.LBB49:
+ 2634              	.LBB38:
+ 257:../Bmp.c      **** 	BitmapPush(x, y, Stru_Bitmap_gbMouse);
+ 2635              		.loc 1 257 0
+ 2636 0c1c 40000BE5 		str	r0, [fp, #-64]
+ 2637 0c20 0C3094E5 		ldr	r3, [r4, #12]
+ 2638              	.LVL61:
+ 2639              	.LBE38:
+ 2640              	.LBE49:
+ 2641              	.LBB50:
+ 2642              	.LBB45:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2643              		.loc 1 150 0
+ 2644 0c24 A200000A 		beq	.L128
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2645              		.loc 1 156 0
+ 2646 0c28 30201BE5 		ldr	r2, [fp, #-48]
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2647              		.loc 1 150 0
+ 2648 0c2c 058185E0 		add	r8, r5, r5, asl #2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2649              		.loc 1 156 0
+ 2650 0c30 0210E0E1 		mvn	r1, r2
+ 281:../Bmp.c      **** void CursorView(INT16U x, INT16U y)
+ 2651              		.loc 1 281 0
+ 2652 0c34 30501BE5 		ldr	r5, [fp, #-48]
+ 2653              	.LVL62:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2654              		.loc 1 150 0
+ 2655 0c38 0873A0E1 		mov	r7, r8, asl #6
+ 2656              	.LBE45:
+ 2657              	.LBE50:
+ 2658 0c3c 0040A0E3 		mov	r4, #0
+ 2659              	.LBB51:
+ 2660              	.LBB42:
+ 2661 0c40 38300BE5 		str	r3, [fp, #-56]
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2662              		.loc 1 156 0
+ 2663 0c44 44100BE5 		str	r1, [fp, #-68]
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2664              		.loc 1 150 0
+ 2665 0c48 3C700BE5 		str	r7, [fp, #-60]
+ 2666              	.LBE42:
+ 2667              	.LBE51:
+ 2668 0c4c 34400BE5 		str	r4, [fp, #-52]
+ 2669              	.LBB52:
+ 2670              	.LBB46:
+ 281:../Bmp.c      **** void CursorView(INT16U x, INT16U y)
+ 2671              		.loc 1 281 0
+ 2672 0c50 057080E0 		add	r7, r0, r5
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2673              		.loc 1 156 0
+ 2674 0c54 0F42A0E3 		mov	r4, #-268435456
+ 2675              	.LVL63:
+ 2676              	.L130:
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2677              		.loc 1 152 0
+ 2678 0c58 40501BE5 		ldr	r5, [fp, #-64]
+ 2679 0c5c 000055E3 		cmp	r5, #0
+ 2680 0c60 8600000A 		beq	.L133
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2681              		.loc 1 156 0
+ 2682 0c64 3CC01BE5 		ldr	ip, [fp, #-60]
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2683              		.loc 1 154 0
+ 2684 0c68 38101BE5 		ldr	r1, [fp, #-56]
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2685              		.loc 1 156 0
+ 2686 0c6c AC80A0E1 		mov	r8, ip, lsr #1
+ 2687 0c70 30C01BE5 		ldr	ip, [fp, #-48]
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2688              		.loc 1 154 0
+ 2689 0c74 0130D1E4 		ldrb	r3, [r1], #1	@ zero_extendqisi2
+ 2690 0c78 0C00E0E1 		mvn	r0, ip
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2691              		.loc 1 156 0
+ 2692 0c7c C32688E2 		add	r2, r8, #204472320
+ 2693 0c80 07E080E0 		add	lr, r0, r7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2694              		.loc 1 154 0
+ 2695 0c84 FF0053E3 		cmp	r3, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2696              		.loc 1 156 0
+ 2697 0c88 962C82E2 		add	r2, r2, #38400
+ 2698 0c8c 03000EE2 		and	r0, lr, #3
+ 2699 0c90 44501B05 		ldreq	r5, [fp, #-68]
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2700              		.loc 1 154 0
+ 2701 0c94 0B00000A 		beq	.L135
+ 2702 0c98 0C60A0E1 		mov	r6, ip
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2703              		.loc 1 156 0
+ 2704 0c9c AC81A0E1 		mov	r8, ip, lsr #3
+ 2705 0ca0 075006E2 		and	r5, r6, #7
+ 2706 0ca4 08C192E7 		ldr	ip, [r2, r8, asl #2]
+ 2707 0ca8 05E1A0E1 		mov	lr, r5, asl #2
+ 2708 0cac 34CECCE1 		bic	ip, ip, r4, lsr lr
+ 2709 0cb0 44E01BE5 		ldr	lr, [fp, #-68]
+ 2710 0cb4 07600EE2 		and	r6, lr, #7
+ 2711 0cb8 0661A0E1 		mov	r6, r6, asl #2
+ 2712 0cbc 13568CE1 		orr	r5, ip, r3, asl r6
+ 2713 0cc0 085182E7 		str	r5, [r2, r8, asl #2]
+ 2714 0cc4 0E50A0E1 		mov	r5, lr
+ 2715              	.L135:
+ 2716              	.LVL64:
+ 2717 0cc8 30301BE5 		ldr	r3, [fp, #-48]
+ 2718 0ccc 013083E2 		add	r3, r3, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2719              		.loc 1 152 0
+ 2720 0cd0 070053E1 		cmp	r3, r7
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2721              		.loc 1 156 0
+ 2722 0cd4 01C045E2 		sub	ip, r5, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2723              		.loc 1 152 0
+ 2724 0cd8 6800000A 		beq	.L133
+ 2725 0cdc 000050E3 		cmp	r0, #0
+ 2726 0ce0 2F00000A 		beq	.L132
+ 2727 0ce4 010050E3 		cmp	r0, #1
+ 2728 0ce8 1D00000A 		beq	.L153
+ 2729 0cec 020050E3 		cmp	r0, #2
+ 2730 0cf0 0D00000A 		beq	.L154
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2731              		.loc 1 154 0
+ 2732 0cf4 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2733 0cf8 FF0050E3 		cmp	r0, #255
+ 2734 0cfc 0800000A 		beq	.L137
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2735              		.loc 1 156 0
+ 2736 0d00 A351A0E1 		mov	r5, r3, lsr #3
+ 2737 0d04 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 2738 0d08 07E003E2 		and	lr, r3, #7
+ 2739 0d0c 0E61A0E1 		mov	r6, lr, asl #2
+ 2740 0d10 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 2741 0d14 07E00CE2 		and	lr, ip, #7
+ 2742 0d18 0E81A0E1 		mov	r8, lr, asl #2
+ 2743 0d1c 100886E1 		orr	r0, r6, r0, asl r8
+ 2744 0d20 050182E7 		str	r0, [r2, r5, asl #2]
+ 2745              	.L137:
+ 2746 0d24 013083E2 		add	r3, r3, #1
+ 2747 0d28 01C04CE2 		sub	ip, ip, #1
+ 2748              	.L154:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2749              		.loc 1 154 0
+ 2750 0d2c 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2751 0d30 FF0050E3 		cmp	r0, #255
+ 2752 0d34 0800000A 		beq	.L140
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2753              		.loc 1 156 0
+ 2754 0d38 A351A0E1 		mov	r5, r3, lsr #3
+ 2755 0d3c 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 2756 0d40 07E003E2 		and	lr, r3, #7
+ 2757 0d44 0E61A0E1 		mov	r6, lr, asl #2
+ 2758 0d48 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 2759 0d4c 07E00CE2 		and	lr, ip, #7
+ 2760 0d50 0E81A0E1 		mov	r8, lr, asl #2
+ 2761 0d54 100886E1 		orr	r0, r6, r0, asl r8
+ 2762 0d58 050182E7 		str	r0, [r2, r5, asl #2]
+ 2763              	.L140:
+ 2764 0d5c 013083E2 		add	r3, r3, #1
+ 2765 0d60 01C04CE2 		sub	ip, ip, #1
+ 2766              	.L153:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2767              		.loc 1 154 0
+ 2768 0d64 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2769 0d68 FF0050E3 		cmp	r0, #255
+ 2770 0d6c 0800000A 		beq	.L143
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2771              		.loc 1 156 0
+ 2772 0d70 A351A0E1 		mov	r5, r3, lsr #3
+ 2773 0d74 058192E7 		ldr	r8, [r2, r5, asl #2]
+ 2774 0d78 07E003E2 		and	lr, r3, #7
+ 2775 0d7c 0E61A0E1 		mov	r6, lr, asl #2
+ 2776 0d80 3466C8E1 		bic	r6, r8, r4, lsr r6
+ 2777 0d84 07E00CE2 		and	lr, ip, #7
+ 2778 0d88 0E81A0E1 		mov	r8, lr, asl #2
+ 2779 0d8c 100886E1 		orr	r0, r6, r0, asl r8
+ 2780 0d90 050182E7 		str	r0, [r2, r5, asl #2]
+ 2781              	.L143:
+ 2782 0d94 013083E2 		add	r3, r3, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2783              		.loc 1 152 0
+ 2784 0d98 070053E1 		cmp	r3, r7
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2785              		.loc 1 156 0
+ 2786 0d9c 01C04CE2 		sub	ip, ip, #1
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2787              		.loc 1 152 0
+ 2788 0da0 3600000A 		beq	.L133
+ 2789              	.L132:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2790              		.loc 1 154 0
+ 2791 0da4 0100D1E4 		ldrb	r0, [r1], #1	@ zero_extendqisi2
+ 2792              	.LVL65:
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2793              		.loc 1 156 0
+ 2794 0da8 A3E1A0E1 		mov	lr, r3, lsr #3
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2795              		.loc 1 154 0
+ 2796 0dac FF0050E3 		cmp	r0, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2797              		.loc 1 156 0
+ 2798 0db0 079003E2 		and	r9, r3, #7
+ 2799 0db4 0EA19217 		ldrne	sl, [r2, lr, asl #2]
+ 2800 0db8 0951A0E1 		mov	r5, r9, asl #2
+ 2801 0dbc 3455CA11 		bicne	r5, sl, r4, lsr r5
+ 2802 0dc0 07600CE2 		and	r6, ip, #7
+ 2803 0dc4 0681A0E1 		mov	r8, r6, asl #2
+ 2804 0dc8 10588511 		orrne	r5, r5, r0, asl r8
+ 2805 0dcc 0E518217 		strne	r5, [r2, lr, asl #2]
+ 2806 0dd0 010083E2 		add	r0, r3, #1
+ 2807              	.LVL66:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2808              		.loc 1 154 0
+ 2809 0dd4 0030D1E5 		ldrb	r3, [r1, #0]	@ zero_extendqisi2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2810              		.loc 1 156 0
+ 2811 0dd8 01C04CE2 		sub	ip, ip, #1
+ 2812 0ddc 079000E2 		and	r9, r0, #7
+ 2813 0de0 07600CE2 		and	r6, ip, #7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2814              		.loc 1 154 0
+ 2815 0de4 FF0053E3 		cmp	r3, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2816              		.loc 1 156 0
+ 2817 0de8 A051A0E1 		mov	r5, r0, lsr #3
+ 2818 0dec 0981A0E1 		mov	r8, r9, asl #2
+ 2819 0df0 0661A0E1 		mov	r6, r6, asl #2
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2820              		.loc 1 154 0
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2821              		.loc 1 156 0
+ 2822 0df4 05A19217 		ldrne	sl, [r2, r5, asl #2]
+ 2823 0df8 3488CA11 		bicne	r8, sl, r4, lsr r8
+ 2824 0dfc 13968811 		orrne	r9, r8, r3, asl r6
+ 2825 0e00 05918217 		strne	r9, [r2, r5, asl #2]
+ 2826              	.L146:
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2827              		.loc 1 154 0
+ 2828 0e04 01E0D1E5 		ldrb	lr, [r1, #1]	@ zero_extendqisi2
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2829              		.loc 1 156 0
+ 2830 0e08 019080E2 		add	r9, r0, #1
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2831              		.loc 1 154 0
+ 2832 0e0c FF005EE3 		cmp	lr, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2833              		.loc 1 156 0
+ 2834 0e10 A961A0E1 		mov	r6, r9, lsr #3
+ 2835 0e14 06A19217 		ldrne	sl, [r2, r6, asl #2]
+ 2836 0e18 078009E2 		and	r8, r9, #7
+ 2837 0e1c 0881A0E1 		mov	r8, r8, asl #2
+ 2838 0e20 3488CA11 		bicne	r8, sl, r4, lsr r8
+ 2839 0e24 01504CE2 		sub	r5, ip, #1
+ 2840 0e28 079005E2 		and	r9, r5, #7
+ 2841 0e2c 0991A0E1 		mov	r9, r9, asl #2
+ 2842 0e30 1E898811 		orrne	r8, r8, lr, asl r9
+ 2843 0e34 033080E2 		add	r3, r0, #3
+ 2844 0e38 06818217 		strne	r8, [r2, r6, asl #2]
+ 2845 0e3c 020080E2 		add	r0, r0, #2
+ 2846 0e40 075000E2 		and	r5, r0, #7
+ 2847 0e44 A061A0E1 		mov	r6, r0, lsr #3
+ 2848 0e48 0501A0E1 		mov	r0, r5, asl #2
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2849              		.loc 1 154 0
+ 2850 0e4c 0250D1E5 		ldrb	r5, [r1, #2]	@ zero_extendqisi2
+ 2851 0e50 FF0055E3 		cmp	r5, #255
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2852              		.loc 1 156 0
+ 2853 0e54 06A19217 		ldrne	sl, [r2, r6, asl #2]
+ 2854 0e58 3400CA11 		bicne	r0, sl, r4, lsr r0
+ 2855 0e5c 02E04CE2 		sub	lr, ip, #2
+ 2856 0e60 07800EE2 		and	r8, lr, #7
+ 2857 0e64 08E1A0E1 		mov	lr, r8, asl #2
+ 2858 0e68 150E8011 		orrne	r0, r0, r5, asl lr
+ 2859 0e6c 06018217 		strne	r0, [r2, r6, asl #2]
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2860              		.loc 1 152 0
+ 2861 0e70 070053E1 		cmp	r3, r7
+ 154:../Bmp.c      **** 			if ((ucColor = *(INT8U*)(Stru_Bitmap.pucStart + i * Stru_Bitmap.usWidth + j)) != (TRANSPARENCY))
+ 2862              		.loc 1 154 0
+ 2863 0e74 031081E2 		add	r1, r1, #3
+ 156:../Bmp.c      **** 				LCD_PutPixel( (x + j), (y + i), ucColor);
+ 2864              		.loc 1 156 0
+ 2865 0e78 03C04CE2 		sub	ip, ip, #3
+ 152:../Bmp.c      **** 		for (j = 0; j <Stru_Bitmap.usWidth; j++)
+ 2866              		.loc 1 152 0
+ 2867 0e7c C8FFFF1A 		bne	.L132
+ 2868              	.L133:
+ 150:../Bmp.c      **** 	for (i =  0; i < Stru_Bitmap.usHeight; i++)
+ 2869              		.loc 1 150 0
+ 2870 0e80 34801BE5 		ldr	r8, [fp, #-52]
+ 2871 0e84 3C304BE2 		sub	r3, fp, #60
+ 2872 0e88 084093E8 		ldmia	r3, {r3, lr}	@ phole ldm
+ 2873 0e8c 48001BE5 		ldr	r0, [fp, #-72]
+ 2874 0e90 40201BE5 		ldr	r2, [fp, #-64]
+ 2875 0e94 018088E2 		add	r8, r8, #1
+ 2876 0e98 02108EE0 		add	r1, lr, r2
+ 2877 0e9c 05CD83E2 		add	ip, r3, #320
+ 2878 0ea0 000058E1 		cmp	r8, r0
+ 2879 0ea4 34800BE5 		str	r8, [fp, #-52]
+ 2880              	.LVL67:
+ 2881 0ea8 38100BE5 		str	r1, [fp, #-56]
+ 2882 0eac 3CC00BE5 		str	ip, [fp, #-60]
+ 2883 0eb0 68FFFF3A 		bcc	.L130
+ 2884              	.LVL68:
+ 2885              	.L128:
+ 2886              	.LBE46:
+ 2887              	.LBE52:
+ 283:../Bmp.c      **** 	CursorPush(x, y);
+ 284:../Bmp.c      **** 	BitmapView(x, y, Stru_Bitmap_gbMouse);
+ 285:../Bmp.c      **** }
+ 2888              		.loc 1 285 0
+ 2889 0eb4 28D04BE2 		sub	sp, fp, #40
+ 2890 0eb8 F06F9DE8 		ldmfd	sp, {r4, r5, r6, r7, r8, r9, sl, fp, sp, lr}
+ 2891 0ebc 1EFF2FE1 		bx	lr
+ 2892              	.L160:
+ 2893              		.align	2
+ 2894              	.L159:
+ 2895 0ec0 00000000 		.word	.LANCHOR0
+ 2896              		.cfi_endproc
+ 2897              	.LFE6:
+ 2899              		.global	ucMouseMap
+ 2900              		.global	fichaNegra
+ 2901              		.global	fichaGris
+ 2902              		.global	fichaBlanca
+ 2903              		.global	Stru_Bitmap_gbMouse
+ 2904              		.global	Stru_Bitmap_fichaNegra
+ 2905              		.global	Stru_Bitmap_fichaGris
+ 2906              		.global	Stru_Bitmap_fichaBlanca
+ 2907              		.comm	ulMouseX,2,2
+ 2908              		.comm	ulMouseY,2,2
+ 2909              		.comm	ucCursorBackUp,120,4
+ 2910              		.section	.rodata
+ 2911              		.align	2
+ 2914              	ucMouseMap:
+ 2915 0000 0F       		.byte	15
+ 2916 0001 FF       		.byte	-1
+ 2917 0002 FF       		.byte	-1
+ 2918 0003 FF       		.byte	-1
+ 2919 0004 FF       		.byte	-1
+ 2920 0005 FF       		.byte	-1
+ 2921 0006 FF       		.byte	-1
+ 2922 0007 FF       		.byte	-1
+ 2923 0008 FF       		.byte	-1
+ 2924 0009 FF       		.byte	-1
+ 2925 000a FF       		.byte	-1
+ 2926 000b FF       		.byte	-1
+ 2927 000c 0F       		.byte	15
+ 2928 000d 0F       		.byte	15
+ 2929 000e FF       		.byte	-1
+ 2930 000f FF       		.byte	-1
+ 2931 0010 FF       		.byte	-1
+ 2932 0011 FF       		.byte	-1
+ 2933 0012 FF       		.byte	-1
+ 2934 0013 FF       		.byte	-1
+ 2935 0014 FF       		.byte	-1
+ 2936 0015 FF       		.byte	-1
+ 2937 0016 FF       		.byte	-1
+ 2938 0017 FF       		.byte	-1
+ 2939 0018 0F       		.byte	15
+ 2940 0019 00       		.byte	0
+ 2941 001a 0F       		.byte	15
+ 2942 001b FF       		.byte	-1
+ 2943 001c FF       		.byte	-1
+ 2944 001d FF       		.byte	-1
+ 2945 001e FF       		.byte	-1
+ 2946 001f FF       		.byte	-1
+ 2947 0020 FF       		.byte	-1
+ 2948 0021 FF       		.byte	-1
+ 2949 0022 FF       		.byte	-1
+ 2950 0023 FF       		.byte	-1
+ 2951 0024 0F       		.byte	15
+ 2952 0025 00       		.byte	0
+ 2953 0026 00       		.byte	0
+ 2954 0027 0F       		.byte	15
+ 2955 0028 FF       		.byte	-1
+ 2956 0029 FF       		.byte	-1
+ 2957 002a FF       		.byte	-1
+ 2958 002b FF       		.byte	-1
+ 2959 002c FF       		.byte	-1
+ 2960 002d FF       		.byte	-1
+ 2961 002e FF       		.byte	-1
+ 2962 002f FF       		.byte	-1
+ 2963 0030 0F       		.byte	15
+ 2964 0031 00       		.byte	0
+ 2965 0032 00       		.byte	0
+ 2966 0033 00       		.byte	0
+ 2967 0034 0F       		.byte	15
+ 2968 0035 FF       		.byte	-1
+ 2969 0036 FF       		.byte	-1
+ 2970 0037 FF       		.byte	-1
+ 2971 0038 FF       		.byte	-1
+ 2972 0039 FF       		.byte	-1
+ 2973 003a FF       		.byte	-1
+ 2974 003b FF       		.byte	-1
+ 2975 003c 0F       		.byte	15
+ 2976 003d 00       		.byte	0
+ 2977 003e 00       		.byte	0
+ 2978 003f 00       		.byte	0
+ 2979 0040 00       		.byte	0
+ 2980 0041 0F       		.byte	15
+ 2981 0042 FF       		.byte	-1
+ 2982 0043 FF       		.byte	-1
+ 2983 0044 FF       		.byte	-1
+ 2984 0045 FF       		.byte	-1
+ 2985 0046 FF       		.byte	-1
+ 2986 0047 FF       		.byte	-1
+ 2987 0048 0F       		.byte	15
+ 2988 0049 00       		.byte	0
+ 2989 004a 00       		.byte	0
+ 2990 004b 00       		.byte	0
+ 2991 004c 00       		.byte	0
+ 2992 004d 00       		.byte	0
+ 2993 004e 0F       		.byte	15
+ 2994 004f FF       		.byte	-1
+ 2995 0050 FF       		.byte	-1
+ 2996 0051 FF       		.byte	-1
+ 2997 0052 FF       		.byte	-1
+ 2998 0053 FF       		.byte	-1
+ 2999 0054 0F       		.byte	15
+ 3000 0055 00       		.byte	0
+ 3001 0056 00       		.byte	0
+ 3002 0057 00       		.byte	0
+ 3003 0058 00       		.byte	0
+ 3004 0059 00       		.byte	0
+ 3005 005a 00       		.byte	0
+ 3006 005b 0F       		.byte	15
+ 3007 005c FF       		.byte	-1
+ 3008 005d FF       		.byte	-1
+ 3009 005e FF       		.byte	-1
+ 3010 005f FF       		.byte	-1
+ 3011 0060 0F       		.byte	15
+ 3012 0061 00       		.byte	0
+ 3013 0062 00       		.byte	0
+ 3014 0063 00       		.byte	0
+ 3015 0064 00       		.byte	0
+ 3016 0065 00       		.byte	0
+ 3017 0066 00       		.byte	0
+ 3018 0067 00       		.byte	0
+ 3019 0068 0F       		.byte	15
+ 3020 0069 FF       		.byte	-1
+ 3021 006a FF       		.byte	-1
+ 3022 006b FF       		.byte	-1
+ 3023 006c 0F       		.byte	15
+ 3024 006d 00       		.byte	0
+ 3025 006e 00       		.byte	0
+ 3026 006f 00       		.byte	0
+ 3027 0070 00       		.byte	0
+ 3028 0071 00       		.byte	0
+ 3029 0072 00       		.byte	0
+ 3030 0073 00       		.byte	0
+ 3031 0074 00       		.byte	0
+ 3032 0075 0F       		.byte	15
+ 3033 0076 FF       		.byte	-1
+ 3034 0077 FF       		.byte	-1
+ 3035 0078 0F       		.byte	15
+ 3036 0079 00       		.byte	0
+ 3037 007a 00       		.byte	0
+ 3038 007b 00       		.byte	0
+ 3039 007c 00       		.byte	0
+ 3040 007d 00       		.byte	0
+ 3041 007e 00       		.byte	0
+ 3042 007f 00       		.byte	0
+ 3043 0080 00       		.byte	0
+ 3044 0081 00       		.byte	0
+ 3045 0082 0F       		.byte	15
+ 3046 0083 FF       		.byte	-1
+ 3047 0084 0F       		.byte	15
+ 3048 0085 00       		.byte	0
+ 3049 0086 00       		.byte	0
+ 3050 0087 00       		.byte	0
+ 3051 0088 00       		.byte	0
+ 3052 0089 00       		.byte	0
+ 3053 008a 00       		.byte	0
+ 3054 008b 0F       		.byte	15
+ 3055 008c 0F       		.byte	15
+ 3056 008d 0F       		.byte	15
+ 3057 008e 0F       		.byte	15
+ 3058 008f 0F       		.byte	15
+ 3059 0090 0F       		.byte	15
+ 3060 0091 00       		.byte	0
+ 3061 0092 00       		.byte	0
+ 3062 0093 0F       		.byte	15
+ 3063 0094 00       		.byte	0
+ 3064 0095 00       		.byte	0
+ 3065 0096 00       		.byte	0
+ 3066 0097 0F       		.byte	15
+ 3067 0098 FF       		.byte	-1
+ 3068 0099 FF       		.byte	-1
+ 3069 009a FF       		.byte	-1
+ 3070 009b FF       		.byte	-1
+ 3071 009c 0F       		.byte	15
+ 3072 009d 00       		.byte	0
+ 3073 009e 0F       		.byte	15
+ 3074 009f FF       		.byte	-1
+ 3075 00a0 0F       		.byte	15
+ 3076 00a1 00       		.byte	0
+ 3077 00a2 00       		.byte	0
+ 3078 00a3 00       		.byte	0
+ 3079 00a4 0F       		.byte	15
+ 3080 00a5 FF       		.byte	-1
+ 3081 00a6 FF       		.byte	-1
+ 3082 00a7 FF       		.byte	-1
+ 3083 00a8 0F       		.byte	15
+ 3084 00a9 0F       		.byte	15
+ 3085 00aa FF       		.byte	-1
+ 3086 00ab FF       		.byte	-1
+ 3087 00ac 0F       		.byte	15
+ 3088 00ad 00       		.byte	0
+ 3089 00ae 00       		.byte	0
+ 3090 00af 00       		.byte	0
+ 3091 00b0 0F       		.byte	15
+ 3092 00b1 FF       		.byte	-1
+ 3093 00b2 FF       		.byte	-1
+ 3094 00b3 FF       		.byte	-1
+ 3095 00b4 0F       		.byte	15
+ 3096 00b5 FF       		.byte	-1
+ 3097 00b6 FF       		.byte	-1
+ 3098 00b7 FF       		.byte	-1
+ 3099 00b8 FF       		.byte	-1
+ 3100 00b9 0F       		.byte	15
+ 3101 00ba 00       		.byte	0
+ 3102 00bb 00       		.byte	0
+ 3103 00bc 00       		.byte	0
+ 3104 00bd 0F       		.byte	15
+ 3105 00be FF       		.byte	-1
+ 3106 00bf FF       		.byte	-1
+ 3107 00c0 FF       		.byte	-1
+ 3108 00c1 FF       		.byte	-1
+ 3109 00c2 FF       		.byte	-1
+ 3110 00c3 FF       		.byte	-1
+ 3111 00c4 FF       		.byte	-1
+ 3112 00c5 0F       		.byte	15
+ 3113 00c6 00       		.byte	0
+ 3114 00c7 00       		.byte	0
+ 3115 00c8 00       		.byte	0
+ 3116 00c9 0F       		.byte	15
+ 3117 00ca FF       		.byte	-1
+ 3118 00cb FF       		.byte	-1
+ 3119 00cc FF       		.byte	-1
+ 3120 00cd FF       		.byte	-1
+ 3121 00ce FF       		.byte	-1
+ 3122 00cf FF       		.byte	-1
+ 3123 00d0 FF       		.byte	-1
+ 3124 00d1 FF       		.byte	-1
+ 3125 00d2 0F       		.byte	15
+ 3126 00d3 00       		.byte	0
+ 3127 00d4 00       		.byte	0
+ 3128 00d5 00       		.byte	0
+ 3129 00d6 0F       		.byte	15
+ 3130 00d7 FF       		.byte	-1
+ 3131 00d8 FF       		.byte	-1
+ 3132 00d9 FF       		.byte	-1
+ 3133 00da FF       		.byte	-1
+ 3134 00db FF       		.byte	-1
+ 3135 00dc FF       		.byte	-1
+ 3136 00dd FF       		.byte	-1
+ 3137 00de 0F       		.byte	15
+ 3138 00df 00       		.byte	0
+ 3139 00e0 00       		.byte	0
+ 3140 00e1 00       		.byte	0
+ 3141 00e2 0F       		.byte	15
+ 3142 00e3 FF       		.byte	-1
+ 3143 00e4 FF       		.byte	-1
+ 3144 00e5 FF       		.byte	-1
+ 3145 00e6 FF       		.byte	-1
+ 3146 00e7 FF       		.byte	-1
+ 3147 00e8 FF       		.byte	-1
+ 3148 00e9 FF       		.byte	-1
+ 3149 00ea FF       		.byte	-1
+ 3150 00eb 0F       		.byte	15
+ 3151 00ec 0F       		.byte	15
+ 3152 00ed 0F       		.byte	15
+ 3153 00ee FF       		.byte	-1
+ 3154 00ef FF       		.byte	-1
+ 3157              	fichaNegra:
+ 3158 00f0 FF       		.byte	-1
+ 3159 00f1 FF       		.byte	-1
+ 3160 00f2 FF       		.byte	-1
+ 3161 00f3 FF       		.byte	-1
+ 3162 00f4 FF       		.byte	-1
+ 3163 00f5 FF       		.byte	-1
+ 3164 00f6 FF       		.byte	-1
+ 3165 00f7 FF       		.byte	-1
+ 3166 00f8 FF       		.byte	-1
+ 3167 00f9 FF       		.byte	-1
+ 3168 00fa FF       		.byte	-1
+ 3169 00fb FF       		.byte	-1
+ 3170 00fc FF       		.byte	-1
+ 3171 00fd FF       		.byte	-1
+ 3172 00fe FF       		.byte	-1
+ 3173 00ff FF       		.byte	-1
+ 3174 0100 FF       		.byte	-1
+ 3175 0101 FF       		.byte	-1
+ 3176 0102 FF       		.byte	-1
+ 3177 0103 FF       		.byte	-1
+ 3178 0104 FF       		.byte	-1
+ 3179 0105 FF       		.byte	-1
+ 3180 0106 FF       		.byte	-1
+ 3181 0107 FF       		.byte	-1
+ 3182 0108 FF       		.byte	-1
+ 3183 0109 FF       		.byte	-1
+ 3184 010a FF       		.byte	-1
+ 3185 010b FF       		.byte	-1
+ 3186 010c FF       		.byte	-1
+ 3187 010d FF       		.byte	-1
+ 3188 010e FF       		.byte	-1
+ 3189 010f FF       		.byte	-1
+ 3190 0110 FF       		.byte	-1
+ 3191 0111 FF       		.byte	-1
+ 3192 0112 FF       		.byte	-1
+ 3193 0113 FF       		.byte	-1
+ 3194 0114 FF       		.byte	-1
+ 3195 0115 FF       		.byte	-1
+ 3196 0116 FF       		.byte	-1
+ 3197 0117 FF       		.byte	-1
+ 3198 0118 FF       		.byte	-1
+ 3199 0119 FF       		.byte	-1
+ 3200 011a FF       		.byte	-1
+ 3201 011b FF       		.byte	-1
+ 3202 011c FF       		.byte	-1
+ 3203 011d FF       		.byte	-1
+ 3204 011e FF       		.byte	-1
+ 3205 011f FF       		.byte	-1
+ 3206 0120 FF       		.byte	-1
+ 3207 0121 FF       		.byte	-1
+ 3208 0122 FF       		.byte	-1
+ 3209 0123 FF       		.byte	-1
+ 3210 0124 FF       		.byte	-1
+ 3211 0125 FF       		.byte	-1
+ 3212 0126 FF       		.byte	-1
+ 3213 0127 FF       		.byte	-1
+ 3214 0128 FF       		.byte	-1
+ 3215 0129 0F       		.byte	15
+ 3216 012a 0F       		.byte	15
+ 3217 012b 0F       		.byte	15
+ 3218 012c 0F       		.byte	15
+ 3219 012d 0F       		.byte	15
+ 3220 012e 0F       		.byte	15
+ 3221 012f FF       		.byte	-1
+ 3222 0130 FF       		.byte	-1
+ 3223 0131 FF       		.byte	-1
+ 3224 0132 FF       		.byte	-1
+ 3225 0133 FF       		.byte	-1
+ 3226 0134 FF       		.byte	-1
+ 3227 0135 FF       		.byte	-1
+ 3228 0136 FF       		.byte	-1
+ 3229 0137 FF       		.byte	-1
+ 3230 0138 FF       		.byte	-1
+ 3231 0139 FF       		.byte	-1
+ 3232 013a FF       		.byte	-1
+ 3233 013b FF       		.byte	-1
+ 3234 013c FF       		.byte	-1
+ 3235 013d FF       		.byte	-1
+ 3236 013e FF       		.byte	-1
+ 3237 013f 0F       		.byte	15
+ 3238 0140 0F       		.byte	15
+ 3239 0141 0F       		.byte	15
+ 3240 0142 0F       		.byte	15
+ 3241 0143 0F       		.byte	15
+ 3242 0144 0F       		.byte	15
+ 3243 0145 0F       		.byte	15
+ 3244 0146 0F       		.byte	15
+ 3245 0147 0F       		.byte	15
+ 3246 0148 0F       		.byte	15
+ 3247 0149 FF       		.byte	-1
+ 3248 014a FF       		.byte	-1
+ 3249 014b FF       		.byte	-1
+ 3250 014c FF       		.byte	-1
+ 3251 014d FF       		.byte	-1
+ 3252 014e FF       		.byte	-1
+ 3253 014f FF       		.byte	-1
+ 3254 0150 FF       		.byte	-1
+ 3255 0151 FF       		.byte	-1
+ 3256 0152 FF       		.byte	-1
+ 3257 0153 FF       		.byte	-1
+ 3258 0154 FF       		.byte	-1
+ 3259 0155 FF       		.byte	-1
+ 3260 0156 0F       		.byte	15
+ 3261 0157 0F       		.byte	15
+ 3262 0158 0F       		.byte	15
+ 3263 0159 0F       		.byte	15
+ 3264 015a 0F       		.byte	15
+ 3265 015b 0F       		.byte	15
+ 3266 015c 0F       		.byte	15
+ 3267 015d 0F       		.byte	15
+ 3268 015e 0F       		.byte	15
+ 3269 015f 0F       		.byte	15
+ 3270 0160 0F       		.byte	15
+ 3271 0161 0F       		.byte	15
+ 3272 0162 FF       		.byte	-1
+ 3273 0163 FF       		.byte	-1
+ 3274 0164 FF       		.byte	-1
+ 3275 0165 FF       		.byte	-1
+ 3276 0166 FF       		.byte	-1
+ 3277 0167 FF       		.byte	-1
+ 3278 0168 FF       		.byte	-1
+ 3279 0169 FF       		.byte	-1
+ 3280 016a FF       		.byte	-1
+ 3281 016b FF       		.byte	-1
+ 3282 016c FF       		.byte	-1
+ 3283 016d 0F       		.byte	15
+ 3284 016e 0F       		.byte	15
+ 3285 016f 0F       		.byte	15
+ 3286 0170 0F       		.byte	15
+ 3287 0171 0F       		.byte	15
+ 3288 0172 0F       		.byte	15
+ 3289 0173 0F       		.byte	15
+ 3290 0174 0F       		.byte	15
+ 3291 0175 0F       		.byte	15
+ 3292 0176 0F       		.byte	15
+ 3293 0177 0F       		.byte	15
+ 3294 0178 0F       		.byte	15
+ 3295 0179 0F       		.byte	15
+ 3296 017a 0F       		.byte	15
+ 3297 017b FF       		.byte	-1
+ 3298 017c FF       		.byte	-1
+ 3299 017d FF       		.byte	-1
+ 3300 017e FF       		.byte	-1
+ 3301 017f FF       		.byte	-1
+ 3302 0180 FF       		.byte	-1
+ 3303 0181 FF       		.byte	-1
+ 3304 0182 FF       		.byte	-1
+ 3305 0183 FF       		.byte	-1
+ 3306 0184 0F       		.byte	15
+ 3307 0185 0F       		.byte	15
+ 3308 0186 0F       		.byte	15
+ 3309 0187 0F       		.byte	15
+ 3310 0188 0F       		.byte	15
+ 3311 0189 0F       		.byte	15
+ 3312 018a 0F       		.byte	15
+ 3313 018b 0F       		.byte	15
+ 3314 018c 0F       		.byte	15
+ 3315 018d 0F       		.byte	15
+ 3316 018e 0F       		.byte	15
+ 3317 018f 0F       		.byte	15
+ 3318 0190 0F       		.byte	15
+ 3319 0191 0F       		.byte	15
+ 3320 0192 0F       		.byte	15
+ 3321 0193 0F       		.byte	15
+ 3322 0194 FF       		.byte	-1
+ 3323 0195 FF       		.byte	-1
+ 3324 0196 FF       		.byte	-1
+ 3325 0197 FF       		.byte	-1
+ 3326 0198 FF       		.byte	-1
+ 3327 0199 FF       		.byte	-1
+ 3328 019a FF       		.byte	-1
+ 3329 019b 0F       		.byte	15
+ 3330 019c 0F       		.byte	15
+ 3331 019d 0F       		.byte	15
+ 3332 019e 0F       		.byte	15
+ 3333 019f 0F       		.byte	15
+ 3334 01a0 0F       		.byte	15
+ 3335 01a1 0F       		.byte	15
+ 3336 01a2 0F       		.byte	15
+ 3337 01a3 0F       		.byte	15
+ 3338 01a4 0F       		.byte	15
+ 3339 01a5 0F       		.byte	15
+ 3340 01a6 0F       		.byte	15
+ 3341 01a7 0F       		.byte	15
+ 3342 01a8 0F       		.byte	15
+ 3343 01a9 0F       		.byte	15
+ 3344 01aa 0F       		.byte	15
+ 3345 01ab 0F       		.byte	15
+ 3346 01ac 0F       		.byte	15
+ 3347 01ad FF       		.byte	-1
+ 3348 01ae FF       		.byte	-1
+ 3349 01af FF       		.byte	-1
+ 3350 01b0 FF       		.byte	-1
+ 3351 01b1 FF       		.byte	-1
+ 3352 01b2 FF       		.byte	-1
+ 3353 01b3 0F       		.byte	15
+ 3354 01b4 0F       		.byte	15
+ 3355 01b5 0F       		.byte	15
+ 3356 01b6 0F       		.byte	15
+ 3357 01b7 0F       		.byte	15
+ 3358 01b8 0F       		.byte	15
+ 3359 01b9 0F       		.byte	15
+ 3360 01ba 0F       		.byte	15
+ 3361 01bb 0F       		.byte	15
+ 3362 01bc 0F       		.byte	15
+ 3363 01bd 0F       		.byte	15
+ 3364 01be 0F       		.byte	15
+ 3365 01bf 0F       		.byte	15
+ 3366 01c0 0F       		.byte	15
+ 3367 01c1 0F       		.byte	15
+ 3368 01c2 0F       		.byte	15
+ 3369 01c3 0F       		.byte	15
+ 3370 01c4 0F       		.byte	15
+ 3371 01c5 FF       		.byte	-1
+ 3372 01c6 FF       		.byte	-1
+ 3373 01c7 FF       		.byte	-1
+ 3374 01c8 FF       		.byte	-1
+ 3375 01c9 FF       		.byte	-1
+ 3376 01ca 0F       		.byte	15
+ 3377 01cb 0F       		.byte	15
+ 3378 01cc 0F       		.byte	15
+ 3379 01cd 0F       		.byte	15
+ 3380 01ce 0F       		.byte	15
+ 3381 01cf 0F       		.byte	15
+ 3382 01d0 0F       		.byte	15
+ 3383 01d1 0F       		.byte	15
+ 3384 01d2 0F       		.byte	15
+ 3385 01d3 0F       		.byte	15
+ 3386 01d4 0F       		.byte	15
+ 3387 01d5 0F       		.byte	15
+ 3388 01d6 0F       		.byte	15
+ 3389 01d7 0F       		.byte	15
+ 3390 01d8 0F       		.byte	15
+ 3391 01d9 0F       		.byte	15
+ 3392 01da 0F       		.byte	15
+ 3393 01db 0F       		.byte	15
+ 3394 01dc 0F       		.byte	15
+ 3395 01dd 0F       		.byte	15
+ 3396 01de FF       		.byte	-1
+ 3397 01df FF       		.byte	-1
+ 3398 01e0 FF       		.byte	-1
+ 3399 01e1 FF       		.byte	-1
+ 3400 01e2 0F       		.byte	15
+ 3401 01e3 0F       		.byte	15
+ 3402 01e4 0F       		.byte	15
+ 3403 01e5 0F       		.byte	15
+ 3404 01e6 0F       		.byte	15
+ 3405 01e7 0F       		.byte	15
+ 3406 01e8 0F       		.byte	15
+ 3407 01e9 0F       		.byte	15
+ 3408 01ea 0F       		.byte	15
+ 3409 01eb 0F       		.byte	15
+ 3410 01ec 0F       		.byte	15
+ 3411 01ed 0F       		.byte	15
+ 3412 01ee 0F       		.byte	15
+ 3413 01ef 0F       		.byte	15
+ 3414 01f0 0F       		.byte	15
+ 3415 01f1 0F       		.byte	15
+ 3416 01f2 0F       		.byte	15
+ 3417 01f3 0F       		.byte	15
+ 3418 01f4 0F       		.byte	15
+ 3419 01f5 0F       		.byte	15
+ 3420 01f6 FF       		.byte	-1
+ 3421 01f7 FF       		.byte	-1
+ 3422 01f8 FF       		.byte	-1
+ 3423 01f9 FF       		.byte	-1
+ 3424 01fa 0F       		.byte	15
+ 3425 01fb 0F       		.byte	15
+ 3426 01fc 0F       		.byte	15
+ 3427 01fd 0F       		.byte	15
+ 3428 01fe 0F       		.byte	15
+ 3429 01ff 0F       		.byte	15
+ 3430 0200 0F       		.byte	15
+ 3431 0201 0F       		.byte	15
+ 3432 0202 0F       		.byte	15
+ 3433 0203 0F       		.byte	15
+ 3434 0204 0F       		.byte	15
+ 3435 0205 0F       		.byte	15
+ 3436 0206 0F       		.byte	15
+ 3437 0207 0F       		.byte	15
+ 3438 0208 0F       		.byte	15
+ 3439 0209 0F       		.byte	15
+ 3440 020a 0F       		.byte	15
+ 3441 020b 0F       		.byte	15
+ 3442 020c 0F       		.byte	15
+ 3443 020d 0F       		.byte	15
+ 3444 020e FF       		.byte	-1
+ 3445 020f FF       		.byte	-1
+ 3446 0210 FF       		.byte	-1
+ 3447 0211 FF       		.byte	-1
+ 3448 0212 0F       		.byte	15
+ 3449 0213 0F       		.byte	15
+ 3450 0214 0F       		.byte	15
+ 3451 0215 0F       		.byte	15
+ 3452 0216 0F       		.byte	15
+ 3453 0217 0F       		.byte	15
+ 3454 0218 0F       		.byte	15
+ 3455 0219 0F       		.byte	15
+ 3456 021a 0F       		.byte	15
+ 3457 021b 0F       		.byte	15
+ 3458 021c 0F       		.byte	15
+ 3459 021d 0F       		.byte	15
+ 3460 021e 0F       		.byte	15
+ 3461 021f 0F       		.byte	15
+ 3462 0220 0F       		.byte	15
+ 3463 0221 0F       		.byte	15
+ 3464 0222 0F       		.byte	15
+ 3465 0223 0F       		.byte	15
+ 3466 0224 0F       		.byte	15
+ 3467 0225 0F       		.byte	15
+ 3468 0226 FF       		.byte	-1
+ 3469 0227 FF       		.byte	-1
+ 3470 0228 FF       		.byte	-1
+ 3471 0229 FF       		.byte	-1
+ 3472 022a 0F       		.byte	15
+ 3473 022b 0F       		.byte	15
+ 3474 022c 0F       		.byte	15
+ 3475 022d 0F       		.byte	15
+ 3476 022e 0F       		.byte	15
+ 3477 022f 0F       		.byte	15
+ 3478 0230 0F       		.byte	15
+ 3479 0231 0F       		.byte	15
+ 3480 0232 0F       		.byte	15
+ 3481 0233 0F       		.byte	15
+ 3482 0234 0F       		.byte	15
+ 3483 0235 0F       		.byte	15
+ 3484 0236 0F       		.byte	15
+ 3485 0237 0F       		.byte	15
+ 3486 0238 0F       		.byte	15
+ 3487 0239 0F       		.byte	15
+ 3488 023a 0F       		.byte	15
+ 3489 023b 0F       		.byte	15
+ 3490 023c 0F       		.byte	15
+ 3491 023d 0F       		.byte	15
+ 3492 023e FF       		.byte	-1
+ 3493 023f FF       		.byte	-1
+ 3494 0240 FF       		.byte	-1
+ 3495 0241 FF       		.byte	-1
+ 3496 0242 0F       		.byte	15
+ 3497 0243 0F       		.byte	15
+ 3498 0244 0F       		.byte	15
+ 3499 0245 0F       		.byte	15
+ 3500 0246 0F       		.byte	15
+ 3501 0247 0F       		.byte	15
+ 3502 0248 0F       		.byte	15
+ 3503 0249 0F       		.byte	15
+ 3504 024a 0F       		.byte	15
+ 3505 024b 0F       		.byte	15
+ 3506 024c 0F       		.byte	15
+ 3507 024d 0F       		.byte	15
+ 3508 024e 0F       		.byte	15
+ 3509 024f 0F       		.byte	15
+ 3510 0250 0F       		.byte	15
+ 3511 0251 0F       		.byte	15
+ 3512 0252 0F       		.byte	15
+ 3513 0253 0F       		.byte	15
+ 3514 0254 0F       		.byte	15
+ 3515 0255 0F       		.byte	15
+ 3516 0256 FF       		.byte	-1
+ 3517 0257 FF       		.byte	-1
+ 3518 0258 FF       		.byte	-1
+ 3519 0259 FF       		.byte	-1
+ 3520 025a FF       		.byte	-1
+ 3521 025b 0F       		.byte	15
+ 3522 025c 0F       		.byte	15
+ 3523 025d 0F       		.byte	15
+ 3524 025e 0F       		.byte	15
+ 3525 025f 0F       		.byte	15
+ 3526 0260 0F       		.byte	15
+ 3527 0261 0F       		.byte	15
+ 3528 0262 0F       		.byte	15
+ 3529 0263 0F       		.byte	15
+ 3530 0264 0F       		.byte	15
+ 3531 0265 0F       		.byte	15
+ 3532 0266 0F       		.byte	15
+ 3533 0267 0F       		.byte	15
+ 3534 0268 0F       		.byte	15
+ 3535 0269 0F       		.byte	15
+ 3536 026a 0F       		.byte	15
+ 3537 026b 0F       		.byte	15
+ 3538 026c 0F       		.byte	15
+ 3539 026d FF       		.byte	-1
+ 3540 026e FF       		.byte	-1
+ 3541 026f FF       		.byte	-1
+ 3542 0270 FF       		.byte	-1
+ 3543 0271 FF       		.byte	-1
+ 3544 0272 FF       		.byte	-1
+ 3545 0273 0F       		.byte	15
+ 3546 0274 0F       		.byte	15
+ 3547 0275 0F       		.byte	15
+ 3548 0276 0F       		.byte	15
+ 3549 0277 0F       		.byte	15
+ 3550 0278 0F       		.byte	15
+ 3551 0279 0F       		.byte	15
+ 3552 027a 0F       		.byte	15
+ 3553 027b 0F       		.byte	15
+ 3554 027c 0F       		.byte	15
+ 3555 027d 0F       		.byte	15
+ 3556 027e 0F       		.byte	15
+ 3557 027f 0F       		.byte	15
+ 3558 0280 0F       		.byte	15
+ 3559 0281 0F       		.byte	15
+ 3560 0282 0F       		.byte	15
+ 3561 0283 0F       		.byte	15
+ 3562 0284 0F       		.byte	15
+ 3563 0285 FF       		.byte	-1
+ 3564 0286 FF       		.byte	-1
+ 3565 0287 FF       		.byte	-1
+ 3566 0288 FF       		.byte	-1
+ 3567 0289 FF       		.byte	-1
+ 3568 028a FF       		.byte	-1
+ 3569 028b FF       		.byte	-1
+ 3570 028c 0F       		.byte	15
+ 3571 028d 0F       		.byte	15
+ 3572 028e 0F       		.byte	15
+ 3573 028f 0F       		.byte	15
+ 3574 0290 0F       		.byte	15
+ 3575 0291 0F       		.byte	15
+ 3576 0292 0F       		.byte	15
+ 3577 0293 0F       		.byte	15
+ 3578 0294 0F       		.byte	15
+ 3579 0295 0F       		.byte	15
+ 3580 0296 0F       		.byte	15
+ 3581 0297 0F       		.byte	15
+ 3582 0298 0F       		.byte	15
+ 3583 0299 0F       		.byte	15
+ 3584 029a 0F       		.byte	15
+ 3585 029b 0F       		.byte	15
+ 3586 029c FF       		.byte	-1
+ 3587 029d FF       		.byte	-1
+ 3588 029e FF       		.byte	-1
+ 3589 029f FF       		.byte	-1
+ 3590 02a0 FF       		.byte	-1
+ 3591 02a1 FF       		.byte	-1
+ 3592 02a2 FF       		.byte	-1
+ 3593 02a3 FF       		.byte	-1
+ 3594 02a4 FF       		.byte	-1
+ 3595 02a5 0F       		.byte	15
+ 3596 02a6 0F       		.byte	15
+ 3597 02a7 0F       		.byte	15
+ 3598 02a8 0F       		.byte	15
+ 3599 02a9 0F       		.byte	15
+ 3600 02aa 0F       		.byte	15
+ 3601 02ab 0F       		.byte	15
+ 3602 02ac 0F       		.byte	15
+ 3603 02ad 0F       		.byte	15
+ 3604 02ae 0F       		.byte	15
+ 3605 02af 0F       		.byte	15
+ 3606 02b0 0F       		.byte	15
+ 3607 02b1 0F       		.byte	15
+ 3608 02b2 0F       		.byte	15
+ 3609 02b3 FF       		.byte	-1
+ 3610 02b4 FF       		.byte	-1
+ 3611 02b5 FF       		.byte	-1
+ 3612 02b6 FF       		.byte	-1
+ 3613 02b7 FF       		.byte	-1
+ 3614 02b8 FF       		.byte	-1
+ 3615 02b9 FF       		.byte	-1
+ 3616 02ba FF       		.byte	-1
+ 3617 02bb FF       		.byte	-1
+ 3618 02bc FF       		.byte	-1
+ 3619 02bd FF       		.byte	-1
+ 3620 02be 0F       		.byte	15
+ 3621 02bf 0F       		.byte	15
+ 3622 02c0 0F       		.byte	15
+ 3623 02c1 0F       		.byte	15
+ 3624 02c2 0F       		.byte	15
+ 3625 02c3 0F       		.byte	15
+ 3626 02c4 0F       		.byte	15
+ 3627 02c5 0F       		.byte	15
+ 3628 02c6 0F       		.byte	15
+ 3629 02c7 0F       		.byte	15
+ 3630 02c8 0F       		.byte	15
+ 3631 02c9 0F       		.byte	15
+ 3632 02ca FF       		.byte	-1
+ 3633 02cb FF       		.byte	-1
+ 3634 02cc FF       		.byte	-1
+ 3635 02cd FF       		.byte	-1
+ 3636 02ce FF       		.byte	-1
+ 3637 02cf FF       		.byte	-1
+ 3638 02d0 FF       		.byte	-1
+ 3639 02d1 FF       		.byte	-1
+ 3640 02d2 FF       		.byte	-1
+ 3641 02d3 FF       		.byte	-1
+ 3642 02d4 FF       		.byte	-1
+ 3643 02d5 FF       		.byte	-1
+ 3644 02d6 FF       		.byte	-1
+ 3645 02d7 0F       		.byte	15
+ 3646 02d8 0F       		.byte	15
+ 3647 02d9 0F       		.byte	15
+ 3648 02da 0F       		.byte	15
+ 3649 02db 0F       		.byte	15
+ 3650 02dc 0F       		.byte	15
+ 3651 02dd 0F       		.byte	15
+ 3652 02de 0F       		.byte	15
+ 3653 02df 0F       		.byte	15
+ 3654 02e0 0F       		.byte	15
+ 3655 02e1 FF       		.byte	-1
+ 3656 02e2 FF       		.byte	-1
+ 3657 02e3 FF       		.byte	-1
+ 3658 02e4 FF       		.byte	-1
+ 3659 02e5 FF       		.byte	-1
+ 3660 02e6 FF       		.byte	-1
+ 3661 02e7 FF       		.byte	-1
+ 3662 02e8 FF       		.byte	-1
+ 3663 02e9 FF       		.byte	-1
+ 3664 02ea FF       		.byte	-1
+ 3665 02eb FF       		.byte	-1
+ 3666 02ec FF       		.byte	-1
+ 3667 02ed FF       		.byte	-1
+ 3668 02ee FF       		.byte	-1
+ 3669 02ef FF       		.byte	-1
+ 3670 02f0 FF       		.byte	-1
+ 3671 02f1 0F       		.byte	15
+ 3672 02f2 0F       		.byte	15
+ 3673 02f3 0F       		.byte	15
+ 3674 02f4 0F       		.byte	15
+ 3675 02f5 0F       		.byte	15
+ 3676 02f6 0F       		.byte	15
+ 3677 02f7 FF       		.byte	-1
+ 3678 02f8 FF       		.byte	-1
+ 3679 02f9 FF       		.byte	-1
+ 3680 02fa FF       		.byte	-1
+ 3681 02fb FF       		.byte	-1
+ 3682 02fc FF       		.byte	-1
+ 3683 02fd FF       		.byte	-1
+ 3684 02fe FF       		.byte	-1
+ 3685 02ff FF       		.byte	-1
+ 3686 0300 FF       		.byte	-1
+ 3687 0301 FF       		.byte	-1
+ 3688 0302 FF       		.byte	-1
+ 3689 0303 FF       		.byte	-1
+ 3690 0304 FF       		.byte	-1
+ 3691 0305 FF       		.byte	-1
+ 3692 0306 FF       		.byte	-1
+ 3693 0307 FF       		.byte	-1
+ 3694 0308 FF       		.byte	-1
+ 3695 0309 FF       		.byte	-1
+ 3696 030a FF       		.byte	-1
+ 3697 030b FF       		.byte	-1
+ 3698 030c FF       		.byte	-1
+ 3699 030d FF       		.byte	-1
+ 3700 030e FF       		.byte	-1
+ 3701 030f FF       		.byte	-1
+ 3702 0310 FF       		.byte	-1
+ 3703 0311 FF       		.byte	-1
+ 3704 0312 FF       		.byte	-1
+ 3705 0313 FF       		.byte	-1
+ 3706 0314 FF       		.byte	-1
+ 3707 0315 FF       		.byte	-1
+ 3708 0316 FF       		.byte	-1
+ 3709 0317 FF       		.byte	-1
+ 3710 0318 FF       		.byte	-1
+ 3711 0319 FF       		.byte	-1
+ 3712 031a FF       		.byte	-1
+ 3713 031b FF       		.byte	-1
+ 3714 031c FF       		.byte	-1
+ 3715 031d FF       		.byte	-1
+ 3716 031e FF       		.byte	-1
+ 3717 031f FF       		.byte	-1
+ 3718 0320 FF       		.byte	-1
+ 3719 0321 FF       		.byte	-1
+ 3720 0322 FF       		.byte	-1
+ 3721 0323 FF       		.byte	-1
+ 3722 0324 FF       		.byte	-1
+ 3723 0325 FF       		.byte	-1
+ 3724 0326 FF       		.byte	-1
+ 3725 0327 FF       		.byte	-1
+ 3726 0328 FF       		.byte	-1
+ 3727 0329 FF       		.byte	-1
+ 3728 032a FF       		.byte	-1
+ 3729 032b FF       		.byte	-1
+ 3730 032c FF       		.byte	-1
+ 3731 032d FF       		.byte	-1
+ 3732 032e FF       		.byte	-1
+ 3733 032f FF       		.byte	-1
+ 3736              	fichaGris:
+ 3737 0330 FF       		.byte	-1
+ 3738 0331 FF       		.byte	-1
+ 3739 0332 FF       		.byte	-1
+ 3740 0333 FF       		.byte	-1
+ 3741 0334 FF       		.byte	-1
+ 3742 0335 FF       		.byte	-1
+ 3743 0336 FF       		.byte	-1
+ 3744 0337 FF       		.byte	-1
+ 3745 0338 FF       		.byte	-1
+ 3746 0339 FF       		.byte	-1
+ 3747 033a FF       		.byte	-1
+ 3748 033b FF       		.byte	-1
+ 3749 033c FF       		.byte	-1
+ 3750 033d FF       		.byte	-1
+ 3751 033e FF       		.byte	-1
+ 3752 033f FF       		.byte	-1
+ 3753 0340 FF       		.byte	-1
+ 3754 0341 FF       		.byte	-1
+ 3755 0342 FF       		.byte	-1
+ 3756 0343 FF       		.byte	-1
+ 3757 0344 FF       		.byte	-1
+ 3758 0345 FF       		.byte	-1
+ 3759 0346 FF       		.byte	-1
+ 3760 0347 FF       		.byte	-1
+ 3761 0348 FF       		.byte	-1
+ 3762 0349 FF       		.byte	-1
+ 3763 034a FF       		.byte	-1
+ 3764 034b FF       		.byte	-1
+ 3765 034c FF       		.byte	-1
+ 3766 034d FF       		.byte	-1
+ 3767 034e FF       		.byte	-1
+ 3768 034f FF       		.byte	-1
+ 3769 0350 FF       		.byte	-1
+ 3770 0351 FF       		.byte	-1
+ 3771 0352 FF       		.byte	-1
+ 3772 0353 FF       		.byte	-1
+ 3773 0354 FF       		.byte	-1
+ 3774 0355 FF       		.byte	-1
+ 3775 0356 FF       		.byte	-1
+ 3776 0357 FF       		.byte	-1
+ 3777 0358 FF       		.byte	-1
+ 3778 0359 FF       		.byte	-1
+ 3779 035a FF       		.byte	-1
+ 3780 035b FF       		.byte	-1
+ 3781 035c FF       		.byte	-1
+ 3782 035d FF       		.byte	-1
+ 3783 035e FF       		.byte	-1
+ 3784 035f FF       		.byte	-1
+ 3785 0360 FF       		.byte	-1
+ 3786 0361 FF       		.byte	-1
+ 3787 0362 FF       		.byte	-1
+ 3788 0363 FF       		.byte	-1
+ 3789 0364 FF       		.byte	-1
+ 3790 0365 FF       		.byte	-1
+ 3791 0366 FF       		.byte	-1
+ 3792 0367 FF       		.byte	-1
+ 3793 0368 FF       		.byte	-1
+ 3794 0369 0A       		.byte	10
+ 3795 036a 0A       		.byte	10
+ 3796 036b 0A       		.byte	10
+ 3797 036c 0A       		.byte	10
+ 3798 036d 0A       		.byte	10
+ 3799 036e 0A       		.byte	10
+ 3800 036f FF       		.byte	-1
+ 3801 0370 FF       		.byte	-1
+ 3802 0371 FF       		.byte	-1
+ 3803 0372 FF       		.byte	-1
+ 3804 0373 FF       		.byte	-1
+ 3805 0374 FF       		.byte	-1
+ 3806 0375 FF       		.byte	-1
+ 3807 0376 FF       		.byte	-1
+ 3808 0377 FF       		.byte	-1
+ 3809 0378 FF       		.byte	-1
+ 3810 0379 FF       		.byte	-1
+ 3811 037a FF       		.byte	-1
+ 3812 037b FF       		.byte	-1
+ 3813 037c FF       		.byte	-1
+ 3814 037d FF       		.byte	-1
+ 3815 037e FF       		.byte	-1
+ 3816 037f 0A       		.byte	10
+ 3817 0380 0A       		.byte	10
+ 3818 0381 0A       		.byte	10
+ 3819 0382 0A       		.byte	10
+ 3820 0383 0A       		.byte	10
+ 3821 0384 0A       		.byte	10
+ 3822 0385 0A       		.byte	10
+ 3823 0386 0A       		.byte	10
+ 3824 0387 0A       		.byte	10
+ 3825 0388 0A       		.byte	10
+ 3826 0389 FF       		.byte	-1
+ 3827 038a FF       		.byte	-1
+ 3828 038b FF       		.byte	-1
+ 3829 038c FF       		.byte	-1
+ 3830 038d FF       		.byte	-1
+ 3831 038e FF       		.byte	-1
+ 3832 038f FF       		.byte	-1
+ 3833 0390 FF       		.byte	-1
+ 3834 0391 FF       		.byte	-1
+ 3835 0392 FF       		.byte	-1
+ 3836 0393 FF       		.byte	-1
+ 3837 0394 FF       		.byte	-1
+ 3838 0395 FF       		.byte	-1
+ 3839 0396 0A       		.byte	10
+ 3840 0397 0A       		.byte	10
+ 3841 0398 0A       		.byte	10
+ 3842 0399 0A       		.byte	10
+ 3843 039a 0A       		.byte	10
+ 3844 039b 0A       		.byte	10
+ 3845 039c 0A       		.byte	10
+ 3846 039d 0A       		.byte	10
+ 3847 039e 0A       		.byte	10
+ 3848 039f 0A       		.byte	10
+ 3849 03a0 0A       		.byte	10
+ 3850 03a1 0A       		.byte	10
+ 3851 03a2 FF       		.byte	-1
+ 3852 03a3 FF       		.byte	-1
+ 3853 03a4 FF       		.byte	-1
+ 3854 03a5 FF       		.byte	-1
+ 3855 03a6 FF       		.byte	-1
+ 3856 03a7 FF       		.byte	-1
+ 3857 03a8 FF       		.byte	-1
+ 3858 03a9 FF       		.byte	-1
+ 3859 03aa FF       		.byte	-1
+ 3860 03ab FF       		.byte	-1
+ 3861 03ac FF       		.byte	-1
+ 3862 03ad 0A       		.byte	10
+ 3863 03ae 0A       		.byte	10
+ 3864 03af 0A       		.byte	10
+ 3865 03b0 0A       		.byte	10
+ 3866 03b1 0A       		.byte	10
+ 3867 03b2 FF       		.byte	-1
+ 3868 03b3 FF       		.byte	-1
+ 3869 03b4 FF       		.byte	-1
+ 3870 03b5 FF       		.byte	-1
+ 3871 03b6 0A       		.byte	10
+ 3872 03b7 0A       		.byte	10
+ 3873 03b8 0A       		.byte	10
+ 3874 03b9 0A       		.byte	10
+ 3875 03ba 0A       		.byte	10
+ 3876 03bb FF       		.byte	-1
+ 3877 03bc FF       		.byte	-1
+ 3878 03bd FF       		.byte	-1
+ 3879 03be FF       		.byte	-1
+ 3880 03bf FF       		.byte	-1
+ 3881 03c0 FF       		.byte	-1
+ 3882 03c1 FF       		.byte	-1
+ 3883 03c2 FF       		.byte	-1
+ 3884 03c3 FF       		.byte	-1
+ 3885 03c4 0A       		.byte	10
+ 3886 03c5 0A       		.byte	10
+ 3887 03c6 0A       		.byte	10
+ 3888 03c7 0A       		.byte	10
+ 3889 03c8 0A       		.byte	10
+ 3890 03c9 0A       		.byte	10
+ 3891 03ca FF       		.byte	-1
+ 3892 03cb FF       		.byte	-1
+ 3893 03cc FF       		.byte	-1
+ 3894 03cd FF       		.byte	-1
+ 3895 03ce 0A       		.byte	10
+ 3896 03cf 0A       		.byte	10
+ 3897 03d0 0A       		.byte	10
+ 3898 03d1 0A       		.byte	10
+ 3899 03d2 0A       		.byte	10
+ 3900 03d3 0A       		.byte	10
+ 3901 03d4 FF       		.byte	-1
+ 3902 03d5 FF       		.byte	-1
+ 3903 03d6 FF       		.byte	-1
+ 3904 03d7 FF       		.byte	-1
+ 3905 03d8 FF       		.byte	-1
+ 3906 03d9 FF       		.byte	-1
+ 3907 03da FF       		.byte	-1
+ 3908 03db 0A       		.byte	10
+ 3909 03dc 0A       		.byte	10
+ 3910 03dd 0A       		.byte	10
+ 3911 03de 0A       		.byte	10
+ 3912 03df 0A       		.byte	10
+ 3913 03e0 0A       		.byte	10
+ 3914 03e1 0A       		.byte	10
+ 3915 03e2 FF       		.byte	-1
+ 3916 03e3 FF       		.byte	-1
+ 3917 03e4 FF       		.byte	-1
+ 3918 03e5 FF       		.byte	-1
+ 3919 03e6 0A       		.byte	10
+ 3920 03e7 0A       		.byte	10
+ 3921 03e8 0A       		.byte	10
+ 3922 03e9 0A       		.byte	10
+ 3923 03ea 0A       		.byte	10
+ 3924 03eb 0A       		.byte	10
+ 3925 03ec 0A       		.byte	10
+ 3926 03ed FF       		.byte	-1
+ 3927 03ee FF       		.byte	-1
+ 3928 03ef FF       		.byte	-1
+ 3929 03f0 FF       		.byte	-1
+ 3930 03f1 FF       		.byte	-1
+ 3931 03f2 FF       		.byte	-1
+ 3932 03f3 0A       		.byte	10
+ 3933 03f4 0A       		.byte	10
+ 3934 03f5 0A       		.byte	10
+ 3935 03f6 0A       		.byte	10
+ 3936 03f7 0A       		.byte	10
+ 3937 03f8 0A       		.byte	10
+ 3938 03f9 0A       		.byte	10
+ 3939 03fa FF       		.byte	-1
+ 3940 03fb FF       		.byte	-1
+ 3941 03fc FF       		.byte	-1
+ 3942 03fd FF       		.byte	-1
+ 3943 03fe 0A       		.byte	10
+ 3944 03ff 0A       		.byte	10
+ 3945 0400 0A       		.byte	10
+ 3946 0401 0A       		.byte	10
+ 3947 0402 0A       		.byte	10
+ 3948 0403 0A       		.byte	10
+ 3949 0404 0A       		.byte	10
+ 3950 0405 FF       		.byte	-1
+ 3951 0406 FF       		.byte	-1
+ 3952 0407 FF       		.byte	-1
+ 3953 0408 FF       		.byte	-1
+ 3954 0409 FF       		.byte	-1
+ 3955 040a 0A       		.byte	10
+ 3956 040b 0A       		.byte	10
+ 3957 040c 0A       		.byte	10
+ 3958 040d 0A       		.byte	10
+ 3959 040e 0A       		.byte	10
+ 3960 040f 0A       		.byte	10
+ 3961 0410 0A       		.byte	10
+ 3962 0411 0A       		.byte	10
+ 3963 0412 FF       		.byte	-1
+ 3964 0413 FF       		.byte	-1
+ 3965 0414 FF       		.byte	-1
+ 3966 0415 FF       		.byte	-1
+ 3967 0416 0A       		.byte	10
+ 3968 0417 0A       		.byte	10
+ 3969 0418 0A       		.byte	10
+ 3970 0419 0A       		.byte	10
+ 3971 041a 0A       		.byte	10
+ 3972 041b 0A       		.byte	10
+ 3973 041c 0A       		.byte	10
+ 3974 041d 0A       		.byte	10
+ 3975 041e FF       		.byte	-1
+ 3976 041f FF       		.byte	-1
+ 3977 0420 FF       		.byte	-1
+ 3978 0421 FF       		.byte	-1
+ 3979 0422 0A       		.byte	10
+ 3980 0423 0A       		.byte	10
+ 3981 0424 0A       		.byte	10
+ 3982 0425 FF       		.byte	-1
+ 3983 0426 FF       		.byte	-1
+ 3984 0427 FF       		.byte	-1
+ 3985 0428 FF       		.byte	-1
+ 3986 0429 FF       		.byte	-1
+ 3987 042a FF       		.byte	-1
+ 3988 042b FF       		.byte	-1
+ 3989 042c FF       		.byte	-1
+ 3990 042d FF       		.byte	-1
+ 3991 042e FF       		.byte	-1
+ 3992 042f FF       		.byte	-1
+ 3993 0430 FF       		.byte	-1
+ 3994 0431 FF       		.byte	-1
+ 3995 0432 FF       		.byte	-1
+ 3996 0433 0A       		.byte	10
+ 3997 0434 0A       		.byte	10
+ 3998 0435 0A       		.byte	10
+ 3999 0436 FF       		.byte	-1
+ 4000 0437 FF       		.byte	-1
+ 4001 0438 FF       		.byte	-1
+ 4002 0439 FF       		.byte	-1
+ 4003 043a 0A       		.byte	10
+ 4004 043b 0A       		.byte	10
+ 4005 043c 0A       		.byte	10
+ 4006 043d FF       		.byte	-1
+ 4007 043e FF       		.byte	-1
+ 4008 043f FF       		.byte	-1
+ 4009 0440 FF       		.byte	-1
+ 4010 0441 FF       		.byte	-1
+ 4011 0442 FF       		.byte	-1
+ 4012 0443 FF       		.byte	-1
+ 4013 0444 FF       		.byte	-1
+ 4014 0445 FF       		.byte	-1
+ 4015 0446 FF       		.byte	-1
+ 4016 0447 FF       		.byte	-1
+ 4017 0448 FF       		.byte	-1
+ 4018 0449 FF       		.byte	-1
+ 4019 044a FF       		.byte	-1
+ 4020 044b 0A       		.byte	10
+ 4021 044c 0A       		.byte	10
+ 4022 044d 0A       		.byte	10
+ 4023 044e FF       		.byte	-1
+ 4024 044f FF       		.byte	-1
+ 4025 0450 FF       		.byte	-1
+ 4026 0451 FF       		.byte	-1
+ 4027 0452 0A       		.byte	10
+ 4028 0453 0A       		.byte	10
+ 4029 0454 0A       		.byte	10
+ 4030 0455 FF       		.byte	-1
+ 4031 0456 FF       		.byte	-1
+ 4032 0457 FF       		.byte	-1
+ 4033 0458 FF       		.byte	-1
+ 4034 0459 FF       		.byte	-1
+ 4035 045a FF       		.byte	-1
+ 4036 045b FF       		.byte	-1
+ 4037 045c FF       		.byte	-1
+ 4038 045d FF       		.byte	-1
+ 4039 045e FF       		.byte	-1
+ 4040 045f FF       		.byte	-1
+ 4041 0460 FF       		.byte	-1
+ 4042 0461 FF       		.byte	-1
+ 4043 0462 FF       		.byte	-1
+ 4044 0463 0A       		.byte	10
+ 4045 0464 0A       		.byte	10
+ 4046 0465 0A       		.byte	10
+ 4047 0466 FF       		.byte	-1
+ 4048 0467 FF       		.byte	-1
+ 4049 0468 FF       		.byte	-1
+ 4050 0469 FF       		.byte	-1
+ 4051 046a 0A       		.byte	10
+ 4052 046b 0A       		.byte	10
+ 4053 046c 0A       		.byte	10
+ 4054 046d FF       		.byte	-1
+ 4055 046e FF       		.byte	-1
+ 4056 046f FF       		.byte	-1
+ 4057 0470 FF       		.byte	-1
+ 4058 0471 FF       		.byte	-1
+ 4059 0472 FF       		.byte	-1
+ 4060 0473 FF       		.byte	-1
+ 4061 0474 FF       		.byte	-1
+ 4062 0475 FF       		.byte	-1
+ 4063 0476 FF       		.byte	-1
+ 4064 0477 FF       		.byte	-1
+ 4065 0478 FF       		.byte	-1
+ 4066 0479 FF       		.byte	-1
+ 4067 047a FF       		.byte	-1
+ 4068 047b 0A       		.byte	10
+ 4069 047c 0A       		.byte	10
+ 4070 047d 0A       		.byte	10
+ 4071 047e FF       		.byte	-1
+ 4072 047f FF       		.byte	-1
+ 4073 0480 FF       		.byte	-1
+ 4074 0481 FF       		.byte	-1
+ 4075 0482 0A       		.byte	10
+ 4076 0483 0A       		.byte	10
+ 4077 0484 0A       		.byte	10
+ 4078 0485 0A       		.byte	10
+ 4079 0486 0A       		.byte	10
+ 4080 0487 0A       		.byte	10
+ 4081 0488 0A       		.byte	10
+ 4082 0489 0A       		.byte	10
+ 4083 048a FF       		.byte	-1
+ 4084 048b FF       		.byte	-1
+ 4085 048c FF       		.byte	-1
+ 4086 048d FF       		.byte	-1
+ 4087 048e 0A       		.byte	10
+ 4088 048f 0A       		.byte	10
+ 4089 0490 0A       		.byte	10
+ 4090 0491 0A       		.byte	10
+ 4091 0492 0A       		.byte	10
+ 4092 0493 0A       		.byte	10
+ 4093 0494 0A       		.byte	10
+ 4094 0495 0A       		.byte	10
+ 4095 0496 FF       		.byte	-1
+ 4096 0497 FF       		.byte	-1
+ 4097 0498 FF       		.byte	-1
+ 4098 0499 FF       		.byte	-1
+ 4099 049a FF       		.byte	-1
+ 4100 049b 0A       		.byte	10
+ 4101 049c 0A       		.byte	10
+ 4102 049d 0A       		.byte	10
+ 4103 049e 0A       		.byte	10
+ 4104 049f 0A       		.byte	10
+ 4105 04a0 0A       		.byte	10
+ 4106 04a1 0A       		.byte	10
+ 4107 04a2 FF       		.byte	-1
+ 4108 04a3 FF       		.byte	-1
+ 4109 04a4 FF       		.byte	-1
+ 4110 04a5 FF       		.byte	-1
+ 4111 04a6 0A       		.byte	10
+ 4112 04a7 0A       		.byte	10
+ 4113 04a8 0A       		.byte	10
+ 4114 04a9 0A       		.byte	10
+ 4115 04aa 0A       		.byte	10
+ 4116 04ab 0A       		.byte	10
+ 4117 04ac 0A       		.byte	10
+ 4118 04ad FF       		.byte	-1
+ 4119 04ae FF       		.byte	-1
+ 4120 04af FF       		.byte	-1
+ 4121 04b0 FF       		.byte	-1
+ 4122 04b1 FF       		.byte	-1
+ 4123 04b2 FF       		.byte	-1
+ 4124 04b3 0A       		.byte	10
+ 4125 04b4 0A       		.byte	10
+ 4126 04b5 0A       		.byte	10
+ 4127 04b6 0A       		.byte	10
+ 4128 04b7 0A       		.byte	10
+ 4129 04b8 0A       		.byte	10
+ 4130 04b9 0A       		.byte	10
+ 4131 04ba FF       		.byte	-1
+ 4132 04bb FF       		.byte	-1
+ 4133 04bc FF       		.byte	-1
+ 4134 04bd FF       		.byte	-1
+ 4135 04be 0A       		.byte	10
+ 4136 04bf 0A       		.byte	10
+ 4137 04c0 0A       		.byte	10
+ 4138 04c1 0A       		.byte	10
+ 4139 04c2 0A       		.byte	10
+ 4140 04c3 0A       		.byte	10
+ 4141 04c4 0A       		.byte	10
+ 4142 04c5 FF       		.byte	-1
+ 4143 04c6 FF       		.byte	-1
+ 4144 04c7 FF       		.byte	-1
+ 4145 04c8 FF       		.byte	-1
+ 4146 04c9 FF       		.byte	-1
+ 4147 04ca FF       		.byte	-1
+ 4148 04cb FF       		.byte	-1
+ 4149 04cc 0A       		.byte	10
+ 4150 04cd 0A       		.byte	10
+ 4151 04ce 0A       		.byte	10
+ 4152 04cf 0A       		.byte	10
+ 4153 04d0 0A       		.byte	10
+ 4154 04d1 0A       		.byte	10
+ 4155 04d2 FF       		.byte	-1
+ 4156 04d3 FF       		.byte	-1
+ 4157 04d4 FF       		.byte	-1
+ 4158 04d5 FF       		.byte	-1
+ 4159 04d6 0A       		.byte	10
+ 4160 04d7 0A       		.byte	10
+ 4161 04d8 0A       		.byte	10
+ 4162 04d9 0A       		.byte	10
+ 4163 04da 0A       		.byte	10
+ 4164 04db 0A       		.byte	10
+ 4165 04dc FF       		.byte	-1
+ 4166 04dd FF       		.byte	-1
+ 4167 04de FF       		.byte	-1
+ 4168 04df FF       		.byte	-1
+ 4169 04e0 FF       		.byte	-1
+ 4170 04e1 FF       		.byte	-1
+ 4171 04e2 FF       		.byte	-1
+ 4172 04e3 FF       		.byte	-1
+ 4173 04e4 FF       		.byte	-1
+ 4174 04e5 0A       		.byte	10
+ 4175 04e6 0A       		.byte	10
+ 4176 04e7 0A       		.byte	10
+ 4177 04e8 0A       		.byte	10
+ 4178 04e9 0A       		.byte	10
+ 4179 04ea FF       		.byte	-1
+ 4180 04eb FF       		.byte	-1
+ 4181 04ec FF       		.byte	-1
+ 4182 04ed FF       		.byte	-1
+ 4183 04ee 0A       		.byte	10
+ 4184 04ef 0A       		.byte	10
+ 4185 04f0 0A       		.byte	10
+ 4186 04f1 0A       		.byte	10
+ 4187 04f2 0A       		.byte	10
+ 4188 04f3 FF       		.byte	-1
+ 4189 04f4 FF       		.byte	-1
+ 4190 04f5 FF       		.byte	-1
+ 4191 04f6 FF       		.byte	-1
+ 4192 04f7 FF       		.byte	-1
+ 4193 04f8 FF       		.byte	-1
+ 4194 04f9 FF       		.byte	-1
+ 4195 04fa FF       		.byte	-1
+ 4196 04fb FF       		.byte	-1
+ 4197 04fc FF       		.byte	-1
+ 4198 04fd FF       		.byte	-1
+ 4199 04fe 0A       		.byte	10
+ 4200 04ff 0A       		.byte	10
+ 4201 0500 0A       		.byte	10
+ 4202 0501 0A       		.byte	10
+ 4203 0502 0A       		.byte	10
+ 4204 0503 0A       		.byte	10
+ 4205 0504 0A       		.byte	10
+ 4206 0505 0A       		.byte	10
+ 4207 0506 0A       		.byte	10
+ 4208 0507 0A       		.byte	10
+ 4209 0508 0A       		.byte	10
+ 4210 0509 0A       		.byte	10
+ 4211 050a FF       		.byte	-1
+ 4212 050b FF       		.byte	-1
+ 4213 050c FF       		.byte	-1
+ 4214 050d FF       		.byte	-1
+ 4215 050e FF       		.byte	-1
+ 4216 050f FF       		.byte	-1
+ 4217 0510 FF       		.byte	-1
+ 4218 0511 FF       		.byte	-1
+ 4219 0512 FF       		.byte	-1
+ 4220 0513 FF       		.byte	-1
+ 4221 0514 FF       		.byte	-1
+ 4222 0515 FF       		.byte	-1
+ 4223 0516 FF       		.byte	-1
+ 4224 0517 0A       		.byte	10
+ 4225 0518 0A       		.byte	10
+ 4226 0519 0A       		.byte	10
+ 4227 051a 0A       		.byte	10
+ 4228 051b 0A       		.byte	10
+ 4229 051c 0A       		.byte	10
+ 4230 051d 0A       		.byte	10
+ 4231 051e 0A       		.byte	10
+ 4232 051f 0A       		.byte	10
+ 4233 0520 0A       		.byte	10
+ 4234 0521 FF       		.byte	-1
+ 4235 0522 FF       		.byte	-1
+ 4236 0523 FF       		.byte	-1
+ 4237 0524 FF       		.byte	-1
+ 4238 0525 FF       		.byte	-1
+ 4239 0526 FF       		.byte	-1
+ 4240 0527 FF       		.byte	-1
+ 4241 0528 FF       		.byte	-1
+ 4242 0529 FF       		.byte	-1
+ 4243 052a FF       		.byte	-1
+ 4244 052b FF       		.byte	-1
+ 4245 052c FF       		.byte	-1
+ 4246 052d FF       		.byte	-1
+ 4247 052e FF       		.byte	-1
+ 4248 052f FF       		.byte	-1
+ 4249 0530 FF       		.byte	-1
+ 4250 0531 0A       		.byte	10
+ 4251 0532 0A       		.byte	10
+ 4252 0533 0A       		.byte	10
+ 4253 0534 0A       		.byte	10
+ 4254 0535 0A       		.byte	10
+ 4255 0536 0A       		.byte	10
+ 4256 0537 FF       		.byte	-1
+ 4257 0538 FF       		.byte	-1
+ 4258 0539 FF       		.byte	-1
+ 4259 053a FF       		.byte	-1
+ 4260 053b FF       		.byte	-1
+ 4261 053c FF       		.byte	-1
+ 4262 053d FF       		.byte	-1
+ 4263 053e FF       		.byte	-1
+ 4264 053f FF       		.byte	-1
+ 4265 0540 FF       		.byte	-1
+ 4266 0541 FF       		.byte	-1
+ 4267 0542 FF       		.byte	-1
+ 4268 0543 FF       		.byte	-1
+ 4269 0544 FF       		.byte	-1
+ 4270 0545 FF       		.byte	-1
+ 4271 0546 FF       		.byte	-1
+ 4272 0547 FF       		.byte	-1
+ 4273 0548 FF       		.byte	-1
+ 4274 0549 FF       		.byte	-1
+ 4275 054a FF       		.byte	-1
+ 4276 054b FF       		.byte	-1
+ 4277 054c FF       		.byte	-1
+ 4278 054d FF       		.byte	-1
+ 4279 054e FF       		.byte	-1
+ 4280 054f FF       		.byte	-1
+ 4281 0550 FF       		.byte	-1
+ 4282 0551 FF       		.byte	-1
+ 4283 0552 FF       		.byte	-1
+ 4284 0553 FF       		.byte	-1
+ 4285 0554 FF       		.byte	-1
+ 4286 0555 FF       		.byte	-1
+ 4287 0556 FF       		.byte	-1
+ 4288 0557 FF       		.byte	-1
+ 4289 0558 FF       		.byte	-1
+ 4290 0559 FF       		.byte	-1
+ 4291 055a FF       		.byte	-1
+ 4292 055b FF       		.byte	-1
+ 4293 055c FF       		.byte	-1
+ 4294 055d FF       		.byte	-1
+ 4295 055e FF       		.byte	-1
+ 4296 055f FF       		.byte	-1
+ 4297 0560 FF       		.byte	-1
+ 4298 0561 FF       		.byte	-1
+ 4299 0562 FF       		.byte	-1
+ 4300 0563 FF       		.byte	-1
+ 4301 0564 FF       		.byte	-1
+ 4302 0565 FF       		.byte	-1
+ 4303 0566 FF       		.byte	-1
+ 4304 0567 FF       		.byte	-1
+ 4305 0568 FF       		.byte	-1
+ 4306 0569 FF       		.byte	-1
+ 4307 056a FF       		.byte	-1
+ 4308 056b FF       		.byte	-1
+ 4309 056c FF       		.byte	-1
+ 4310 056d FF       		.byte	-1
+ 4311 056e FF       		.byte	-1
+ 4312 056f FF       		.byte	-1
+ 4315              	fichaBlanca:
+ 4316 0570 FF       		.byte	-1
+ 4317 0571 FF       		.byte	-1
+ 4318 0572 FF       		.byte	-1
+ 4319 0573 FF       		.byte	-1
+ 4320 0574 FF       		.byte	-1
+ 4321 0575 FF       		.byte	-1
+ 4322 0576 FF       		.byte	-1
+ 4323 0577 FF       		.byte	-1
+ 4324 0578 FF       		.byte	-1
+ 4325 0579 FF       		.byte	-1
+ 4326 057a FF       		.byte	-1
+ 4327 057b FF       		.byte	-1
+ 4328 057c FF       		.byte	-1
+ 4329 057d FF       		.byte	-1
+ 4330 057e FF       		.byte	-1
+ 4331 057f FF       		.byte	-1
+ 4332 0580 FF       		.byte	-1
+ 4333 0581 FF       		.byte	-1
+ 4334 0582 FF       		.byte	-1
+ 4335 0583 FF       		.byte	-1
+ 4336 0584 FF       		.byte	-1
+ 4337 0585 FF       		.byte	-1
+ 4338 0586 FF       		.byte	-1
+ 4339 0587 FF       		.byte	-1
+ 4340 0588 FF       		.byte	-1
+ 4341 0589 FF       		.byte	-1
+ 4342 058a FF       		.byte	-1
+ 4343 058b FF       		.byte	-1
+ 4344 058c FF       		.byte	-1
+ 4345 058d FF       		.byte	-1
+ 4346 058e FF       		.byte	-1
+ 4347 058f FF       		.byte	-1
+ 4348 0590 FF       		.byte	-1
+ 4349 0591 FF       		.byte	-1
+ 4350 0592 FF       		.byte	-1
+ 4351 0593 FF       		.byte	-1
+ 4352 0594 FF       		.byte	-1
+ 4353 0595 FF       		.byte	-1
+ 4354 0596 FF       		.byte	-1
+ 4355 0597 FF       		.byte	-1
+ 4356 0598 FF       		.byte	-1
+ 4357 0599 FF       		.byte	-1
+ 4358 059a FF       		.byte	-1
+ 4359 059b FF       		.byte	-1
+ 4360 059c FF       		.byte	-1
+ 4361 059d FF       		.byte	-1
+ 4362 059e FF       		.byte	-1
+ 4363 059f FF       		.byte	-1
+ 4364 05a0 FF       		.byte	-1
+ 4365 05a1 FF       		.byte	-1
+ 4366 05a2 FF       		.byte	-1
+ 4367 05a3 FF       		.byte	-1
+ 4368 05a4 FF       		.byte	-1
+ 4369 05a5 FF       		.byte	-1
+ 4370 05a6 FF       		.byte	-1
+ 4371 05a7 FF       		.byte	-1
+ 4372 05a8 FF       		.byte	-1
+ 4373 05a9 0F       		.byte	15
+ 4374 05aa 0F       		.byte	15
+ 4375 05ab 0F       		.byte	15
+ 4376 05ac 0F       		.byte	15
+ 4377 05ad 0F       		.byte	15
+ 4378 05ae 0F       		.byte	15
+ 4379 05af FF       		.byte	-1
+ 4380 05b0 FF       		.byte	-1
+ 4381 05b1 FF       		.byte	-1
+ 4382 05b2 FF       		.byte	-1
+ 4383 05b3 FF       		.byte	-1
+ 4384 05b4 FF       		.byte	-1
+ 4385 05b5 FF       		.byte	-1
+ 4386 05b6 FF       		.byte	-1
+ 4387 05b7 FF       		.byte	-1
+ 4388 05b8 FF       		.byte	-1
+ 4389 05b9 FF       		.byte	-1
+ 4390 05ba FF       		.byte	-1
+ 4391 05bb FF       		.byte	-1
+ 4392 05bc FF       		.byte	-1
+ 4393 05bd FF       		.byte	-1
+ 4394 05be FF       		.byte	-1
+ 4395 05bf 0F       		.byte	15
+ 4396 05c0 0F       		.byte	15
+ 4397 05c1 FF       		.byte	-1
+ 4398 05c2 FF       		.byte	-1
+ 4399 05c3 FF       		.byte	-1
+ 4400 05c4 FF       		.byte	-1
+ 4401 05c5 FF       		.byte	-1
+ 4402 05c6 FF       		.byte	-1
+ 4403 05c7 0F       		.byte	15
+ 4404 05c8 0F       		.byte	15
+ 4405 05c9 FF       		.byte	-1
+ 4406 05ca FF       		.byte	-1
+ 4407 05cb FF       		.byte	-1
+ 4408 05cc FF       		.byte	-1
+ 4409 05cd FF       		.byte	-1
+ 4410 05ce FF       		.byte	-1
+ 4411 05cf FF       		.byte	-1
+ 4412 05d0 FF       		.byte	-1
+ 4413 05d1 FF       		.byte	-1
+ 4414 05d2 FF       		.byte	-1
+ 4415 05d3 FF       		.byte	-1
+ 4416 05d4 FF       		.byte	-1
+ 4417 05d5 FF       		.byte	-1
+ 4418 05d6 0F       		.byte	15
+ 4419 05d7 FF       		.byte	-1
+ 4420 05d8 FF       		.byte	-1
+ 4421 05d9 FF       		.byte	-1
+ 4422 05da FF       		.byte	-1
+ 4423 05db FF       		.byte	-1
+ 4424 05dc FF       		.byte	-1
+ 4425 05dd FF       		.byte	-1
+ 4426 05de FF       		.byte	-1
+ 4427 05df FF       		.byte	-1
+ 4428 05e0 FF       		.byte	-1
+ 4429 05e1 0F       		.byte	15
+ 4430 05e2 FF       		.byte	-1
+ 4431 05e3 FF       		.byte	-1
+ 4432 05e4 FF       		.byte	-1
+ 4433 05e5 FF       		.byte	-1
+ 4434 05e6 FF       		.byte	-1
+ 4435 05e7 FF       		.byte	-1
+ 4436 05e8 FF       		.byte	-1
+ 4437 05e9 FF       		.byte	-1
+ 4438 05ea FF       		.byte	-1
+ 4439 05eb FF       		.byte	-1
+ 4440 05ec FF       		.byte	-1
+ 4441 05ed 0F       		.byte	15
+ 4442 05ee FF       		.byte	-1
+ 4443 05ef FF       		.byte	-1
+ 4444 05f0 FF       		.byte	-1
+ 4445 05f1 FF       		.byte	-1
+ 4446 05f2 FF       		.byte	-1
+ 4447 05f3 FF       		.byte	-1
+ 4448 05f4 FF       		.byte	-1
+ 4449 05f5 FF       		.byte	-1
+ 4450 05f6 FF       		.byte	-1
+ 4451 05f7 FF       		.byte	-1
+ 4452 05f8 FF       		.byte	-1
+ 4453 05f9 FF       		.byte	-1
+ 4454 05fa 0F       		.byte	15
+ 4455 05fb FF       		.byte	-1
+ 4456 05fc FF       		.byte	-1
+ 4457 05fd FF       		.byte	-1
+ 4458 05fe FF       		.byte	-1
+ 4459 05ff FF       		.byte	-1
+ 4460 0600 FF       		.byte	-1
+ 4461 0601 FF       		.byte	-1
+ 4462 0602 FF       		.byte	-1
+ 4463 0603 FF       		.byte	-1
+ 4464 0604 0F       		.byte	15
+ 4465 0605 FF       		.byte	-1
+ 4466 0606 FF       		.byte	-1
+ 4467 0607 FF       		.byte	-1
+ 4468 0608 FF       		.byte	-1
+ 4469 0609 FF       		.byte	-1
+ 4470 060a FF       		.byte	-1
+ 4471 060b FF       		.byte	-1
+ 4472 060c FF       		.byte	-1
+ 4473 060d FF       		.byte	-1
+ 4474 060e FF       		.byte	-1
+ 4475 060f FF       		.byte	-1
+ 4476 0610 FF       		.byte	-1
+ 4477 0611 FF       		.byte	-1
+ 4478 0612 FF       		.byte	-1
+ 4479 0613 0F       		.byte	15
+ 4480 0614 FF       		.byte	-1
+ 4481 0615 FF       		.byte	-1
+ 4482 0616 FF       		.byte	-1
+ 4483 0617 FF       		.byte	-1
+ 4484 0618 FF       		.byte	-1
+ 4485 0619 FF       		.byte	-1
+ 4486 061a FF       		.byte	-1
+ 4487 061b 0F       		.byte	15
+ 4488 061c FF       		.byte	-1
+ 4489 061d FF       		.byte	-1
+ 4490 061e FF       		.byte	-1
+ 4491 061f FF       		.byte	-1
+ 4492 0620 FF       		.byte	-1
+ 4493 0621 FF       		.byte	-1
+ 4494 0622 FF       		.byte	-1
+ 4495 0623 FF       		.byte	-1
+ 4496 0624 FF       		.byte	-1
+ 4497 0625 FF       		.byte	-1
+ 4498 0626 FF       		.byte	-1
+ 4499 0627 FF       		.byte	-1
+ 4500 0628 FF       		.byte	-1
+ 4501 0629 FF       		.byte	-1
+ 4502 062a FF       		.byte	-1
+ 4503 062b FF       		.byte	-1
+ 4504 062c 0F       		.byte	15
+ 4505 062d FF       		.byte	-1
+ 4506 062e FF       		.byte	-1
+ 4507 062f FF       		.byte	-1
+ 4508 0630 FF       		.byte	-1
+ 4509 0631 FF       		.byte	-1
+ 4510 0632 FF       		.byte	-1
+ 4511 0633 FF       		.byte	-1
+ 4512 0634 FF       		.byte	-1
+ 4513 0635 FF       		.byte	-1
+ 4514 0636 FF       		.byte	-1
+ 4515 0637 FF       		.byte	-1
+ 4516 0638 FF       		.byte	-1
+ 4517 0639 FF       		.byte	-1
+ 4518 063a FF       		.byte	-1
+ 4519 063b FF       		.byte	-1
+ 4520 063c FF       		.byte	-1
+ 4521 063d FF       		.byte	-1
+ 4522 063e FF       		.byte	-1
+ 4523 063f FF       		.byte	-1
+ 4524 0640 FF       		.byte	-1
+ 4525 0641 FF       		.byte	-1
+ 4526 0642 FF       		.byte	-1
+ 4527 0643 FF       		.byte	-1
+ 4528 0644 0F       		.byte	15
+ 4529 0645 FF       		.byte	-1
+ 4530 0646 FF       		.byte	-1
+ 4531 0647 FF       		.byte	-1
+ 4532 0648 FF       		.byte	-1
+ 4533 0649 FF       		.byte	-1
+ 4534 064a 0F       		.byte	15
+ 4535 064b FF       		.byte	-1
+ 4536 064c FF       		.byte	-1
+ 4537 064d FF       		.byte	-1
+ 4538 064e FF       		.byte	-1
+ 4539 064f FF       		.byte	-1
+ 4540 0650 FF       		.byte	-1
+ 4541 0651 FF       		.byte	-1
+ 4542 0652 FF       		.byte	-1
+ 4543 0653 FF       		.byte	-1
+ 4544 0654 FF       		.byte	-1
+ 4545 0655 FF       		.byte	-1
+ 4546 0656 FF       		.byte	-1
+ 4547 0657 FF       		.byte	-1
+ 4548 0658 FF       		.byte	-1
+ 4549 0659 FF       		.byte	-1
+ 4550 065a FF       		.byte	-1
+ 4551 065b FF       		.byte	-1
+ 4552 065c FF       		.byte	-1
+ 4553 065d 0F       		.byte	15
+ 4554 065e FF       		.byte	-1
+ 4555 065f FF       		.byte	-1
+ 4556 0660 FF       		.byte	-1
+ 4557 0661 FF       		.byte	-1
+ 4558 0662 0F       		.byte	15
+ 4559 0663 FF       		.byte	-1
+ 4560 0664 FF       		.byte	-1
+ 4561 0665 FF       		.byte	-1
+ 4562 0666 FF       		.byte	-1
+ 4563 0667 FF       		.byte	-1
+ 4564 0668 FF       		.byte	-1
+ 4565 0669 FF       		.byte	-1
+ 4566 066a FF       		.byte	-1
+ 4567 066b FF       		.byte	-1
+ 4568 066c FF       		.byte	-1
+ 4569 066d FF       		.byte	-1
+ 4570 066e FF       		.byte	-1
+ 4571 066f FF       		.byte	-1
+ 4572 0670 FF       		.byte	-1
+ 4573 0671 FF       		.byte	-1
+ 4574 0672 FF       		.byte	-1
+ 4575 0673 FF       		.byte	-1
+ 4576 0674 FF       		.byte	-1
+ 4577 0675 0F       		.byte	15
+ 4578 0676 FF       		.byte	-1
+ 4579 0677 FF       		.byte	-1
+ 4580 0678 FF       		.byte	-1
+ 4581 0679 FF       		.byte	-1
+ 4582 067a 0F       		.byte	15
+ 4583 067b FF       		.byte	-1
+ 4584 067c FF       		.byte	-1
+ 4585 067d FF       		.byte	-1
+ 4586 067e FF       		.byte	-1
+ 4587 067f FF       		.byte	-1
+ 4588 0680 FF       		.byte	-1
+ 4589 0681 FF       		.byte	-1
+ 4590 0682 FF       		.byte	-1
+ 4591 0683 FF       		.byte	-1
+ 4592 0684 FF       		.byte	-1
+ 4593 0685 FF       		.byte	-1
+ 4594 0686 FF       		.byte	-1
+ 4595 0687 FF       		.byte	-1
+ 4596 0688 FF       		.byte	-1
+ 4597 0689 FF       		.byte	-1
+ 4598 068a FF       		.byte	-1
+ 4599 068b FF       		.byte	-1
+ 4600 068c FF       		.byte	-1
+ 4601 068d 0F       		.byte	15
+ 4602 068e FF       		.byte	-1
+ 4603 068f FF       		.byte	-1
+ 4604 0690 FF       		.byte	-1
+ 4605 0691 FF       		.byte	-1
+ 4606 0692 0F       		.byte	15
+ 4607 0693 FF       		.byte	-1
+ 4608 0694 FF       		.byte	-1
+ 4609 0695 FF       		.byte	-1
+ 4610 0696 FF       		.byte	-1
+ 4611 0697 FF       		.byte	-1
+ 4612 0698 FF       		.byte	-1
+ 4613 0699 FF       		.byte	-1
+ 4614 069a FF       		.byte	-1
+ 4615 069b FF       		.byte	-1
+ 4616 069c FF       		.byte	-1
+ 4617 069d FF       		.byte	-1
+ 4618 069e FF       		.byte	-1
+ 4619 069f FF       		.byte	-1
+ 4620 06a0 FF       		.byte	-1
+ 4621 06a1 FF       		.byte	-1
+ 4622 06a2 FF       		.byte	-1
+ 4623 06a3 FF       		.byte	-1
+ 4624 06a4 FF       		.byte	-1
+ 4625 06a5 0F       		.byte	15
+ 4626 06a6 FF       		.byte	-1
+ 4627 06a7 FF       		.byte	-1
+ 4628 06a8 FF       		.byte	-1
+ 4629 06a9 FF       		.byte	-1
+ 4630 06aa 0F       		.byte	15
+ 4631 06ab FF       		.byte	-1
+ 4632 06ac FF       		.byte	-1
+ 4633 06ad FF       		.byte	-1
+ 4634 06ae FF       		.byte	-1
+ 4635 06af FF       		.byte	-1
+ 4636 06b0 FF       		.byte	-1
+ 4637 06b1 FF       		.byte	-1
+ 4638 06b2 FF       		.byte	-1
+ 4639 06b3 FF       		.byte	-1
+ 4640 06b4 FF       		.byte	-1
+ 4641 06b5 FF       		.byte	-1
+ 4642 06b6 FF       		.byte	-1
+ 4643 06b7 FF       		.byte	-1
+ 4644 06b8 FF       		.byte	-1
+ 4645 06b9 FF       		.byte	-1
+ 4646 06ba FF       		.byte	-1
+ 4647 06bb FF       		.byte	-1
+ 4648 06bc FF       		.byte	-1
+ 4649 06bd 0F       		.byte	15
+ 4650 06be FF       		.byte	-1
+ 4651 06bf FF       		.byte	-1
+ 4652 06c0 FF       		.byte	-1
+ 4653 06c1 FF       		.byte	-1
+ 4654 06c2 0F       		.byte	15
+ 4655 06c3 FF       		.byte	-1
+ 4656 06c4 FF       		.byte	-1
+ 4657 06c5 FF       		.byte	-1
+ 4658 06c6 FF       		.byte	-1
+ 4659 06c7 FF       		.byte	-1
+ 4660 06c8 FF       		.byte	-1
+ 4661 06c9 FF       		.byte	-1
+ 4662 06ca FF       		.byte	-1
+ 4663 06cb FF       		.byte	-1
+ 4664 06cc FF       		.byte	-1
+ 4665 06cd FF       		.byte	-1
+ 4666 06ce FF       		.byte	-1
+ 4667 06cf FF       		.byte	-1
+ 4668 06d0 FF       		.byte	-1
+ 4669 06d1 FF       		.byte	-1
+ 4670 06d2 FF       		.byte	-1
+ 4671 06d3 FF       		.byte	-1
+ 4672 06d4 FF       		.byte	-1
+ 4673 06d5 0F       		.byte	15
+ 4674 06d6 FF       		.byte	-1
+ 4675 06d7 FF       		.byte	-1
+ 4676 06d8 FF       		.byte	-1
+ 4677 06d9 FF       		.byte	-1
+ 4678 06da FF       		.byte	-1
+ 4679 06db FF       		.byte	-1
+ 4680 06dc FF       		.byte	-1
+ 4681 06dd FF       		.byte	-1
+ 4682 06de FF       		.byte	-1
+ 4683 06df FF       		.byte	-1
+ 4684 06e0 FF       		.byte	-1
+ 4685 06e1 FF       		.byte	-1
+ 4686 06e2 FF       		.byte	-1
+ 4687 06e3 FF       		.byte	-1
+ 4688 06e4 FF       		.byte	-1
+ 4689 06e5 FF       		.byte	-1
+ 4690 06e6 FF       		.byte	-1
+ 4691 06e7 FF       		.byte	-1
+ 4692 06e8 FF       		.byte	-1
+ 4693 06e9 FF       		.byte	-1
+ 4694 06ea FF       		.byte	-1
+ 4695 06eb FF       		.byte	-1
+ 4696 06ec 0F       		.byte	15
+ 4697 06ed FF       		.byte	-1
+ 4698 06ee FF       		.byte	-1
+ 4699 06ef FF       		.byte	-1
+ 4700 06f0 FF       		.byte	-1
+ 4701 06f1 FF       		.byte	-1
+ 4702 06f2 FF       		.byte	-1
+ 4703 06f3 0F       		.byte	15
+ 4704 06f4 FF       		.byte	-1
+ 4705 06f5 FF       		.byte	-1
+ 4706 06f6 FF       		.byte	-1
+ 4707 06f7 FF       		.byte	-1
+ 4708 06f8 FF       		.byte	-1
+ 4709 06f9 FF       		.byte	-1
+ 4710 06fa FF       		.byte	-1
+ 4711 06fb FF       		.byte	-1
+ 4712 06fc FF       		.byte	-1
+ 4713 06fd FF       		.byte	-1
+ 4714 06fe FF       		.byte	-1
+ 4715 06ff FF       		.byte	-1
+ 4716 0700 FF       		.byte	-1
+ 4717 0701 FF       		.byte	-1
+ 4718 0702 FF       		.byte	-1
+ 4719 0703 FF       		.byte	-1
+ 4720 0704 0F       		.byte	15
+ 4721 0705 FF       		.byte	-1
+ 4722 0706 FF       		.byte	-1
+ 4723 0707 FF       		.byte	-1
+ 4724 0708 FF       		.byte	-1
+ 4725 0709 FF       		.byte	-1
+ 4726 070a FF       		.byte	-1
+ 4727 070b FF       		.byte	-1
+ 4728 070c 0F       		.byte	15
+ 4729 070d FF       		.byte	-1
+ 4730 070e FF       		.byte	-1
+ 4731 070f FF       		.byte	-1
+ 4732 0710 FF       		.byte	-1
+ 4733 0711 FF       		.byte	-1
+ 4734 0712 FF       		.byte	-1
+ 4735 0713 FF       		.byte	-1
+ 4736 0714 FF       		.byte	-1
+ 4737 0715 FF       		.byte	-1
+ 4738 0716 FF       		.byte	-1
+ 4739 0717 FF       		.byte	-1
+ 4740 0718 FF       		.byte	-1
+ 4741 0719 FF       		.byte	-1
+ 4742 071a FF       		.byte	-1
+ 4743 071b 0F       		.byte	15
+ 4744 071c FF       		.byte	-1
+ 4745 071d FF       		.byte	-1
+ 4746 071e FF       		.byte	-1
+ 4747 071f FF       		.byte	-1
+ 4748 0720 FF       		.byte	-1
+ 4749 0721 FF       		.byte	-1
+ 4750 0722 FF       		.byte	-1
+ 4751 0723 FF       		.byte	-1
+ 4752 0724 FF       		.byte	-1
+ 4753 0725 0F       		.byte	15
+ 4754 0726 FF       		.byte	-1
+ 4755 0727 FF       		.byte	-1
+ 4756 0728 FF       		.byte	-1
+ 4757 0729 FF       		.byte	-1
+ 4758 072a FF       		.byte	-1
+ 4759 072b FF       		.byte	-1
+ 4760 072c FF       		.byte	-1
+ 4761 072d FF       		.byte	-1
+ 4762 072e FF       		.byte	-1
+ 4763 072f FF       		.byte	-1
+ 4764 0730 FF       		.byte	-1
+ 4765 0731 FF       		.byte	-1
+ 4766 0732 0F       		.byte	15
+ 4767 0733 FF       		.byte	-1
+ 4768 0734 FF       		.byte	-1
+ 4769 0735 FF       		.byte	-1
+ 4770 0736 FF       		.byte	-1
+ 4771 0737 FF       		.byte	-1
+ 4772 0738 FF       		.byte	-1
+ 4773 0739 FF       		.byte	-1
+ 4774 073a FF       		.byte	-1
+ 4775 073b FF       		.byte	-1
+ 4776 073c FF       		.byte	-1
+ 4777 073d FF       		.byte	-1
+ 4778 073e 0F       		.byte	15
+ 4779 073f FF       		.byte	-1
+ 4780 0740 FF       		.byte	-1
+ 4781 0741 FF       		.byte	-1
+ 4782 0742 FF       		.byte	-1
+ 4783 0743 FF       		.byte	-1
+ 4784 0744 FF       		.byte	-1
+ 4785 0745 FF       		.byte	-1
+ 4786 0746 FF       		.byte	-1
+ 4787 0747 FF       		.byte	-1
+ 4788 0748 FF       		.byte	-1
+ 4789 0749 0F       		.byte	15
+ 4790 074a FF       		.byte	-1
+ 4791 074b FF       		.byte	-1
+ 4792 074c FF       		.byte	-1
+ 4793 074d FF       		.byte	-1
+ 4794 074e FF       		.byte	-1
+ 4795 074f FF       		.byte	-1
+ 4796 0750 FF       		.byte	-1
+ 4797 0751 FF       		.byte	-1
+ 4798 0752 FF       		.byte	-1
+ 4799 0753 FF       		.byte	-1
+ 4800 0754 FF       		.byte	-1
+ 4801 0755 FF       		.byte	-1
+ 4802 0756 FF       		.byte	-1
+ 4803 0757 0F       		.byte	15
+ 4804 0758 0F       		.byte	15
+ 4805 0759 FF       		.byte	-1
+ 4806 075a FF       		.byte	-1
+ 4807 075b FF       		.byte	-1
+ 4808 075c FF       		.byte	-1
+ 4809 075d FF       		.byte	-1
+ 4810 075e FF       		.byte	-1
+ 4811 075f 0F       		.byte	15
+ 4812 0760 0F       		.byte	15
+ 4813 0761 FF       		.byte	-1
+ 4814 0762 FF       		.byte	-1
+ 4815 0763 FF       		.byte	-1
+ 4816 0764 FF       		.byte	-1
+ 4817 0765 FF       		.byte	-1
+ 4818 0766 FF       		.byte	-1
+ 4819 0767 FF       		.byte	-1
+ 4820 0768 FF       		.byte	-1
+ 4821 0769 FF       		.byte	-1
+ 4822 076a FF       		.byte	-1
+ 4823 076b FF       		.byte	-1
+ 4824 076c FF       		.byte	-1
+ 4825 076d FF       		.byte	-1
+ 4826 076e FF       		.byte	-1
+ 4827 076f FF       		.byte	-1
+ 4828 0770 FF       		.byte	-1
+ 4829 0771 0F       		.byte	15
+ 4830 0772 0F       		.byte	15
+ 4831 0773 0F       		.byte	15
+ 4832 0774 0F       		.byte	15
+ 4833 0775 0F       		.byte	15
+ 4834 0776 0F       		.byte	15
+ 4835 0777 FF       		.byte	-1
+ 4836 0778 FF       		.byte	-1
+ 4837 0779 FF       		.byte	-1
+ 4838 077a FF       		.byte	-1
+ 4839 077b FF       		.byte	-1
+ 4840 077c FF       		.byte	-1
+ 4841 077d FF       		.byte	-1
+ 4842 077e FF       		.byte	-1
+ 4843 077f FF       		.byte	-1
+ 4844 0780 FF       		.byte	-1
+ 4845 0781 FF       		.byte	-1
+ 4846 0782 FF       		.byte	-1
+ 4847 0783 FF       		.byte	-1
+ 4848 0784 FF       		.byte	-1
+ 4849 0785 FF       		.byte	-1
+ 4850 0786 FF       		.byte	-1
+ 4851 0787 FF       		.byte	-1
+ 4852 0788 FF       		.byte	-1
+ 4853 0789 FF       		.byte	-1
+ 4854 078a FF       		.byte	-1
+ 4855 078b FF       		.byte	-1
+ 4856 078c FF       		.byte	-1
+ 4857 078d FF       		.byte	-1
+ 4858 078e FF       		.byte	-1
+ 4859 078f FF       		.byte	-1
+ 4860 0790 FF       		.byte	-1
+ 4861 0791 FF       		.byte	-1
+ 4862 0792 FF       		.byte	-1
+ 4863 0793 FF       		.byte	-1
+ 4864 0794 FF       		.byte	-1
+ 4865 0795 FF       		.byte	-1
+ 4866 0796 FF       		.byte	-1
+ 4867 0797 FF       		.byte	-1
+ 4868 0798 FF       		.byte	-1
+ 4869 0799 FF       		.byte	-1
+ 4870 079a FF       		.byte	-1
+ 4871 079b FF       		.byte	-1
+ 4872 079c FF       		.byte	-1
+ 4873 079d FF       		.byte	-1
+ 4874 079e FF       		.byte	-1
+ 4875 079f FF       		.byte	-1
+ 4876 07a0 FF       		.byte	-1
+ 4877 07a1 FF       		.byte	-1
+ 4878 07a2 FF       		.byte	-1
+ 4879 07a3 FF       		.byte	-1
+ 4880 07a4 FF       		.byte	-1
+ 4881 07a5 FF       		.byte	-1
+ 4882 07a6 FF       		.byte	-1
+ 4883 07a7 FF       		.byte	-1
+ 4884 07a8 FF       		.byte	-1
+ 4885 07a9 FF       		.byte	-1
+ 4886 07aa FF       		.byte	-1
+ 4887 07ab FF       		.byte	-1
+ 4888 07ac FF       		.byte	-1
+ 4889 07ad FF       		.byte	-1
+ 4890 07ae FF       		.byte	-1
+ 4891 07af FF       		.byte	-1
+ 4892              		.data
+ 4893              		.align	2
+ 4894              		.set	.LANCHOR0,. + 0
+ 4897              	Stru_Bitmap_gbMouse:
+ 4898 0000 10       		.byte	16
+ 4899 0001 04       		.byte	4
+ 4900 0002 0C00     		.short	12
+ 4901 0004 1400     		.short	20
+ 4902 0006 0000     		.space	2
+ 4903 0008 FF000000 		.word	255
+ 4904 000c 00000000 		.word	ucMouseMap
+ 4907              	Stru_Bitmap_fichaNegra:
+ 4908 0010 10       		.byte	16
+ 4909 0011 04       		.byte	4
+ 4910 0012 1800     		.short	24
+ 4911 0014 1800     		.short	24
+ 4912 0016 0000     		.space	2
+ 4913 0018 FF000000 		.word	255
+ 4914 001c 00000000 		.word	fichaNegra
+ 4917              	Stru_Bitmap_fichaGris:
+ 4918 0020 10       		.byte	16
+ 4919 0021 04       		.byte	4
+ 4920 0022 1800     		.short	24
+ 4921 0024 1800     		.short	24
+ 4922 0026 0000     		.space	2
+ 4923 0028 FF000000 		.word	255
+ 4924 002c 00000000 		.word	fichaGris
+ 4927              	Stru_Bitmap_fichaBlanca:
+ 4928 0030 10       		.byte	16
+ 4929 0031 04       		.byte	4
+ 4930 0032 1800     		.short	24
+ 4931 0034 1800     		.short	24
+ 4932 0036 0000     		.space	2
+ 4933 0038 FF000000 		.word	255
+ 4934 003c 00000000 		.word	fichaBlanca
+ 4935              		.text
+ 4936              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 Bmp.c
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1211   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1214   .text:00000000 BitmapView
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1490   .text:000002c4 BitmapPush
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1808   .text:000005a8 $d
+                            *COM*:00000002 ulMouseX
+                            *COM*:00000002 ulMouseY
+                            *COM*:00000078 ucCursorBackUp
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1814   .text:000005b4 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:1817   .text:000005b4 BitmapPop
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2132   .text:000008a0 $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2136   .text:000008a4 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2139   .text:000008a4 CursorInit
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2446   .text:00000b1c $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2452   .text:00000b28 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2455   .text:00000b28 CursorPush
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2499   .text:00000b70 $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2503   .text:00000b74 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2506   .text:00000b74 CursorPop
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2547   .text:00000bc4 $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2553   .text:00000bd0 $a
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2556   .text:00000bd0 CursorView
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2895   .text:00000ec0 $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2914   .rodata:00000000 ucMouseMap
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:3157   .rodata:000000f0 fichaNegra
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:3736   .rodata:00000330 fichaGris
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4315   .rodata:00000570 fichaBlanca
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4897   .data:00000000 Stru_Bitmap_gbMouse
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4907   .data:00000010 Stru_Bitmap_fichaNegra
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4917   .data:00000020 Stru_Bitmap_fichaGris
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4927   .data:00000030 Stru_Bitmap_fichaBlanca
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:2911   .rodata:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccKJqHw1.s:4893   .data:00000000 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

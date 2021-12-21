@@ -1,0 +1,404 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"pila_depuracion.c"
+  21              	.Ltext0:
+  22              		.file 1 "../pila_depuracion.c"
+ 1225              		.align	2
+ 1226              	lista_eventos:
+ 1227 0000 00000000 		.space	4
+ 1228              		.align	2
+ 1229              	head:
+ 1230 0004 00000000 		.space	4
+ 1231              		.align	2
+ 1232              	tail:
+ 1233 0008 00000000 		.space	4
+ 1234              		.global	MAXEVENTOS
+ 1235              		.section	.rodata
+ 1236              		.align	2
+ 1239              	MAXEVENTOS:
+ 1240 0000 00010000 		.word	256
+ 1241              		.bss
+ 1242              		.align	2
+ 1243              	n:
+ 1244 000c 00000000 		.space	4
+ 1245              		.text
+ 1246              		.align	2
+ 1247              		.global	inicializar_pila
+ 1249              	inicializar_pila:
+ 1250              	.LFB0:
+   1:../pila_depuracion.c **** #include "pila_depuracion.h"
+   2:../pila_depuracion.c **** #include "timer2.h"
+   3:../pila_depuracion.c **** 
+   4:../pila_depuracion.c **** /* Ini lista circular 	0xc7fe700
+   5:../pila_depuracion.c ****  * 256x8
+   6:../pila_depuracion.c ****  * Fin lista circular 	0xc7fef00
+   7:../pila_depuracion.c ****  * 256
+   8:../pila_depuracion.c ****  * UserStack 			0xc7ff000
+   9:../pila_depuracion.c ****  */
+  10:../pila_depuracion.c **** enum {direccion=0xc7fe700};
+  11:../pila_depuracion.c **** 
+  12:../pila_depuracion.c **** /* Registro creado para almacenar los 2 enteros que guardamos de cada evento*/
+  13:../pila_depuracion.c **** typedef struct elemento_pila{
+  14:../pila_depuracion.c **** 	uint32_t ID_evento_auxData;		//32 bits: 8 mas significativos ID_evento, 24 restantes auxData
+  15:../pila_depuracion.c **** 	unsigned int momento_invocacion;	//instante(timer2) de guardado del evento en pila
+  16:../pila_depuracion.c **** } elemento_pila;
+  17:../pila_depuracion.c **** 
+  18:../pila_depuracion.c **** /*--- variables globales del modulo ---*/
+  19:../pila_depuracion.c **** static elemento_pila *lista_eventos;
+  20:../pila_depuracion.c **** static int head;			//indice primer evento lista
+  21:../pila_depuracion.c **** static int tail;			//indice ultimo evento lista
+  22:../pila_depuracion.c **** const int MAXEVENTOS=256;	//maximo de elementos en la lista
+  23:../pila_depuracion.c **** static int n;				//numero de elementos apilados
+  24:../pila_depuracion.c **** 
+  25:../pila_depuracion.c **** 
+  26:../pila_depuracion.c **** /*--- codigo de las funciones publicas ---*/
+  27:../pila_depuracion.c **** void inicializar_pila(){
+ 1251              		.loc 1 27 0
+ 1252              		.cfi_startproc
+ 1253              		@ Function supports interworking.
+ 1254              		@ args = 0, pretend = 0, frame = 0
+ 1255              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1256 0000 0DC0A0E1 		mov	ip, sp
+ 1257              	.LCFI0:
+ 1258              		.cfi_def_cfa_register 12
+ 1259 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1260 0008 04B04CE2 		sub	fp, ip, #4
+ 1261              		.cfi_offset 14, -8
+ 1262              		.cfi_offset 13, -12
+ 1263              		.cfi_offset 11, -16
+ 1264              	.LCFI1:
+ 1265              		.cfi_def_cfa 11, 4
+  28:../pila_depuracion.c **** 	lista_eventos=direccion;//asignamos direccion inicial de la lista
+ 1266              		.loc 1 28 0
+ 1267 000c 34309FE5 		ldr	r3, .L2
+ 1268 0010 34209FE5 		ldr	r2, .L2+4
+ 1269 0014 002083E5 		str	r2, [r3, #0]
+  29:../pila_depuracion.c **** 	head=0;
+ 1270              		.loc 1 29 0
+ 1271 0018 30309FE5 		ldr	r3, .L2+8
+ 1272 001c 0020A0E3 		mov	r2, #0
+ 1273 0020 002083E5 		str	r2, [r3, #0]
+  30:../pila_depuracion.c **** 	tail=0;
+ 1274              		.loc 1 30 0
+ 1275 0024 28309FE5 		ldr	r3, .L2+12
+ 1276 0028 0020A0E3 		mov	r2, #0
+ 1277 002c 002083E5 		str	r2, [r3, #0]
+  31:../pila_depuracion.c **** 	n=0;
+ 1278              		.loc 1 31 0
+ 1279 0030 20309FE5 		ldr	r3, .L2+16
+ 1280 0034 0020A0E3 		mov	r2, #0
+ 1281 0038 002083E5 		str	r2, [r3, #0]
+  32:../pila_depuracion.c **** }
+ 1282              		.loc 1 32 0
+ 1283 003c 0CD04BE2 		sub	sp, fp, #12
+ 1284 0040 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1285 0044 1EFF2FE1 		bx	lr
+ 1286              	.L3:
+ 1287              		.align	2
+ 1288              	.L2:
+ 1289 0048 00000000 		.word	lista_eventos
+ 1290 004c 00E77F0C 		.word	209708800
+ 1291 0050 04000000 		.word	head
+ 1292 0054 08000000 		.word	tail
+ 1293 0058 0C000000 		.word	n
+ 1294              		.cfi_endproc
+ 1295              	.LFE0:
+ 1297              		.align	2
+ 1298              		.global	push_debug
+ 1300              	push_debug:
+ 1301              	.LFB1:
+  33:../pila_depuracion.c **** void push_debug(uint8_t ID_evento, uint32_t auxData){
+ 1302              		.loc 1 33 0
+ 1303              		.cfi_startproc
+ 1304              		@ Function supports interworking.
+ 1305              		@ args = 0, pretend = 0, frame = 32
+ 1306              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1307 005c 0DC0A0E1 		mov	ip, sp
+ 1308              	.LCFI2:
+ 1309              		.cfi_def_cfa_register 12
+ 1310 0060 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1311 0064 04B04CE2 		sub	fp, ip, #4
+ 1312              		.cfi_offset 14, -8
+ 1313              		.cfi_offset 13, -12
+ 1314              		.cfi_offset 11, -16
+ 1315              	.LCFI3:
+ 1316              		.cfi_def_cfa 11, 4
+ 1317 0068 20D04DE2 		sub	sp, sp, #32
+ 1318 006c 0030A0E1 		mov	r3, r0
+ 1319 0070 2C100BE5 		str	r1, [fp, #-44]
+ 1320 0074 25304BE5 		strb	r3, [fp, #-37]
+  34:../pila_depuracion.c **** 	unsigned int time=timer2_leer();
+ 1321              		.loc 1 34 0
+ 1322 0078 FEFFFFEB 		bl	timer2_leer
+ 1323 007c 10000BE5 		str	r0, [fp, #-16]
+  35:../pila_depuracion.c **** 	uint32_t aux=ID_evento;
+ 1324              		.loc 1 35 0
+ 1325 0080 25305BE5 		ldrb	r3, [fp, #-37]	@ zero_extendqisi2
+ 1326 0084 14300BE5 		str	r3, [fp, #-20]
+  36:../pila_depuracion.c **** 	uint32_t ID_data=auxData&(0x00ffffff);
+ 1327              		.loc 1 36 0
+ 1328 0088 2C301BE5 		ldr	r3, [fp, #-44]
+ 1329 008c FF34C3E3 		bic	r3, r3, #-16777216
+ 1330 0090 18300BE5 		str	r3, [fp, #-24]
+  37:../pila_depuracion.c **** 	ID_data |= (aux<<24);
+ 1331              		.loc 1 37 0
+ 1332 0094 14301BE5 		ldr	r3, [fp, #-20]
+ 1333 0098 033CA0E1 		mov	r3, r3, asl #24
+ 1334 009c 18201BE5 		ldr	r2, [fp, #-24]
+ 1335 00a0 033082E1 		orr	r3, r2, r3
+ 1336 00a4 18300BE5 		str	r3, [fp, #-24]
+  38:../pila_depuracion.c **** 	elemento_pila nuevo;
+  39:../pila_depuracion.c **** 	nuevo.ID_evento_auxData=ID_data;
+ 1337              		.loc 1 39 0
+ 1338 00a8 18301BE5 		ldr	r3, [fp, #-24]
+ 1339 00ac 20300BE5 		str	r3, [fp, #-32]
+  40:../pila_depuracion.c **** 	nuevo.momento_invocacion=time;
+ 1340              		.loc 1 40 0
+ 1341 00b0 10301BE5 		ldr	r3, [fp, #-16]
+ 1342 00b4 1C300BE5 		str	r3, [fp, #-28]
+  41:../pila_depuracion.c **** 	lista_eventos[tail]=nuevo;
+ 1343              		.loc 1 41 0
+ 1344 00b8 78309FE5 		ldr	r3, .L7
+ 1345 00bc 002093E5 		ldr	r2, [r3, #0]
+ 1346 00c0 74309FE5 		ldr	r3, .L7+4
+ 1347 00c4 003093E5 		ldr	r3, [r3, #0]
+ 1348 00c8 8331A0E1 		mov	r3, r3, asl #3
+ 1349 00cc 033082E0 		add	r3, r2, r3
+ 1350 00d0 20204BE2 		sub	r2, fp, #32
+ 1351 00d4 030092E8 		ldmia	r2, {r0, r1}
+ 1352 00d8 030083E8 		stmia	r3, {r0, r1}
+  42:../pila_depuracion.c **** 	//Si tail llega al limite, el siguiente dato se guarda en la pos 0
+  43:../pila_depuracion.c **** 	if(tail==MAXEVENTOS){
+ 1353              		.loc 1 43 0
+ 1354 00dc 58309FE5 		ldr	r3, .L7+4
+ 1355 00e0 002093E5 		ldr	r2, [r3, #0]
+ 1356 00e4 54309FE5 		ldr	r3, .L7+8
+ 1357 00e8 003093E5 		ldr	r3, [r3, #0]
+ 1358 00ec 030052E1 		cmp	r2, r3
+ 1359 00f0 0300001A 		bne	.L5
+  44:../pila_depuracion.c **** 		tail=0;
+ 1360              		.loc 1 44 0
+ 1361 00f4 40309FE5 		ldr	r3, .L7+4
+ 1362 00f8 0020A0E3 		mov	r2, #0
+ 1363 00fc 002083E5 		str	r2, [r3, #0]
+ 1364 0100 040000EA 		b	.L6
+ 1365              	.L5:
+  45:../pila_depuracion.c **** 	}else{
+  46:../pila_depuracion.c **** 		tail++;
+ 1366              		.loc 1 46 0
+ 1367 0104 30309FE5 		ldr	r3, .L7+4
+ 1368 0108 003093E5 		ldr	r3, [r3, #0]
+ 1369 010c 012083E2 		add	r2, r3, #1
+ 1370 0110 24309FE5 		ldr	r3, .L7+4
+ 1371 0114 002083E5 		str	r2, [r3, #0]
+ 1372              	.L6:
+  47:../pila_depuracion.c **** 	}
+  48:../pila_depuracion.c **** 	n++;
+ 1373              		.loc 1 48 0
+ 1374 0118 24309FE5 		ldr	r3, .L7+12
+ 1375 011c 003093E5 		ldr	r3, [r3, #0]
+ 1376 0120 012083E2 		add	r2, r3, #1
+ 1377 0124 18309FE5 		ldr	r3, .L7+12
+ 1378 0128 002083E5 		str	r2, [r3, #0]
+  49:../pila_depuracion.c **** }
+ 1379              		.loc 1 49 0
+ 1380 012c 0CD04BE2 		sub	sp, fp, #12
+ 1381 0130 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1382 0134 1EFF2FE1 		bx	lr
+ 1383              	.L8:
+ 1384              		.align	2
+ 1385              	.L7:
+ 1386 0138 00000000 		.word	lista_eventos
+ 1387 013c 08000000 		.word	tail
+ 1388 0140 00000000 		.word	MAXEVENTOS
+ 1389 0144 0C000000 		.word	n
+ 1390              		.cfi_endproc
+ 1391              	.LFE1:
+ 1393              		.align	2
+ 1394              		.global	pop_debug
+ 1396              	pop_debug:
+ 1397              	.LFB2:
+  50:../pila_depuracion.c **** 
+  51:../pila_depuracion.c **** void pop_debug(uint32_t *ID_evento, uint32_t *auxData,unsigned int *time){
+ 1398              		.loc 1 51 0
+ 1399              		.cfi_startproc
+ 1400              		@ Function supports interworking.
+ 1401              		@ args = 0, pretend = 0, frame = 24
+ 1402              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1403 0148 0DC0A0E1 		mov	ip, sp
+ 1404              	.LCFI4:
+ 1405              		.cfi_def_cfa_register 12
+ 1406 014c 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1407 0150 04B04CE2 		sub	fp, ip, #4
+ 1408              		.cfi_offset 14, -8
+ 1409              		.cfi_offset 13, -12
+ 1410              		.cfi_offset 11, -16
+ 1411              	.LCFI5:
+ 1412              		.cfi_def_cfa 11, 4
+ 1413 0154 18D04DE2 		sub	sp, sp, #24
+ 1414 0158 18000BE5 		str	r0, [fp, #-24]
+ 1415 015c 1C100BE5 		str	r1, [fp, #-28]
+ 1416 0160 20200BE5 		str	r2, [fp, #-32]
+  52:../pila_depuracion.c **** 	if(n!=0){
+ 1417              		.loc 1 52 0
+ 1418 0164 C8309FE5 		ldr	r3, .L13
+ 1419 0168 003093E5 		ldr	r3, [r3, #0]
+ 1420 016c 000053E3 		cmp	r3, #0
+ 1421 0170 2C00000A 		beq	.L9
+ 1422              	.LBB2:
+  53:../pila_depuracion.c **** 		uint32_t get_ID_Data=lista_eventos[head].ID_evento_auxData;//leemos evento
+ 1423              		.loc 1 53 0
+ 1424 0174 BC309FE5 		ldr	r3, .L13+4
+ 1425 0178 002093E5 		ldr	r2, [r3, #0]
+ 1426 017c B8309FE5 		ldr	r3, .L13+8
+ 1427 0180 003093E5 		ldr	r3, [r3, #0]
+ 1428 0184 8331A0E1 		mov	r3, r3, asl #3
+ 1429 0188 033082E0 		add	r3, r2, r3
+ 1430 018c 003093E5 		ldr	r3, [r3, #0]
+ 1431 0190 10300BE5 		str	r3, [fp, #-16]
+  54:../pila_depuracion.c **** 		*ID_evento=get_ID_Data>>24;
+ 1432              		.loc 1 54 0
+ 1433 0194 10301BE5 		ldr	r3, [fp, #-16]
+ 1434 0198 232CA0E1 		mov	r2, r3, lsr #24
+ 1435 019c 18301BE5 		ldr	r3, [fp, #-24]
+ 1436 01a0 002083E5 		str	r2, [r3, #0]
+  55:../pila_depuracion.c **** 		*auxData=get_ID_Data&(0x00ffffff);
+ 1437              		.loc 1 55 0
+ 1438 01a4 10301BE5 		ldr	r3, [fp, #-16]
+ 1439 01a8 FF24C3E3 		bic	r2, r3, #-16777216
+ 1440 01ac 1C301BE5 		ldr	r3, [fp, #-28]
+ 1441 01b0 002083E5 		str	r2, [r3, #0]
+  56:../pila_depuracion.c **** 		*time=lista_eventos[head].momento_invocacion;//leemos instante
+ 1442              		.loc 1 56 0
+ 1443 01b4 7C309FE5 		ldr	r3, .L13+4
+ 1444 01b8 002093E5 		ldr	r2, [r3, #0]
+ 1445 01bc 78309FE5 		ldr	r3, .L13+8
+ 1446 01c0 003093E5 		ldr	r3, [r3, #0]
+ 1447 01c4 8331A0E1 		mov	r3, r3, asl #3
+ 1448 01c8 033082E0 		add	r3, r2, r3
+ 1449 01cc 042093E5 		ldr	r2, [r3, #4]
+ 1450 01d0 20301BE5 		ldr	r3, [fp, #-32]
+ 1451 01d4 002083E5 		str	r2, [r3, #0]
+  57:../pila_depuracion.c **** 		if(head==MAXEVENTOS){
+ 1452              		.loc 1 57 0
+ 1453 01d8 5C309FE5 		ldr	r3, .L13+8
+ 1454 01dc 002093E5 		ldr	r2, [r3, #0]
+ 1455 01e0 58309FE5 		ldr	r3, .L13+12
+ 1456 01e4 003093E5 		ldr	r3, [r3, #0]
+ 1457 01e8 030052E1 		cmp	r2, r3
+ 1458 01ec 0300001A 		bne	.L11
+  58:../pila_depuracion.c **** 			head=0;
+ 1459              		.loc 1 58 0
+ 1460 01f0 44309FE5 		ldr	r3, .L13+8
+ 1461 01f4 0020A0E3 		mov	r2, #0
+ 1462 01f8 002083E5 		str	r2, [r3, #0]
+ 1463 01fc 040000EA 		b	.L12
+ 1464              	.L11:
+  59:../pila_depuracion.c **** 		}else{
+  60:../pila_depuracion.c **** 			head++;
+ 1465              		.loc 1 60 0
+ 1466 0200 34309FE5 		ldr	r3, .L13+8
+ 1467 0204 003093E5 		ldr	r3, [r3, #0]
+ 1468 0208 012083E2 		add	r2, r3, #1
+ 1469 020c 28309FE5 		ldr	r3, .L13+8
+ 1470 0210 002083E5 		str	r2, [r3, #0]
+ 1471              	.L12:
+  61:../pila_depuracion.c **** 		}
+  62:../pila_depuracion.c **** 		n--;
+ 1472              		.loc 1 62 0
+ 1473 0214 18309FE5 		ldr	r3, .L13
+ 1474 0218 003093E5 		ldr	r3, [r3, #0]
+ 1475 021c 012043E2 		sub	r2, r3, #1
+ 1476 0220 0C309FE5 		ldr	r3, .L13
+ 1477 0224 002083E5 		str	r2, [r3, #0]
+ 1478              	.L9:
+ 1479              	.LBE2:
+  63:../pila_depuracion.c **** 	}
+  64:../pila_depuracion.c **** }
+ 1480              		.loc 1 64 0
+ 1481 0228 0CD04BE2 		sub	sp, fp, #12
+ 1482 022c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1483 0230 1EFF2FE1 		bx	lr
+ 1484              	.L14:
+ 1485              		.align	2
+ 1486              	.L13:
+ 1487 0234 0C000000 		.word	n
+ 1488 0238 00000000 		.word	lista_eventos
+ 1489 023c 04000000 		.word	head
+ 1490 0240 00000000 		.word	MAXEVENTOS
+ 1491              		.cfi_endproc
+ 1492              	.LFE2:
+ 1494              		.align	2
+ 1495              		.global	hayEvento
+ 1497              	hayEvento:
+ 1498              	.LFB3:
+  65:../pila_depuracion.c **** 
+  66:../pila_depuracion.c **** int hayEvento(){
+ 1499              		.loc 1 66 0
+ 1500              		.cfi_startproc
+ 1501              		@ Function supports interworking.
+ 1502              		@ args = 0, pretend = 0, frame = 0
+ 1503              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1504 0244 0DC0A0E1 		mov	ip, sp
+ 1505              	.LCFI6:
+ 1506              		.cfi_def_cfa_register 12
+ 1507 0248 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1508 024c 04B04CE2 		sub	fp, ip, #4
+ 1509              		.cfi_offset 14, -8
+ 1510              		.cfi_offset 13, -12
+ 1511              		.cfi_offset 11, -16
+ 1512              	.LCFI7:
+ 1513              		.cfi_def_cfa 11, 4
+  67:../pila_depuracion.c **** 	return n!=0;
+ 1514              		.loc 1 67 0
+ 1515 0250 1C309FE5 		ldr	r3, .L16
+ 1516 0254 003093E5 		ldr	r3, [r3, #0]
+ 1517 0258 000053E3 		cmp	r3, #0
+ 1518 025c 0030A003 		moveq	r3, #0
+ 1519 0260 0130A013 		movne	r3, #1
+  68:../pila_depuracion.c **** }
+ 1520              		.loc 1 68 0
+ 1521 0264 0300A0E1 		mov	r0, r3
+ 1522 0268 0CD04BE2 		sub	sp, fp, #12
+ 1523 026c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1524 0270 1EFF2FE1 		bx	lr
+ 1525              	.L17:
+ 1526              		.align	2
+ 1527              	.L16:
+ 1528 0274 0C000000 		.word	n
+ 1529              		.cfi_endproc
+ 1530              	.LFE3:
+ 1532              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 pila_depuracion.c
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1225   .bss:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1226   .bss:00000000 lista_eventos
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1229   .bss:00000004 head
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1232   .bss:00000008 tail
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1239   .rodata:00000000 MAXEVENTOS
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1236   .rodata:00000000 $d
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1243   .bss:0000000c n
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1246   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1249   .text:00000000 inicializar_pila
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1289   .text:00000048 $d
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1297   .text:0000005c $a
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1300   .text:0000005c push_debug
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1386   .text:00000138 $d
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1393   .text:00000148 $a
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1396   .text:00000148 pop_debug
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1487   .text:00000234 $d
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1494   .text:00000244 $a
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1497   .text:00000244 hayEvento
+C:\Users\sergi\AppData\Local\Temp\ccsDtXdi.s:1528   .text:00000274 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+timer2_leer

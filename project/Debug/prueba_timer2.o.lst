@@ -1,0 +1,260 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"prueba_timer2.c"
+  21              	.Ltext0:
+  22              		.file 1 "../prueba_timer2.c"
+ 1020              		.align	2
+ 1021              		.global	probar_timer2
+ 1023              	probar_timer2:
+ 1024              	.LFB0:
+   1:../prueba_timer2.c **** /*********************************************************************************************
+   2:../prueba_timer2.c **** * Fichero:		prueba_timer2.c
+   3:../prueba_timer2.c **** * Autor1:	Sergio García Esteban	755844
+   4:../prueba_timer2.c **** * Autor2:	Irene Fumanal Lacoma	758325
+   5:../prueba_timer2.c **** * Descrip:		Funciones de debugg de timer2.
+   6:../prueba_timer2.c **** * Version:
+   7:../prueba_timer2.c **** *********************************************************************************************/
+   8:../prueba_timer2.c **** 
+   9:../prueba_timer2.c **** /*--- ficheros de cabecera ---*/
+  10:../prueba_timer2.c **** #include "timer2.h"
+  11:../prueba_timer2.c **** #include "44blib.h"
+  12:../prueba_timer2.c **** 
+  13:../prueba_timer2.c **** /*--- valores y constantes ---*/
+  14:../prueba_timer2.c **** enum{ TIEMPO1=1000 };
+  15:../prueba_timer2.c **** enum{ TIEMPO2=10000 };
+  16:../prueba_timer2.c **** enum{ TIEMPO3=1000000 };
+  17:../prueba_timer2.c **** enum{ TIEMPO4=10000000 };
+  18:../prueba_timer2.c **** enum{ DELAY_UNIT=100 };//Delay 100us resolution
+  19:../prueba_timer2.c **** 
+  20:../prueba_timer2.c **** /*
+  21:../prueba_timer2.c ****  * Prueba el funcionamiento del timer2 comparando los tiempos con los de Delay()
+  22:../prueba_timer2.c ****  * Si no coinciden entra en bucle infinito.
+  23:../prueba_timer2.c ****  */
+  24:../prueba_timer2.c **** void probar_timer2(){
+ 1025              		.loc 1 24 0
+ 1026              		.cfi_startproc
+ 1027              		@ Function supports interworking.
+ 1028              		@ args = 0, pretend = 0, frame = 0
+ 1029              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1030 0000 0DC0A0E1 		mov	ip, sp
+ 1031              	.LCFI0:
+ 1032              		.cfi_def_cfa_register 12
+ 1033 0004 F8D92DE9 		stmfd	sp!, {r3, r4, r5, r6, r7, r8, fp, ip, lr, pc}
+ 1034 0008 04B04CE2 		sub	fp, ip, #4
+ 1035              		.cfi_offset 14, -8
+ 1036              		.cfi_offset 13, -12
+ 1037              		.cfi_offset 11, -16
+ 1038              		.cfi_offset 8, -20
+ 1039              		.cfi_offset 7, -24
+ 1040              		.cfi_offset 6, -28
+ 1041              		.cfi_offset 5, -32
+ 1042              		.cfi_offset 4, -36
+ 1043              		.cfi_offset 3, -40
+ 1044              	.LCFI1:
+ 1045              		.cfi_def_cfa 11, 4
+  25:../prueba_timer2.c **** 	unsigned int t1;
+  26:../prueba_timer2.c **** 	unsigned int t2;
+  27:../prueba_timer2.c **** 	unsigned int t3;
+  28:../prueba_timer2.c **** 	unsigned int t4;
+  29:../prueba_timer2.c **** 	timer2_inicializar();
+ 1046              		.loc 1 29 0
+ 1047 000c FEFFFFEB 		bl	timer2_inicializar
+  30:../prueba_timer2.c **** 
+  31:../prueba_timer2.c **** 	timer2_empezar();
+ 1048              		.loc 1 31 0
+ 1049 0010 FEFFFFEB 		bl	timer2_empezar
+  32:../prueba_timer2.c **** 	Delay(TIEMPO1/DELAY_UNIT);
+ 1050              		.loc 1 32 0
+ 1051 0014 0A00A0E3 		mov	r0, #10
+ 1052 0018 FEFFFFEB 		bl	Delay
+  33:../prueba_timer2.c **** 	t1 = timer2_leer();//1000
+ 1053              		.loc 1 33 0
+ 1054 001c FEFFFFEB 		bl	timer2_leer
+ 1055 0020 0060A0E1 		mov	r6, r0
+ 1056              	.LVL0:
+  34:../prueba_timer2.c **** 
+  35:../prueba_timer2.c **** 	timer2_empezar();
+ 1057              		.loc 1 35 0
+ 1058 0024 FEFFFFEB 		bl	timer2_empezar
+ 1059              	.LVL1:
+  36:../prueba_timer2.c **** 	Delay(TIEMPO2/DELAY_UNIT);
+ 1060              		.loc 1 36 0
+ 1061 0028 6400A0E3 		mov	r0, #100
+ 1062 002c FEFFFFEB 		bl	Delay
+  37:../prueba_timer2.c **** 	t2 = timer2_leer();//10000
+ 1063              		.loc 1 37 0
+ 1064 0030 FEFFFFEB 		bl	timer2_leer
+ 1065 0034 0050A0E1 		mov	r5, r0
+ 1066              	.LVL2:
+  38:../prueba_timer2.c **** 
+  39:../prueba_timer2.c **** 	timer2_empezar();
+ 1067              		.loc 1 39 0
+ 1068 0038 FEFFFFEB 		bl	timer2_empezar
+ 1069              	.LVL3:
+  40:../prueba_timer2.c **** 	Delay(TIEMPO3/DELAY_UNIT);
+ 1070              		.loc 1 40 0
+ 1071 003c 38019FE5 		ldr	r0, .L24
+ 1072 0040 FEFFFFEB 		bl	Delay
+  41:../prueba_timer2.c **** 	t3 = timer2_leer();//1000000
+ 1073              		.loc 1 41 0
+ 1074 0044 FEFFFFEB 		bl	timer2_leer
+ 1075 0048 0040A0E1 		mov	r4, r0
+ 1076              	.LVL4:
+  42:../prueba_timer2.c **** 
+  43:../prueba_timer2.c **** 	timer2_empezar();
+ 1077              		.loc 1 43 0
+ 1078 004c FEFFFFEB 		bl	timer2_empezar
+ 1079              	.LVL5:
+  44:../prueba_timer2.c **** 	Delay(TIEMPO4/DELAY_UNIT);
+ 1080              		.loc 1 44 0
+ 1081 0050 28019FE5 		ldr	r0, .L24+4
+ 1082 0054 FEFFFFEB 		bl	Delay
+  45:../prueba_timer2.c **** 	t4 = timer2_parar();//10000000
+ 1083              		.loc 1 45 0
+ 1084 0058 FEFFFFEB 		bl	timer2_parar
+ 1085 005c 0080A0E1 		mov	r8, r0
+ 1086              	.LVL6:
+  46:../prueba_timer2.c **** 
+  47:../prueba_timer2.c **** 	// Si hay un error mayor al 5%, entra en bucle infinito.
+  48:../prueba_timer2.c **** 	if( t1<(TIEMPO1*0.95) || t1>(TIEMPO1*1.05) )	while(1);
+ 1087              		.loc 1 48 0
+ 1088 0060 0600A0E1 		mov	r0, r6
+ 1089              	.LVL7:
+ 1090 0064 FEFFFFEB 		bl	__aeabi_ui2d
+ 1091 0068 0020A0E3 		mov	r2, #0
+ 1092 006c 10319FE5 		ldr	r3, .L24+8
+ 1093 0070 0060A0E1 		mov	r6, r0
+ 1094              	.LVL8:
+ 1095 0074 0170A0E1 		mov	r7, r1
+ 1096 0078 FEFFFFEB 		bl	__aeabi_dcmplt
+ 1097 007c 000050E3 		cmp	r0, #0
+ 1098 0080 0000000A 		beq	.L23
+ 1099              	.L2:
+ 1100              	.L15:
+ 1101 0084 FEFFFFEA 		b	.L15
+ 1102              	.L23:
+ 1103              		.loc 1 48 0 is_stmt 0 discriminator 2
+ 1104 0088 0600A0E1 		mov	r0, r6
+ 1105 008c 0710A0E1 		mov	r1, r7
+ 1106 0090 0020A0E3 		mov	r2, #0
+ 1107 0094 EC309FE5 		ldr	r3, .L24+12
+ 1108 0098 FEFFFFEB 		bl	__aeabi_dcmpgt
+ 1109 009c 000050E3 		cmp	r0, #0
+ 1110 00a0 F7FFFF1A 		bne	.L2
+  49:../prueba_timer2.c **** 	if( t2<(TIEMPO2*0.95) || t2>(TIEMPO2*1.05) )	while(1);
+ 1111              		.loc 1 49 0 is_stmt 1
+ 1112 00a4 0500A0E1 		mov	r0, r5
+ 1113 00a8 FEFFFFEB 		bl	__aeabi_ui2d
+ 1114 00ac 0020A0E3 		mov	r2, #0
+ 1115 00b0 D4309FE5 		ldr	r3, .L24+16
+ 1116 00b4 0050A0E1 		mov	r5, r0
+ 1117              	.LVL9:
+ 1118 00b8 0160A0E1 		mov	r6, r1
+ 1119 00bc FEFFFFEB 		bl	__aeabi_dcmplt
+ 1120 00c0 000050E3 		cmp	r0, #0
+ 1121 00c4 0600001A 		bne	.L5
+ 1122              		.loc 1 49 0 is_stmt 0 discriminator 2
+ 1123 00c8 0500A0E1 		mov	r0, r5
+ 1124 00cc 0610A0E1 		mov	r1, r6
+ 1125 00d0 0020A0E3 		mov	r2, #0
+ 1126 00d4 B4309FE5 		ldr	r3, .L24+20
+ 1127 00d8 FEFFFFEB 		bl	__aeabi_dcmpgt
+ 1128 00dc 000050E3 		cmp	r0, #0
+ 1129 00e0 0000000A 		beq	.L16
+ 1130              	.L5:
+ 1131              	.L17:
+ 1132 00e4 FEFFFFEA 		b	.L17
+ 1133              	.L16:
+  50:../prueba_timer2.c **** 	if( t3<(TIEMPO3*0.95) || t3>(TIEMPO3*1.05) )	while(1);
+ 1134              		.loc 1 50 0 is_stmt 1
+ 1135 00e8 0400A0E1 		mov	r0, r4
+ 1136 00ec FEFFFFEB 		bl	__aeabi_ui2d
+ 1137 00f0 0020A0E3 		mov	r2, #0
+ 1138 00f4 98309FE5 		ldr	r3, .L24+24
+ 1139 00f8 0040A0E1 		mov	r4, r0
+ 1140              	.LVL10:
+ 1141 00fc 0150A0E1 		mov	r5, r1
+ 1142 0100 FEFFFFEB 		bl	__aeabi_dcmplt
+ 1143 0104 000050E3 		cmp	r0, #0
+ 1144 0108 0600001A 		bne	.L8
+ 1145              		.loc 1 50 0 is_stmt 0 discriminator 2
+ 1146 010c 0400A0E1 		mov	r0, r4
+ 1147 0110 0510A0E1 		mov	r1, r5
+ 1148 0114 0020A0E3 		mov	r2, #0
+ 1149 0118 78309FE5 		ldr	r3, .L24+28
+ 1150 011c FEFFFFEB 		bl	__aeabi_dcmpgt
+ 1151 0120 000050E3 		cmp	r0, #0
+ 1152 0124 0000000A 		beq	.L18
+ 1153              	.L8:
+ 1154              	.L19:
+ 1155 0128 FEFFFFEA 		b	.L19
+ 1156              	.L18:
+  51:../prueba_timer2.c **** 	if( t4<(TIEMPO4*0.95) || t4>(TIEMPO4*1.05) )	while(1);
+ 1157              		.loc 1 51 0 is_stmt 1
+ 1158 012c 0800A0E1 		mov	r0, r8
+ 1159 0130 FEFFFFEB 		bl	__aeabi_ui2d
+ 1160 0134 0020A0E3 		mov	r2, #0
+ 1161 0138 5C309FE5 		ldr	r3, .L24+32
+ 1162 013c 0040A0E1 		mov	r4, r0
+ 1163 0140 0150A0E1 		mov	r5, r1
+ 1164 0144 FEFFFFEB 		bl	__aeabi_dcmplt
+ 1165 0148 000050E3 		cmp	r0, #0
+ 1166 014c 0600001A 		bne	.L11
+ 1167              		.loc 1 51 0 is_stmt 0 discriminator 2
+ 1168 0150 0400A0E1 		mov	r0, r4
+ 1169 0154 0510A0E1 		mov	r1, r5
+ 1170 0158 0020A0E3 		mov	r2, #0
+ 1171 015c 3C309FE5 		ldr	r3, .L24+36
+ 1172 0160 FEFFFFEB 		bl	__aeabi_dcmpgt
+ 1173 0164 000050E3 		cmp	r0, #0
+ 1174 0168 0000000A 		beq	.L20
+ 1175              	.L11:
+ 1176              	.L21:
+ 1177 016c FEFFFFEA 		b	.L21
+ 1178              	.L20:
+  52:../prueba_timer2.c **** 
+  53:../prueba_timer2.c **** }
+ 1179              		.loc 1 53 0 is_stmt 1
+ 1180 0170 24D04BE2 		sub	sp, fp, #36
+ 1181 0174 F8699DE8 		ldmfd	sp, {r3, r4, r5, r6, r7, r8, fp, sp, lr}
+ 1182 0178 1EFF2FE1 		bx	lr
+ 1183              	.L25:
+ 1184              		.align	2
+ 1185              	.L24:
+ 1186 017c 10270000 		.word	10000
+ 1187 0180 A0860100 		.word	100000
+ 1188 0184 00B08D40 		.word	1083027456
+ 1189 0188 00689040 		.word	1083205632
+ 1190 018c 008EC240 		.word	1086492160
+ 1191 0190 0082C440 		.word	1086620160
+ 1192 0194 E0FD2C41 		.word	1093467616
+ 1193 0198 90053041 		.word	1093666192
+ 1194 019c AC1E6241 		.word	1096949420
+ 1195 01a0 F4066441 		.word	1097074420
+ 1196              		.cfi_endproc
+ 1197              	.LFE0:
+ 1199              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 prueba_timer2.c
+C:\Users\sergi\AppData\Local\Temp\ccjktYMj.s:1020   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\ccjktYMj.s:1023   .text:00000000 probar_timer2
+C:\Users\sergi\AppData\Local\Temp\ccjktYMj.s:1186   .text:0000017c $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_ui2d
+__aeabi_dcmplt
+__aeabi_dcmpgt
+timer2_inicializar
+timer2_empezar
+Delay
+timer2_leer
+timer2_parar

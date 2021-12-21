@@ -1,0 +1,229 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 2
+  10              		.eabi_attribute 18, 4
+  11              		.file	"reversi_main.c"
+  21              	.Ltext0:
+  22              		.file 1 "../reversi_main.c"
+ 2182              		.align	2
+ 2183              		.global	dormir_procesador
+ 2185              	dormir_procesador:
+ 2186              	.LFB0:
+   1:../reversi_main.c **** /*********************************************************************************************
+   2:../reversi_main.c **** * Fichero:		reversi_main.c
+   3:../reversi_main.c **** * Autor1:		Sergio García Esteban	755844
+   4:../reversi_main.c **** * Autor2:		Irene Fumanal Lacoma	758325
+   5:../reversi_main.c **** * Descrip:		Gestor de eventos.
+   6:../reversi_main.c **** * Version:
+   7:../reversi_main.c **** *********************************************************************************************/
+   8:../reversi_main.c **** 
+   9:../reversi_main.c **** /*--- ficheros de cabecera ---*/
+  10:../reversi_main.c **** #include "44blib.h"
+  11:../reversi_main.c **** #include "44b.h"
+  12:../reversi_main.c **** #include "reversi_main.h"
+  13:../reversi_main.c **** #include "jugada_por_pantalla.h"
+  14:../reversi_main.c **** #include "cola_depuracion.h"
+  15:../reversi_main.c **** #include "latido.h"
+  16:../reversi_main.c **** #include "botones_antirebotes.h"
+  17:../reversi_main.c **** #include "tp_antirebotes.h"
+  18:../reversi_main.c **** #include "pantalla.h"
+  19:../reversi_main.c **** #include <stdint.h>
+  20:../reversi_main.c **** 
+  21:../reversi_main.c **** 
+  22:../reversi_main.c **** /*
+  23:../reversi_main.c ****  * Configura el procesador en modo ahorro de energia
+  24:../reversi_main.c ****  */
+  25:../reversi_main.c **** void dormir_procesador(){
+ 2187              		.loc 1 25 0
+ 2188              		.cfi_startproc
+ 2189              		@ Function supports interworking.
+ 2190              		@ args = 0, pretend = 0, frame = 0
+ 2191              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2192              		@ link register save eliminated.
+  26:../reversi_main.c **** 	//modo de bajo consumo de energía
+  27:../reversi_main.c **** 	rCLKCON |= 0x404; // GPIO + IDLE
+ 2193              		.loc 1 27 0
+ 2194 0000 7637A0E3 		mov	r3, #30932992
+ 2195 0004 041093E5 		ldr	r1, [r3, #4]
+ 2196 0008 010B81E3 		orr	r0, r1, #1024
+ 2197 000c 042080E3 		orr	r2, r0, #4
+ 2198 0010 042083E5 		str	r2, [r3, #4]
+  28:../reversi_main.c **** }
+ 2199              		.loc 1 28 0
+ 2200 0014 1EFF2FE1 		bx	lr
+ 2201              		.cfi_endproc
+ 2202              	.LFE0:
+ 2204              		.align	2
+ 2205              		.global	reversi_main
+ 2207              	reversi_main:
+ 2208              	.LFB1:
+  29:../reversi_main.c **** 
+  30:../reversi_main.c **** /*
+  31:../reversi_main.c ****  * Comprueba si hay eventos y los procesa segun el tipo de evento.
+  32:../reversi_main.c ****  */
+  33:../reversi_main.c **** void reversi_main(){
+ 2209              		.loc 1 33 0
+ 2210              		.cfi_startproc
+ 2211              		@ Function supports interworking.
+ 2212              		@ args = 0, pretend = 0, frame = 16
+ 2213              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2214 0018 0DC0A0E1 		mov	ip, sp
+ 2215              	.LCFI0:
+ 2216              		.cfi_def_cfa_register 12
+ 2217 001c 10D82DE9 		stmfd	sp!, {r4, fp, ip, lr, pc}
+ 2218 0020 04B04CE2 		sub	fp, ip, #4
+ 2219              		.cfi_offset 14, -8
+ 2220              		.cfi_offset 13, -12
+ 2221              		.cfi_offset 11, -16
+ 2222              		.cfi_offset 4, -20
+ 2223              	.LCFI1:
+ 2224              		.cfi_def_cfa 11, 4
+ 2225 0024 14D04DE2 		sub	sp, sp, #20
+ 2226              	.LBB5:
+ 2227              	.LBB6:
+  27:../reversi_main.c **** 	rCLKCON |= 0x404; // GPIO + IDLE
+ 2228              		.loc 1 27 0
+ 2229 0028 7647A0E3 		mov	r4, #30932992
+ 2230              	.LVL0:
+ 2231              	.L12:
+ 2232              	.LBE6:
+ 2233              	.LBE5:
+  34:../reversi_main.c **** 
+  35:../reversi_main.c **** 	while(1){
+  36:../reversi_main.c **** 		while(hayEvento()){
+ 2234              		.loc 1 36 0 discriminator 1
+ 2235 002c FEFFFFEB 		bl	hayEvento
+ 2236 0030 000050E3 		cmp	r0, #0
+ 2237 0034 1200000A 		beq	.L15
+ 2238              	.L9:
+ 2239              	.LBB8:
+  37:../reversi_main.c **** 			ID_evento evento;
+  38:../reversi_main.c **** 			uint32_t info;
+  39:../reversi_main.c **** 			unsigned int t;
+  40:../reversi_main.c **** 			pop_debug(&evento,&info,&t);//obtenemos evento, info e instante
+ 2240              		.loc 1 40 0
+ 2241 0038 15004BE2 		sub	r0, fp, #21
+ 2242 003c 1C104BE2 		sub	r1, fp, #28
+ 2243 0040 20204BE2 		sub	r2, fp, #32
+ 2244 0044 FEFFFFEB 		bl	pop_debug
+  41:../reversi_main.c **** 
+  42:../reversi_main.c **** 			if (evento==ev_tick0){//-------------------------------------------------------
+ 2245              		.loc 1 42 0
+ 2246 0048 15005BE5 		ldrb	r0, [fp, #-21]	@ zero_extendqisi2
+ 2247 004c 010050E3 		cmp	r0, #1
+ 2248 0050 1500000A 		beq	.L16
+  43:../reversi_main.c **** 				LCD_Refresca_ttotal();			// comprueba si hay que refrescar el ttotal
+  44:../reversi_main.c **** 				LCD_imprimir();					// IMPRIME pantalla si hay cambios
+  45:../reversi_main.c **** 				Latido_ev_new_tick();			// latido led
+  46:../reversi_main.c **** 				antirrebotes_ev_tick();			// antirrebotes botones
+  47:../reversi_main.c **** 				tp_antirrebotes_ev_tick();		// antirrebotes tactil
+  48:../reversi_main.c **** 			}else if (evento==ev_pulsacion){//---------------------------------------------
+ 2249              		.loc 1 48 0
+ 2250 0054 020050E3 		cmp	r0, #2
+ 2251 0058 1900000A 		beq	.L17
+  49:../reversi_main.c **** 				antirrebotes_ev_boton();		// antirrebotes botones
+  50:../reversi_main.c **** 				jugada_x_pantalla(evento,info);	// AUTÓMATA juego
+  51:../reversi_main.c **** 			}else if (evento==ev_mantener){//----------------------------------------------
+ 2252              		.loc 1 51 0
+ 2253 005c 030050E3 		cmp	r0, #3
+ 2254 0060 0E00000A 		beq	.L13
+  52:../reversi_main.c **** 				jugada_x_pantalla(evento,info);	// AUTÓMATA juego
+  53:../reversi_main.c **** 			}else if (evento==ev_tactil){//------------------------------------------------
+ 2255              		.loc 1 53 0
+ 2256 0064 040050E3 		cmp	r0, #4
+ 2257 0068 0A00000A 		beq	.L18
+  54:../reversi_main.c **** 				tp_antirrebotes_ev_tactil();	// antirrebotes tactil
+  55:../reversi_main.c **** 				jugada_x_pantalla(evento,info);	// AUTÓMATA juego
+  56:../reversi_main.c **** 			}else if (evento==ev_dma){//---------------------------------------------------
+ 2258              		.loc 1 56 0
+ 2259 006c 050050E3 		cmp	r0, #5
+ 2260 0070 EDFFFF1A 		bne	.L12
+  57:../reversi_main.c **** 				LCD_DMA_ready();				// comunica que dma ha terminado
+ 2261              		.loc 1 57 0
+ 2262 0074 FEFFFFEB 		bl	LCD_DMA_ready
+ 2263              	.LBE8:
+  36:../reversi_main.c **** 		while(hayEvento()){
+ 2264              		.loc 1 36 0
+ 2265 0078 FEFFFFEB 		bl	hayEvento
+ 2266 007c 000050E3 		cmp	r0, #0
+ 2267 0080 ECFFFF1A 		bne	.L9
+ 2268              	.L15:
+ 2269              	.LBB9:
+ 2270              	.LBB7:
+  27:../reversi_main.c **** 	rCLKCON |= 0x404; // GPIO + IDLE
+ 2271              		.loc 1 27 0
+ 2272 0084 041094E5 		ldr	r1, [r4, #4]
+ 2273 0088 010B81E3 		orr	r0, r1, #1024
+ 2274 008c 043080E3 		orr	r3, r0, #4
+ 2275 0090 043084E5 		str	r3, [r4, #4]
+ 2276 0094 E4FFFFEA 		b	.L12
+ 2277              	.L18:
+ 2278              	.LBE7:
+ 2279              	.LBE9:
+ 2280              	.LBB10:
+  54:../reversi_main.c **** 				tp_antirrebotes_ev_tactil();	// antirrebotes tactil
+ 2281              		.loc 1 54 0
+ 2282 0098 FEFFFFEB 		bl	tp_antirrebotes_ev_tactil
+  55:../reversi_main.c **** 				jugada_x_pantalla(evento,info);	// AUTÓMATA juego
+ 2283              		.loc 1 55 0
+ 2284 009c 15005BE5 		ldrb	r0, [fp, #-21]	@ zero_extendqisi2
+ 2285              	.L13:
+ 2286 00a0 1C101BE5 		ldr	r1, [fp, #-28]
+ 2287 00a4 FEFFFFEB 		bl	jugada_x_pantalla
+ 2288 00a8 DFFFFFEA 		b	.L12
+ 2289              	.L16:
+  43:../reversi_main.c **** 				LCD_Refresca_ttotal();			// comprueba si hay que refrescar el ttotal
+ 2290              		.loc 1 43 0
+ 2291 00ac FEFFFFEB 		bl	LCD_Refresca_ttotal
+  44:../reversi_main.c **** 				LCD_imprimir();					// IMPRIME pantalla si hay cambios
+ 2292              		.loc 1 44 0
+ 2293 00b0 FEFFFFEB 		bl	LCD_imprimir
+  45:../reversi_main.c **** 				Latido_ev_new_tick();			// latido led
+ 2294              		.loc 1 45 0
+ 2295 00b4 FEFFFFEB 		bl	Latido_ev_new_tick
+  46:../reversi_main.c **** 				antirrebotes_ev_tick();			// antirrebotes botones
+ 2296              		.loc 1 46 0
+ 2297 00b8 FEFFFFEB 		bl	antirrebotes_ev_tick
+  47:../reversi_main.c **** 				tp_antirrebotes_ev_tick();		// antirrebotes tactil
+ 2298              		.loc 1 47 0
+ 2299 00bc FEFFFFEB 		bl	tp_antirrebotes_ev_tick
+ 2300 00c0 D9FFFFEA 		b	.L12
+ 2301              	.L17:
+  49:../reversi_main.c **** 				antirrebotes_ev_boton();		// antirrebotes botones
+ 2302              		.loc 1 49 0
+ 2303 00c4 FEFFFFEB 		bl	antirrebotes_ev_boton
+  50:../reversi_main.c **** 				jugada_x_pantalla(evento,info);	// AUTÓMATA juego
+ 2304              		.loc 1 50 0
+ 2305 00c8 15005BE5 		ldrb	r0, [fp, #-21]	@ zero_extendqisi2
+ 2306 00cc 1C101BE5 		ldr	r1, [fp, #-28]
+ 2307 00d0 FEFFFFEB 		bl	jugada_x_pantalla
+ 2308 00d4 D4FFFFEA 		b	.L12
+ 2309              	.LBE10:
+ 2310              		.cfi_endproc
+ 2311              	.LFE1:
+ 2313              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 reversi_main.c
+C:\Users\sergi\AppData\Local\Temp\cciLEdIa.s:2182   .text:00000000 $a
+C:\Users\sergi\AppData\Local\Temp\cciLEdIa.s:2185   .text:00000000 dormir_procesador
+C:\Users\sergi\AppData\Local\Temp\cciLEdIa.s:2207   .text:00000018 reversi_main
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+hayEvento
+pop_debug
+LCD_DMA_ready
+tp_antirrebotes_ev_tactil
+jugada_x_pantalla
+LCD_Refresca_ttotal
+LCD_imprimir
+Latido_ev_new_tick
+antirrebotes_ev_tick
+tp_antirrebotes_ev_tick
+antirrebotes_ev_boton
